@@ -42,6 +42,16 @@ export default class AppBots {
         return null;
     }
 
+    async getById(bot: AppBotInterface): Promise<AppBot | null> {
+        let uri = `/${bot.id}`;
+        const { data } = await this.client.GET(uri);
+
+        if (data) {
+            return new AppBot(this, {...data, api_key: bot.api_key} as AppBotInterface);
+        }
+        return null;
+    }
+
     async create(bot: AppBotInterface): Promise<AppBot> {
         const { data } = await this.client.POST('', bot);
 
