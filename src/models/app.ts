@@ -1,4 +1,7 @@
-import { AppInterface } from '../types';
+import {
+    AppInterface,
+    MosiaConfig
+} from '../types';
 import {
     Apps,
     AppBots
@@ -9,8 +12,8 @@ export default class App {
     public props: AppInterface;
 
     constructor(apps: Apps, app: AppInterface) {
-        this.apps = apps;
         this.props = app;
+        this.apps = apps;
     }
 
     get bots(): AppBots {
