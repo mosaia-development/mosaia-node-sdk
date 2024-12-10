@@ -111,5 +111,6 @@ We welcome community contributions and pull requests. See [CONTRIBUTING.md][cont
 
 [issues]: https://github.com/mosaia-development/mosaia-node-sdk/issues
 [pr]: https://github.com/mosaia-development/mosaia-node-sdk/pulls
+[license]: https://github.com/mosaia-development/mosaia-node-sdk/blob/main/LICENSE
 [contributing]: https://github.com/mosaia-development/mosaia-node-sdk/blob/main/CONTRIBUTING.md
 [cla]: http://en.wikipedia.org/wiki/Contributor_License_Agreement
