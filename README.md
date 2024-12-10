@@ -8,7 +8,7 @@
 
 ## Current Features
 - Get and manage Mosaia Apps
-- Get and manage agent and group bots
+- Manage agent and group bots
 - Agent inference
 
 ## Getting Started
