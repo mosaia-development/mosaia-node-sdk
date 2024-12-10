@@ -105,6 +105,6 @@ We welcome community contributions and pull requests. See [CONTRIBUTING.md](http
 
 ## License
 
-Apache 2.0
+[Apache license][license]
 
 **Free Software, Hell Yeah!**
