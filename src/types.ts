@@ -52,6 +52,10 @@ export interface AppBotInterface {
     id?: string;
     app: string | AppInterface;
     response_url: string;
+    org?: string;
+    user?: string;
+    agent?: string;
+    agent_group?: string;
     api_key?: string;
     api_key_partial?: string;
     active?: boolean;
@@ -60,7 +64,7 @@ export interface AppBotInterface {
         [key: string]: string;
     }
     external_id?: string;
-    record_history: {
+    record_history?: {
         updated_at: string;
         created_at: string;
     }
