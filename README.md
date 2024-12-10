@@ -92,9 +92,9 @@ const coreBot = await app.bots.create({
     response_url: `<optional webhook URL for async agent calls>`,
     user: `<optional user ID reference>`,
     org: `<optional org ID reference>`,
-    agent: <optional agent ID reference>`,
-    agent_group: <optional agent_group ID reference>`,
-    external_id: <optional external ID reference>`
+    agent: `<optional agent ID reference>`,
+    agent_group: `<optional agent_group ID reference>`,
+    external_id: `<optional external ID reference>`
 });
 ```
     
