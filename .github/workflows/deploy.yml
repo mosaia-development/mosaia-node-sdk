@@ -10,18 +10,35 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # 1. Checkout the repository
       - name: Checkout code
         uses: actions/checkout@v3
 
+      # 2. Set up Node.js
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '21'
           registry-url: 'https://registry.npmjs.org'
 
+      # 3. Extract the version from the tag
+      - name: Extract version from tag
+        id: get_version
+        run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_ENV
+
+      # 4. Update the version in package.json
+      - name: Update package.json version
+        run: |
+          npm install -g npm
+          VERSION=${{ env.version }}
+          echo "Updating package.json to version $VERSION"
+          jq '.version = "'$VERSION'"' package.json > tmp.json && mv tmp.json package.json
+
+      # 5. Install dependencies
       - name: Install dependencies
         run: npm install
 
+      # 6. Publish to NPM
       - name: Publish to NPM
         run: npm publish --access public
         env:
