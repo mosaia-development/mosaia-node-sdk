@@ -101,10 +101,15 @@ const coreBot = await app.bots.create({
 ## Contributing
 Want to contribute? Great!
 
-We welcome community contributions and pull requests. See [CONTRIBUTING.md](https://github.com/mosaia-development/mosaia-node-sdk/blob/8f4dd4785cb5194a3567a76643844e699e637f46/CONTRIBUTING.md) for information on how to set up a development environment and submit code.
+We welcome community contributions and pull requests. See [CONTRIBUTING.md][contributing] for information on how to set up a development environment and submit code.
 
 ## License
 
 [Apache license][license]
 
 **Free Software, Hell Yeah!**
+
+[issues]: https://github.com/mosaia-development/mosaia-node-sdk/issues
+[pr]: https://github.com/mosaia-development/mosaia-node-sdk/pulls
+[contributing]: https://github.com/mosaia-development/mosaia-node-sdk/blob/main/CONTRIBUTING.md
+[cla]: http://en.wikipedia.org/wiki/Contributor_License_Agreement
