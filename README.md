@@ -101,7 +101,7 @@ const coreBot = await app.bots.create({
 ## Contributing
 Want to contribute? Great!
 
-We welcome community contributions and pull requests. See CONTRIBUTING.md for information on how to set up a development environment and submit code.
+We welcome community contributions and pull requests. See [CONTRIBUTING.md link](https://github.com/mosaia-development/mosaia-node-sdk/blob/8f4dd4785cb5194a3567a76643844e699e637f46/CONTRIBUTING.md) for information on how to set up a development environment and submit code.
 
 ## License
 
