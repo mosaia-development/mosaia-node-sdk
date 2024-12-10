@@ -1,9 +1,10 @@
 # @mosaia/mosaia-node-sdk
-Mosaia's TypeScript SDK for interfacing with the Mosaia Core platform
 [![Publish to NPM](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml/badge.svg)](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml)
 ![GitHub all releases](https://img.shields.io/github/commit-activity/m/mosaia-development/mosaia-node-sdk)
 ![GitHub contributors](https://img.shields.io/github/contributors-anon/mosaia-development/mosaia-node-sdk)
 ![NPM Downloads](https://img.shields.io/npm/dm/%40mosaia%2Fmosaia-node-sdk)
+
+## Mosaia's TypeScript SDK for interfacing with the Mosaia Core platform
 
 ## Current Features
 - Get and manage Mosaia Apps
