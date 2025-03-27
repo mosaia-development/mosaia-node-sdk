@@ -6,6 +6,7 @@ import {
 import { AppBot } from '../models';
 import APIClient from './api-client';
 import Apps from './apps';
+import { DEFAULT_CONFIG } from '../config';
 
 export default class AppBots {
     private client: APIClient;
@@ -16,9 +17,9 @@ export default class AppBots {
         let baseURL = config.baseURL;
 
         if (app && app.id) baseURL += `/${app.id}`;
-        baseURL += '/bot';
+        baseURL += DEFAULT_CONFIG.ENDPOINTS.BOTS;
 
-        this.config  = {
+        this.config = {
             ...config,
             baseURL,
         };

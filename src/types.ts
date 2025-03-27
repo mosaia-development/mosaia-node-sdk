@@ -1,9 +1,12 @@
 "use strict";
 
 export interface MosiaConfig {
-    apiKey: string;
+    apiKey?: string;
     version?: string;
     baseURL?: string;
+    frontendURL?: string;
+    clientId?: string;
+    clientSecret?: string;
 }
 
 export interface APIResponse<T> {
@@ -90,4 +93,27 @@ export type GetAppsPayload = {
 export type GetAppPayload = {
     data: AppInterface;
     paging?: PagingInterface
+}
+
+export interface OAuthConfig {
+    clientId: string;
+    redirectUri: string;
+    scopes?: string[];
+    state?: string;
+}
+
+export interface OAuthTokenResponse {
+    access_token: string;
+    refresh_token?: string;
+    token_type: string;
+    expires_in: number;
+    sub: string;
+    iat: string;
+    exp: string;
+}
+
+export interface OAuthErrorResponse {
+    error: string;
+    error_description?: string;
+    error_uri?: string;
 }

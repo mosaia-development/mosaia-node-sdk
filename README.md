@@ -48,13 +48,19 @@ In a TypeScript file:
 const {
     MOSAIA_CORE_URL,
     MOSAIA_CORE_VERSION,
-    MOSAIA_API_KEY
+    MOSAIA_API_KEY,
+    MOSAIA_FRONTEND_URL,
+    MOSAIA_CLIENT_ID,
+    MOSAIA_CLIENT_SECRET
 } = process.env;
 // Apply API configs 
 const mosaia = new Mosaia({
     apiKey: MOSAIA_API_KEY as string,
     version: MOSAIA_CORE_VERSION as string,
-    baseURL: MOSAIA_CORE_URL as string
+    baseURL: MOSAIA_CORE_URL as string,
+    frontendURL: MOSAIA_FRONTEND_URL as string,
+    clientId: MOSAIA_CLIENT_ID as string,
+    clientSecret: MOSAIA_CLIENT_SECRET as string
 });
 ```
 In a JavaScript file:
@@ -62,13 +68,19 @@ In a JavaScript file:
 const {
     MOSAIA_CORE_URL,
     MOSAIA_CORE_VERSION,
-    MOSAIA_API_KEY
+    MOSAIA_API_KEY,
+    MOSAIA_FRONTEND_URL,
+    MOSAIA_CLIENT_ID,
+    MOSAIA_CLIENT_SECRET
 } = process.env;
 // Apply API configs 
 const mosaia = new Mosaia({
     apiKey: MOSAIA_API_KEY,
     version: MOSAIA_CORE_VERSION,
-    baseURL: MOSAIA_CORE_URL
+    baseURL: MOSAIA_CORE_URL,
+    frontendURL: MOSAIA_FRONTEND_URL,
+    clientId: MOSAIA_CLIENT_ID,
+    clientSecret: MOSAIA_CLIENT_SECRET
 });
 ```
 ##### Get the app by ID
@@ -97,7 +109,75 @@ const coreBot = await app.bots.create({
     external_id: `<optional external ID reference>`
 });
 ```
-    
+##### OAuth Authentication
+The SDK supports OAuth2 Authorization Code flow with PKCE for secure authentication. Here's how to implement it:
+
+In a TypeScript file:
+```typescript
+// Initialize Mosaia with client ID and client secret
+const mosaia = new Mosaia({
+    clientId: MOSAIA_CLIENT_ID as string,
+    clientSecret: MOSAIA_CLIENT_SECRET as string,
+    version: MOSAIA_CORE_VERSION as string,
+    baseURL: MOSAIA_CORE_URL as string,
+    frontendURL: MOSAIA_FRONTEND_URL as string
+});
+
+// Create OAuth instance
+const oauth = mosaia.oauth({
+    redirectUri: 'https://your-app.com/callback',
+    scopes: ['agent:read', 'agent:write'] // Optional scopes
+});
+
+// Get authorization URL and code verifier
+const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
+
+// Redirect user to the authorization URL
+// After user authorizes, they will be redirected to your callback URL with a code
+
+// Exchange the code for tokens
+const tokens = await oauth.exchangeCodeForToken(code, codeVerifier);
+
+// Use the access token
+const { access_token, refresh_token } = tokens;
+
+// Refresh the access token when it expires
+const newTokens = await oauth.refreshToken(refresh_token);
+```
+
+In a JavaScript file:
+```javascript
+// Initialize Mosaia with client ID and client secret
+const mosaia = new Mosaia({
+    clientId: MOSAIA_CLIENT_ID,
+    clientSecret: MOSAIA_CLIENT_SECRET,
+    version: MOSAIA_CORE_VERSION,
+    baseURL: MOSAIA_CORE_URL,
+    frontendURL: MOSAIA_FRONTEND_URL
+});
+
+// Create OAuth instance
+const oauth = mosaia.oauth({
+    redirectUri: 'https://your-app.com/callback',
+    scopes: ['agent:read', 'agent:write'] // Optional scopes
+});
+
+// Get authorization URL and code verifier
+const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
+
+// Redirect user to the authorization URL
+// After user authorizes, they will be redirected to your callback URL with a code
+
+// Exchange the code for tokens
+const tokens = await oauth.exchangeCodeForToken(code, codeVerifier);
+
+// Use the access token
+const { access_token, refresh_token } = tokens;
+
+// Refresh the access token when it expires
+const newTokens = await oauth.refreshToken(refresh_token);
+```
+
 ## Contributing
 Want to contribute? Great!
 

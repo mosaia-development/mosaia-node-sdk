@@ -1,5 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { MosiaConfig, APIResponse, ErrorResponse } from '../types';
+import { DEFAULT_CONFIG } from '../config';
 
 export default class APIClient {
     private client: AxiosInstance;
@@ -10,8 +11,8 @@ export default class APIClient {
         this.client = axios.create({
             baseURL: config.baseURL,
             headers: {
-                'Authorization': `Bearer ${config.apiKey}`,
-                'Content-Type': 'application/json',
+                'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey}`,
+                'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
             },
         });
 
@@ -24,9 +25,9 @@ export default class APIClient {
 
     private handleError(error: AxiosError): Promise<never> {
         const errorResponse: ErrorResponse = {
-            message: error.message,
+            message: error.message || DEFAULT_CONFIG.ERRORS.UNKNOWN_ERROR,
             code: error.code || 'UNKNOWN_ERROR',
-            status: error.response?.status || 500,
+            status: error.response?.status || DEFAULT_CONFIG.ERRORS.DEFAULT_STATUS_CODE,
         };
         return Promise.reject(errorResponse);
     }
