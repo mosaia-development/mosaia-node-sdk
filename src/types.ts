@@ -7,6 +7,8 @@ export interface MosiaConfig {
     frontendURL?: string;
     clientId?: string;
     clientSecret?: string;
+    user?: string;
+    org?: string;
 }
 
 export interface APIResponse<T> {
@@ -49,6 +51,25 @@ export interface AppInterface {
         [key: string]: string;
     }
     external_id?: string;
+}
+
+export interface ToolInterface {
+    id?: string;
+    org?: string;
+    user?: string;
+    name?: string;
+    short_description: string;
+    tool_schema: string;
+    required_environment_variables?: string[];
+    url?: string;
+    public?: boolean;
+    active?: boolean;
+    keywords?: string[];
+    tags?: string[];
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
 }
 
 export interface AppBotInterface {

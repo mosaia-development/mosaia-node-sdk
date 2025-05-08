@@ -31,6 +31,7 @@ export const DEFAULT_CONFIG = {
     // API Endpoints
     ENDPOINTS: {
         APPS: '/app',
+        TOOLS: '/tool',
         BOTS: '/bot',
     },
 

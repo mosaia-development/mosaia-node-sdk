@@ -1,7 +1,8 @@
-import { Apps } from './apis';
+import { Apps, Tools } from './apis';
 import { MosiaConfig, OAuthConfig } from './types';
 import { DEFAULT_CONFIG } from './config';
 import { OAuth } from './oauth';
+import { isSdkError } from './utils';
 
 class Mosaia {
     private config: MosiaConfig;
@@ -9,16 +10,24 @@ class Mosaia {
     constructor(config: MosiaConfig) {
         const baseURL = `${config.baseURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`;
         const frontendURL = config.frontendURL || DEFAULT_CONFIG.FRONTEND.URL;
+        const user = config.user;
+        const org = config.org;
 
         this.config = {
             ...config,
             baseURL,
-            frontendURL
+            frontendURL,
+            user,
+            org,
         };
     }
 
     get apps() {
         return new Apps(this.config);
+    }
+
+    get tools() {
+        return new Tools(this.config);
     }
 
     /**
@@ -51,6 +60,8 @@ export * from './types';
 export * from './apis';
 // Export OAuth
 export * from './oauth';
+
+export { isSdkError };
 
 // Export default SDK
 export default Mosaia;

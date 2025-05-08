@@ -1,3 +1,5 @@
+import { ErrorResponse } from "../types";
+
 export function isValidObjectId(id: string): boolean {
     // MongoDB ObjectID is a 24-character hexadecimal string
     const objectIdRegex = /^[a-fA-F0-9]{24}$/;
@@ -52,7 +54,7 @@ export function success<T = any>(data: T | any = null): SuccessResponse<T> {
 }
 
 export function serverErrorToString(err: any) {
-    if(err.digest) {
+    if (err.digest) {
         console.log(`${err.digest}: ${err.message}`)
     }
     const messageStr = err.digest ? 'Unexpected Error' : err.message;
@@ -63,4 +65,12 @@ export function serverErrorToString(err: any) {
     }
 
     return `${messageStr}${digestStr}`;
+}
+
+export function isSdkError(err: any): err is ErrorResponse {
+    const potentialSdkError = err as ErrorResponse;
+
+    if ('message' in potentialSdkError && 'code' in potentialSdkError && 'status' in potentialSdkError) return true;
+
+    return false;
 }
