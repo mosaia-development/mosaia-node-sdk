@@ -1,9 +1,14 @@
 "use strict";
 
 export interface MosiaConfig {
-    apiKey: string;
+    apiKey?: string;
     version?: string;
     baseURL?: string;
+    frontendURL?: string;
+    clientId?: string;
+    clientSecret?: string;
+    user?: string;
+    org?: string;
 }
 
 export interface APIResponse<T> {
@@ -48,6 +53,25 @@ export interface AppInterface {
     external_id?: string;
 }
 
+export interface ToolInterface {
+    id?: string;
+    org?: string;
+    user?: string;
+    name?: string;
+    short_description: string;
+    tool_schema: string;
+    required_environment_variables?: string[];
+    url?: string;
+    public?: boolean;
+    active?: boolean;
+    keywords?: string[];
+    tags?: string[];
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
 export interface AppBotInterface {
     id?: string;
     app: string | AppInterface;
@@ -90,4 +114,27 @@ export type GetAppsPayload = {
 export type GetAppPayload = {
     data: AppInterface;
     paging?: PagingInterface
+}
+
+export interface OAuthConfig {
+    clientId: string;
+    redirectUri: string;
+    scopes?: string[];
+    state?: string;
+}
+
+export interface OAuthTokenResponse {
+    access_token: string;
+    refresh_token?: string;
+    token_type: string;
+    expires_in: number;
+    sub: string;
+    iat: string;
+    exp: string;
+}
+
+export interface OAuthErrorResponse {
+    error: string;
+    error_description?: string;
+    error_uri?: string;
 }

@@ -4,15 +4,16 @@ import {
 } from '../types';
 import { App } from '../models';
 import APIClient from './api-client';
+import { DEFAULT_CONFIG } from '../config';
 
 export default class Apps {
     private client: APIClient;
     public config: MosiaConfig;
 
     constructor(config: MosiaConfig) {
-        const baseURL = `${config.baseURL}/app`;
+        const baseURL = `${config.baseURL}${DEFAULT_CONFIG.ENDPOINTS.APPS}`;
 
-        this.config  = {
+        this.config = {
             ...config,
             baseURL,
         };
