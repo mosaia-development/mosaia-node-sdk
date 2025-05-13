@@ -58,6 +58,7 @@ export interface ToolInterface {
     org?: string;
     user?: string;
     name?: string;
+    friendly_name?: string;
     short_description: string;
     tool_schema: string;
     required_environment_variables?: string[];
