@@ -62,6 +62,7 @@ export interface ToolInterface {
     short_description: string;
     tool_schema: string;
     required_environment_variables?: string[];
+    source_url?: string;
     url?: string;
     public?: boolean;
     active?: boolean;
