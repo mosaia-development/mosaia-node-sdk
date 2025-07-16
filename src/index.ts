@@ -1,4 +1,5 @@
-import { Apps, Tools } from './apis';
+import { Apps, Tools, AppBots, Users, Organizations, Agents, AgentGroups, Models, Clients, Auth, Billing, Permissions } from './apis';
+import { App, Tool, AppBot } from './models';
 import { MosiaConfig, OAuthConfig } from './types';
 import { DEFAULT_CONFIG } from './config';
 import { OAuth } from './oauth';
@@ -30,6 +31,42 @@ class Mosaia {
         return new Tools(this.config);
     }
 
+    get users() {
+        return new Users(this.config);
+    }
+
+    get organizations() {
+        return new Organizations(this.config);
+    }
+
+    get agents() {
+        return new Agents(this.config);
+    }
+
+    get agentGroups() {
+        return new AgentGroups(this.config);
+    }
+
+    get models() {
+        return new Models(this.config);
+    }
+
+    get clients() {
+        return new Clients(this.config);
+    }
+
+    get auth() {
+        return new Auth(this.config);
+    }
+
+    get billing() {
+        return new Billing(this.config);
+    }
+
+    get permissions() {
+        return new Permissions(this.config);
+    }
+
     /**
      * Creates a new OAuth instance for handling OAuth2 Authorization Code flow with PKCE
      * @param config OAuth configuration
@@ -58,6 +95,8 @@ class Mosaia {
 export * from './types';
 // Export APIs
 export * from './apis';
+// Export models
+export * from './models';
 // Export OAuth
 export * from './oauth';
 
