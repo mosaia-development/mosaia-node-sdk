@@ -1,17 +1,74 @@
-# Mosaia Node.js SDK
+# @mosaia/mosaia-node-sdk
+[![Publish to NPM](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml/badge.svg)](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml)
+![GitHub all releases](https://img.shields.io/github/commit-activity/m/mosaia-development/mosaia-node-sdk)
+![GitHub contributors](https://img.shields.io/github/contributors-anon/mosaia-development/mosaia-node-sdk)
+![NPM Downloads](https://img.shields.io/npm/dm/%40mosaia%2Fmosaia-node-sdk)
+
+## Mosaia's TypeScript SDK for interfacing with the Mosaia Core platform
 
 A comprehensive Node.js SDK for the Mosaia API platform, providing access to all models and endpoints available in the api-core ExpressJS application.
 
-## Installation
+## Current Features
+- Get and manage Mosaia Apps
+- Manage agent and group bots
+- Agent inference
 
-```bash
-npm install mosaia-node-sdk
+## Getting Started
+### Installation
+Run any of the following commands to install the SDK using choice of package manager
+##### NPM
+```shell
+npm i @mosaia/mosaia-node-sdk
+```
+##### PNPM
+```shell
+pnpm add @mosaia/mosaia-node-sdk
+```
+##### YARN
+```shell
+yarn add @mosaia/mosaia-node-sdk
+```
+### Implementation
+##### In Node.js or NextJS
+To use the TypeScript definition files within a Node.js or NextJS project, simply import @mosaia/mosaia-node-sdk as you normally would.
+In a TypeScript file:
+```typescript
+// import entire SDK
+import Mosaia from '@mosaia/mosaia-node-sdk';
+// import SDK with type references
+import Mosaia, { AppInterface } from '@mosaia/mosaia-node-sdk';
+```
+In a JavaScript file:
+```javascript
+// import entire SDK
+const Mosaia = require('@mosaia/mosaia-node-sdk');
+```
+##### Create a Mosaia instance
+In a TypeScript file:
+```typescript
+const {
+    MOSAIA_CORE_URL,
+    MOSAIA_CORE_VERSION,
+    MOSAIA_API_KEY,
+    MOSAIA_FRONTEND_URL,
+    MOSAIA_CLIENT_ID,
+    MOSAIA_CLIENT_SECRET
+} = process.env;
+// Apply API configs 
+const mosaia = new Mosaia({
+    apiKey: MOSAIA_API_KEY as string,
+    version: MOSAIA_CORE_VERSION as string,
+    baseURL: MOSAIA_CORE_URL as string,
+    frontendURL: MOSAIA_FRONTEND_URL as string,
+    clientId: MOSAIA_CLIENT_ID as string,
+    clientSecret: MOSAIA_CLIENT_SECRET as string
+});
 ```
 
 ## Quick Start
 
 ```typescript
-import Mosaia from 'mosaia-node-sdk';
+import Mosaia from '@mosaia/mosaia-node-sdk';
 
 const mosaia = new Mosaia({
     apiKey: 'your-api-key',
