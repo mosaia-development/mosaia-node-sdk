@@ -1,6 +1,6 @@
 {
   "name": "@mosaia/mosaia-node-sdk",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "Mosaia's TypeScript SDK for constructing 3rd party app integrations on the Mosaia platform",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
