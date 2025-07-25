@@ -187,4 +187,215 @@ describe('Auth API', () => {
       expect(result).toEqual(mockResponse);
     });
   });
+
+  describe('Authentication Flow with apiKey Assignment', () => {
+    let mosaia: any;
+
+    beforeEach(() => {
+      // Mock the main Mosaia class
+      mosaia = {
+        config: {
+          apiKey: 'initial-key',
+          apiURL: 'https://api.test.com/v1',
+          version: '1'
+        },
+        set apiKey(value: string) {
+          this.config.apiKey = value;
+        }
+      };
+    });
+
+    describe('Password Authentication Flow', () => {
+      it('should assign access token to apiKey after successful password authentication', async () => {
+        const mockResponse: AuthResponse = {
+          access_token: 'new-access-token-123',
+          refresh_token: 'refresh-token-456',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const mockClient = {
+          POST: jest.fn().mockResolvedValue({ data: mockResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // Perform authentication
+        const result = await auth.signInWithPassword('test@example.com', 'password', 'client-id');
+
+        // Simulate assigning the access token to the SDK
+        mosaia.apiKey = result.data.access_token;
+
+        // Verify the token was assigned correctly
+        expect(mosaia.config.apiKey).toBe('new-access-token-123');
+        expect(result.data.access_token).toBe('new-access-token-123');
+      });
+
+      it('should handle multiple password authentication attempts with different tokens', async () => {
+        const firstResponse: AuthResponse = {
+          access_token: 'first-token',
+          refresh_token: 'first-refresh',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const secondResponse: AuthResponse = {
+          access_token: 'second-token',
+          refresh_token: 'second-refresh',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const mockClient = {
+          POST: jest.fn()
+            .mockResolvedValueOnce({ data: firstResponse, status: 201 })
+            .mockResolvedValueOnce({ data: secondResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // First authentication
+        const firstResult = await auth.signInWithPassword('user1@example.com', 'password1', 'client-id');
+        mosaia.apiKey = firstResult.data.access_token;
+        expect(mosaia.config.apiKey).toBe('first-token');
+
+        // Second authentication
+        const secondResult = await auth.signInWithPassword('user2@example.com', 'password2', 'client-id');
+        mosaia.apiKey = secondResult.data.access_token;
+        expect(mosaia.config.apiKey).toBe('second-token');
+      });
+    });
+
+    describe('Client Credentials Authentication Flow', () => {
+      it('should assign access token to apiKey after successful client authentication', async () => {
+        const mockResponse: AuthResponse = {
+          access_token: 'client-access-token-789',
+          refresh_token: 'client-refresh-token-012',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const mockClient = {
+          POST: jest.fn().mockResolvedValue({ data: mockResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // Perform client authentication
+        const result = await auth.signInWithClient('client-id', 'client-secret');
+
+        // Simulate assigning the access token to the SDK
+        mosaia.apiKey = result.data.access_token;
+
+        // Verify the token was assigned correctly
+        expect(mosaia.config.apiKey).toBe('client-access-token-789');
+        expect(result.data.access_token).toBe('client-access-token-789');
+      });
+    });
+
+    describe('Token Refresh Flow', () => {
+      it('should assign new access token to apiKey after successful token refresh', async () => {
+        const mockResponse: AuthResponse = {
+          access_token: 'refreshed-access-token-345',
+          refresh_token: 'new-refresh-token-678',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const mockClient = {
+          POST: jest.fn().mockResolvedValue({ data: mockResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // Set initial token
+        mosaia.apiKey = 'old-access-token';
+        expect(mosaia.config.apiKey).toBe('old-access-token');
+
+        // Perform token refresh
+        const result = await auth.refreshToken('old-refresh-token');
+
+        // Update the SDK with the new access token
+        mosaia.apiKey = result.data.access_token;
+
+        // Verify the token was updated correctly
+        expect(mosaia.config.apiKey).toBe('refreshed-access-token-345');
+        expect(result.data.access_token).toBe('refreshed-access-token-345');
+      });
+
+      it('should handle token refresh with different token types', async () => {
+        const mockResponse: AuthResponse = {
+          access_token: 'new-token-with-special-chars!@#$%^&*()',
+          refresh_token: 'new-refresh-with-special-chars!@#$%^&*()',
+          token_type: 'Bearer',
+          expires_in: 7200
+        };
+
+        const mockClient = {
+          POST: jest.fn().mockResolvedValue({ data: mockResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // Perform token refresh
+        const result = await auth.refreshToken('old-refresh-token');
+
+        // Update the SDK with the new access token
+        mosaia.apiKey = result.data.access_token;
+
+        // Verify the token was assigned correctly, including special characters
+        expect(mosaia.config.apiKey).toBe('new-token-with-special-chars!@#$%^&*()');
+        expect(result.data.access_token).toBe('new-token-with-special-chars!@#$%^&*()');
+      });
+    });
+
+    describe('Error Handling in Authentication Flow', () => {
+      it('should not update apiKey when authentication fails', async () => {
+        const mockClient = {
+          POST: jest.fn().mockRejectedValue(new Error('Authentication failed'))
+        };
+
+        (auth as any).client = mockClient;
+
+        // Set initial token
+        mosaia.apiKey = 'initial-token';
+        expect(mosaia.config.apiKey).toBe('initial-token');
+
+        // Attempt authentication (should fail)
+        try {
+          await auth.signInWithPassword('invalid@example.com', 'wrong-password', 'client-id');
+        } catch (error) {
+          // Authentication failed as expected
+        }
+
+        // Verify the token was not changed
+        expect(mosaia.config.apiKey).toBe('initial-token');
+      });
+
+      it('should handle empty access token gracefully', async () => {
+        const mockResponse: AuthResponse = {
+          access_token: '',
+          refresh_token: 'refresh-token',
+          token_type: 'Bearer',
+          expires_in: 3600
+        };
+
+        const mockClient = {
+          POST: jest.fn().mockResolvedValue({ data: mockResponse, status: 201 })
+        };
+
+        (auth as any).client = mockClient;
+
+        // Perform authentication
+        const result = await auth.signInWithPassword('test@example.com', 'password', 'client-id');
+
+        // Assign empty token to SDK
+        mosaia.apiKey = result.data.access_token;
+
+        // Verify empty token is handled correctly
+        expect(mosaia.config.apiKey).toBe('');
+        expect(result.data.access_token).toBe('');
+      });
+    });
+  });
 }); 

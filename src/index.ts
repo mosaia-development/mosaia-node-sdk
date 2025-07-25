@@ -75,6 +75,160 @@ class Mosaia {
     }
 
     /**
+     * Set the API key for authentication
+     * 
+     * Updates the API key used for authenticating requests to the Mosaia API.
+     * This can be used to change authentication credentials at runtime.
+     * 
+     * @param apiKey - The new API key for authentication
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Update API key
+     * mosaia.apiKey = 'new-api-key-123';
+     * 
+     * // Now all subsequent requests will use the new API key
+     * const users = await mosaia.users.getAll();
+     * ```
+     */
+    set apiKey(apiKey: string) {
+        this.config.apiKey = apiKey;
+    }
+
+    /**
+     * Set the API version
+     * 
+     * Updates the API version used for requests. This affects the version
+     * header sent with API requests.
+     * 
+     * @param version - The new API version (e.g., '1', '2')
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Update API version
+     * mosaia.version = '2';
+     * 
+     * // Now all subsequent requests will use API v2
+     * const users = await mosaia.users.getAll();
+     * ```
+     */
+    set version(version: string) {
+        this.config.version = version;
+    }
+
+    /**
+     * Set the API base URL
+     * 
+     * Updates the base URL used for API requests. This is useful for
+     * switching between different environments (development, staging, production).
+     * 
+     * @param apiURL - The new API base URL
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Switch to staging environment
+     * mosaia.apiURL = 'https://api-staging.mosaia.ai';
+     * 
+     * // Switch to production environment
+     * mosaia.apiURL = 'https://api.mosaia.ai';
+     * 
+     * // Switch to local development
+     * mosaia.apiURL = 'http://localhost:3000';
+     * ```
+     */
+    set apiURL(apiURL: string) {
+        this.config.apiURL = apiURL;
+    }
+
+    /**
+     * Set the app URL for OAuth flows
+     * 
+     * Updates the app URL used for OAuth authorization flows. This affects
+     * the authorization URL generated for OAuth authentication.
+     * 
+     * @param appURL - The new app URL for OAuth flows
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Update OAuth app URL
+     * mosaia.appURL = 'https://app-staging.mosaia.ai';
+     * 
+     * // Generate OAuth authorization URL with new app URL
+     * const oauth = mosaia.oauth({
+     *   redirectUri: 'https://myapp.com/callback',
+     *   scopes: ['read', 'write']
+     * });
+     * 
+     * const { url } = oauth.getAuthorizationUrlAndCodeVerifier();
+     * console.log('Authorization URL:', url);
+     * ```
+     */
+    set appURL(appURL: string) {
+        this.config.appURL = appURL;
+    }
+
+    /**
+     * Set the OAuth client ID
+     * 
+     * Updates the OAuth client ID used for authentication flows.
+     * This is required for OAuth-based authentication.
+     * 
+     * @param clientId - The new OAuth client ID
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Update OAuth client ID
+     * mosaia.clientId = 'new-client-id-123';
+     * 
+     * // Create OAuth instance with updated client ID
+     * const oauth = mosaia.oauth({
+     *   redirectUri: 'https://myapp.com/callback',
+     *   scopes: ['read', 'write']
+     * });
+     * ```
+     */
+    set clientId(clientId: string) {
+        this.config.clientId = clientId;
+    }
+
+    /**
+     * Set the OAuth client secret
+     * 
+     * Updates the OAuth client secret used for client credentials flow.
+     * This is used for server-to-server authentication.
+     * 
+     * @param clientSecret - The new OAuth client secret
+     * 
+     * @example
+     * ```typescript
+     * const mosaia = new Mosaia(config);
+     * 
+     * // Update OAuth client secret
+     * mosaia.clientSecret = 'new-client-secret-456';
+     * 
+     * // Use client credentials flow with updated secret
+     * const auth = new Auth(mosaia.config);
+     * const authResponse = await auth.signInWithClient(
+     *   mosaia.config.clientId!,
+     *   mosaia.config.clientSecret!
+     * );
+     * ```
+     */
+    set clientSecret(clientSecret: string) {
+        this.config.clientSecret = clientSecret;
+    }
+
+    /**
      * Access to Applications API
      * 
      * Manage applications, including CRUD operations and app-specific functionality.

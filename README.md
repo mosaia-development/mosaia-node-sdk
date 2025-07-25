@@ -117,11 +117,20 @@ interface MosiaConfig {
 // Sign in with password
 const auth = await mosaia.auth.signInWithPassword(email, password, clientId);
 
+// Assign the access token to the SDK for subsequent API calls
+mosaia.apiKey = auth.access_token;
+
 // Sign in with client credentials
 const auth = await mosaia.auth.signInWithClient(clientId, clientSecret);
 
+// Assign the access token to the SDK for subsequent API calls
+mosaia.apiKey = auth.access_token;
+
 // Refresh token
 const auth = await mosaia.auth.refreshToken(refreshToken);
+
+// Update the SDK with the new access token
+mosaia.apiKey = auth.access_token;
 
 // Sign out
 await mosaia.auth.signOut();
@@ -132,6 +141,8 @@ const session = await mosaia.auth.getSession();
 // Get self info
 const self = await mosaia.auth.getSelf();
 ```
+
+
 
 ### Users
 
@@ -568,8 +579,17 @@ const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
 // Exchange code for token (requires the code verifier)
 const token = await oauth.exchangeCodeForToken(code, codeVerifier);
 
+// Assign the access token to the SDK for subsequent API calls
+mosaia.apiKey = token.access_token;
+
+// Now you can make authenticated API calls
+const users = await mosaia.users.getAll();
+
 // Refresh token when needed
 const newToken = await oauth.refreshToken(token.refresh_token);
+
+// Update the SDK with the new access token
+mosaia.apiKey = newToken.access_token;
 ```
 
 **Important Notes:**
