@@ -3,8 +3,8 @@
 export interface MosiaConfig {
     apiKey?: string;
     version?: string;
-    baseURL?: string;
-    frontendURL?: string;
+    apiURL?: string;
+    appURL?: string;
     clientId?: string;
     clientSecret?: string;
     user?: string;
@@ -779,6 +779,7 @@ export type GetApiRequestLogPayload = {
 export interface OAuthConfig {
     clientId: string;
     redirectUri: string;
+    appURL: string;
     scopes?: string[];
     state?: string;
 }

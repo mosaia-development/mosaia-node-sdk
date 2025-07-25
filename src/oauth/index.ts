@@ -53,7 +53,7 @@ export class OAuth {
         });
 
         return {
-            url: `${DEFAULT_CONFIG.FRONTEND.URL}/oauth?${params.toString()}`,
+            url: `${this.config.appURL}/oauth?${params.toString()}`,
             codeVerifier: code_verifier
         };
     }

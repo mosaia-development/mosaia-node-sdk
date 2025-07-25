@@ -8,7 +8,7 @@ describe('Users API', () => {
   let users: Users;
   const mockConfig: MosiaConfig = {
     apiKey: 'test-api-key',
-    baseURL: 'https://api.test.com/v1',
+    apiURL: 'https://api.test.com/v1',
     version: '1'
   };
 

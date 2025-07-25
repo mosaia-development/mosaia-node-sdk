@@ -9,15 +9,15 @@ class Mosaia {
     private config: MosiaConfig;
     
     constructor(config: MosiaConfig) {
-        const baseURL = `${config.baseURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`;
-        const frontendURL = config.frontendURL || DEFAULT_CONFIG.FRONTEND.URL;
+        const apiURL = `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`;
+        const appURL = config.appURL || DEFAULT_CONFIG.APP.URL;
         const user = config.user;
         const org = config.org;
 
         this.config = {
             ...config,
-            baseURL,
-            frontendURL,
+            apiURL,
+            appURL,
             user,
             org,
         };
@@ -83,9 +83,14 @@ class Mosaia {
             throw new Error('Client ID is required to initialize OAuth');
         }
 
+        if (!this.config.appURL) {
+            throw new Error('appURL is required to initialize OAuth');
+        }
+
         return new OAuth({
             clientId: this.config.clientId,
             redirectUri,
+            appURL: this.config.appURL,
             scopes
         });
     }

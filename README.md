@@ -58,8 +58,8 @@ const {
 const mosaia = new Mosaia({
     apiKey: MOSAIA_API_KEY as string,
     version: MOSAIA_CORE_VERSION as string,
-    baseURL: MOSAIA_CORE_URL as string,
-    frontendURL: MOSAIA_FRONTEND_URL as string,
+    apiURL: MOSAIA_CORE_URL as string,
+    appURL: MOSAIA_FRONTEND_URL as string,
     clientId: MOSAIA_CLIENT_ID as string,
     clientSecret: MOSAIA_CLIENT_SECRET as string
 });
@@ -72,7 +72,8 @@ import Mosaia from '@mosaia/mosaia-node-sdk';
 
 const mosaia = new Mosaia({
     apiKey: 'your-api-key',
-    baseURL: 'https://api.mosaia.com',
+    apiURL: 'https://api.mosaia.com',
+    appURL: 'https://mosaia.ai',
     version: '1'
 });
 
@@ -95,14 +96,19 @@ const orgs = await mosaia.organizations.getAll();
 interface MosiaConfig {
     apiKey?: string;
     version?: string;
-    baseURL?: string;
-    frontendURL?: string;
-    clientId?: string;
-    clientSecret?: string;
-    user?: string;
-    org?: string;
+    apiURL?: string;      // API base URL (defaults to https://api.mosaia.ai)
+    appURL?: string;      // App URL for OAuth flows (defaults to https://mosaia.ai)
+    clientId?: string;    // Required for OAuth flows
+    clientSecret?: string; // Optional: for client credentials flow
+    user?: string;        // Optional: for user-specific operations
+    org?: string;         // Optional: for organization-specific operations
 }
 ```
+
+**Recent Changes:**
+- `baseURL` has been renamed to `apiURL` for clarity
+- `frontendURL` has been renamed to `appURL` for consistency
+- OAuth authorization URLs now use the configured `appURL` instead of hardcoded defaults
 
 ## API Reference
 
@@ -545,19 +551,33 @@ await mosaia.permissions.deleteUserPermission('permission-id');
 
 ## OAuth
 
+The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Exchange) for secure authentication.
+
 ```typescript
-// Initialize OAuth
+// Initialize OAuth (requires clientId in config)
 const oauth = mosaia.oauth({
     redirectUri: 'https://your-app.com/callback',
     scopes: ['read', 'write']
 });
 
-// Get authorization URL
-const authUrl = oauth.getAuthorizationUrl();
+// Get authorization URL and code verifier
+const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
 
-// Exchange code for token
-const token = await oauth.exchangeCodeForToken(code);
+// Redirect user to the authorization URL
+// After user authorizes, you'll receive a code in your callback
+
+// Exchange code for token (requires the code verifier)
+const token = await oauth.exchangeCodeForToken(code, codeVerifier);
+
+// Refresh token when needed
+const newToken = await oauth.refreshToken(token.refresh_token);
 ```
+
+**Important Notes:**
+- `clientId` must be provided in the SDK configuration
+- `appURL` must be provided in the SDK configuration for OAuth authorization URLs
+- The `codeVerifier` must be stored securely and used with the same authorization code
+- PKCE ensures security even for public clients
 
 ## Error Handling
 
@@ -608,6 +628,27 @@ if (app) {
     const bots = await app.bots.get();
 }
 ```
+
+## What's New
+
+### Version 0.0.10
+- 🔧 **Configuration Improvements**: `baseURL` → `apiURL`, `frontendURL` → `appURL`
+- 🔧 **OAuth URL Fix**: Authorization URLs now use configured `appURL` instead of hardcoded defaults
+- 🔧 **Enhanced OAuth Security**: Proper validation for required configuration parameters
+- ✅ **Complete API Coverage**: All Mosaia API endpoints implemented
+- ✅ **Authentication API**: Sign in, refresh tokens, session management
+- ✅ **Users API**: Full user management with filtering and pagination
+- ✅ **Organizations API**: Organization CRUD operations
+- ✅ **Agents API**: AI agent management with chat completion
+- ✅ **Agent Groups API**: Multi-agent collaboration
+- ✅ **Models API**: AI model management
+- ✅ **Clients API**: OAuth client management
+- ✅ **Billing API**: Wallet and meter operations
+- ✅ **Permissions API**: Access policies and permission management
+- ✅ **TypeScript Support**: Full type definitions and IntelliSense
+- ✅ **Comprehensive Test Suite**: 100% test coverage
+- ✅ **OAuth Support**: PKCE flow implementation
+- ✅ **Error Handling**: Structured error responses
 
 ## Contributing
 

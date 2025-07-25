@@ -19,7 +19,7 @@ export default class AppBot {
 
         this.openai = new OpenAI({
             apiKey: apiKey,
-            baseURL: config.baseURL,
+            baseURL: config.apiURL,
         });
     }
 

@@ -9,7 +9,7 @@ export default class APIClient {
     constructor(config: MosiaConfig) {
         this.config = config;
         this.client = axios.create({
-            baseURL: config.baseURL,
+            baseURL: config.apiURL,
             headers: {
                 'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey}`,
                 'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,

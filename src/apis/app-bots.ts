@@ -14,14 +14,14 @@ export default class AppBots {
 
     constructor(apps: Apps, app?: AppInterface) {
         const { config } = apps;
-        let baseURL = config.baseURL;
+        let apiURL = config.apiURL;
 
-        if (app && app.id) baseURL += `/${app.id}`;
-        baseURL += DEFAULT_CONFIG.ENDPOINTS.BOTS;
+        if (app && app.id) apiURL += `/${app.id}`;
+        apiURL += DEFAULT_CONFIG.ENDPOINTS.BOTS;
 
         this.config = {
             ...config,
-            baseURL,
+            apiURL,
         };
         this.client = new APIClient(this.config);
     }

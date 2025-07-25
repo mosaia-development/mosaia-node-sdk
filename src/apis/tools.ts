@@ -11,18 +11,18 @@ export default class Tools {
     public config: MosiaConfig;
 
     constructor(config: MosiaConfig) {
-        let baseURL;
+        let apiURL;
         if (config.user) {
-            baseURL = `${config.baseURL}/user/${config.user}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
+            apiURL = `${config.apiURL}/user/${config.user}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
         } else if(config.org) {
-            baseURL = `${config.baseURL}/org/${config.org}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
+            apiURL = `${config.apiURL}/org/${config.org}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
         } else {
             throw new Error('User or org id is required to call tools endpoint');
         }
 
         this.config = {
             ...config,
-            baseURL,
+            apiURL,
         };
         this.client = new APIClient(this.config);
     }

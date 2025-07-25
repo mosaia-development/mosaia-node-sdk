@@ -11,11 +11,11 @@ export default class Apps {
     public config: MosiaConfig;
 
     constructor(config: MosiaConfig) {
-        const baseURL = `${config.baseURL}${DEFAULT_CONFIG.ENDPOINTS.APPS}`;
+        const apiURL = `${config.apiURL}${DEFAULT_CONFIG.ENDPOINTS.APPS}`;
 
         this.config = {
             ...config,
-            baseURL,
+            apiURL,
         };
         this.client = new APIClient(this.config);
     }

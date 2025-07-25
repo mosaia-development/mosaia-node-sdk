@@ -10,8 +10,8 @@ export const DEFAULT_CONFIG = {
         CONTENT_TYPE: 'application/json',
     },
 
-    // Frontend Configuration
-    FRONTEND: {
+    // App Configuration
+    APP: {
         URL: 'https://mosaia.ai',
     },
 

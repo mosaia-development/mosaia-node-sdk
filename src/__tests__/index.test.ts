@@ -18,9 +18,9 @@ describe('Mosaia SDK', () => {
   let mosaia: Mosaia;
   const mockConfig: MosiaConfig = {
     apiKey: 'test-api-key',
-    baseURL: 'https://api.test.com',
+    apiURL: 'https://api.test.com',
     version: '1',
-    frontendURL: 'https://app.test.com',
+    appURL: 'https://app.test.com',
     clientId: 'test-client-id',
     clientSecret: 'test-client-secret',
     user: 'test-user-id',
@@ -46,8 +46,8 @@ describe('Mosaia SDK', () => {
     it('should merge configuration correctly', () => {
       const config = mosaia['config'];
       expect(config.apiKey).toBe('test-api-key');
-      expect(config.baseURL).toBe('https://api.test.com/v1');
-      expect(config.frontendURL).toBe('https://app.test.com');
+      expect(config.apiURL).toBe('https://api.test.com/v1');
+      expect(config.appURL).toBe('https://app.test.com');
       expect(config.user).toBe('test-user-id');
       expect(config.org).toBe('test-org-id');
     });

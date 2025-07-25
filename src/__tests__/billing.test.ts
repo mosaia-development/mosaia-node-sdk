@@ -8,7 +8,7 @@ describe('Billing API', () => {
   let billing: Billing;
   const mockConfig: MosiaConfig = {
     apiKey: 'test-api-key',
-    baseURL: 'https://api.test.com/v1',
+    apiURL: 'https://api.test.com/v1',
     version: '1'
   };
 
