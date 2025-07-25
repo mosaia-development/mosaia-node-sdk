@@ -1,99 +1,256 @@
 "use strict";
 
+/**
+ * Configuration interface for the Mosaia SDK
+ * 
+ * This interface defines all configuration options available when initializing
+ * the Mosaia SDK client. It includes authentication settings, API endpoints,
+ * and optional context parameters.
+ * 
+ * @example
+ * ```typescript
+ * const config: MosiaConfig = {
+ *   apiKey: 'your-api-key',
+ *   apiURL: 'https://api.mosaia.ai',
+ *   appURL: 'https://mosaia.ai',
+ *   clientId: 'your-client-id',
+ *   user: 'user-id',
+ *   org: 'org-id'
+ * };
+ * ```
+ */
 export interface MosiaConfig {
+    /** API key for authentication (optional if using OAuth) */
     apiKey?: string;
+    /** API version to use (defaults to '1') */
     version?: string;
+    /** Base URL for API requests (defaults to https://api.mosaia.ai) */
     apiURL?: string;
+    /** App URL for OAuth flows (defaults to https://mosaia.ai) */
     appURL?: string;
+    /** Client ID for OAuth flows (required for OAuth) */
     clientId?: string;
+    /** Client secret for client credentials flow (optional) */
     clientSecret?: string;
+    /** User ID for user-scoped operations (optional) */
     user?: string;
+    /** Organization ID for org-scoped operations (optional) */
     org?: string;
 }
 
+/**
+ * Standard API response wrapper
+ * 
+ * All API responses are wrapped in this structure to provide consistent
+ * response handling across the SDK.
+ * 
+ * @template T - The type of data contained in the response
+ */
 export interface APIResponse<T> {
+    /** The actual response data */
     data: T;
+    /** HTTP status code of the response */
     status: number;
+    /** Optional message from the API */
     message?: string;
 }
 
+/**
+ * Standard error response structure
+ * 
+ * All API errors follow this structure for consistent error handling.
+ */
 export interface ErrorResponse {
+    /** Human-readable error message */
     message: string;
+    /** Error code for programmatic handling */
     code: string;
+    /** HTTP status code */
     status: number;
 }
 
+/**
+ * Pagination interface for list responses
+ * 
+ * Used by API endpoints that return paginated lists of resources.
+ */
 export interface PagingInterface {
+    /** Number of items to skip (for offset-based pagination) */
     offset?: number;
+    /** Maximum number of items to return */
     limit?: number;
+    /** Total number of items available */
     total?: number;
+    /** Current page number (for page-based pagination) */
     page?: number;
+    /** Total number of pages available */
     total_pages?: number;
 }
 
-// Base interfaces
+/**
+ * Base entity interface for all platform resources
+ * 
+ * All entities in the Mosaia platform extend this interface to provide
+ * consistent base properties across all resource types.
+ */
 export interface BaseEntity {
+    /** Unique identifier for the entity */
     id?: string;
+    /** Whether the entity is currently active */
     active?: boolean;
+    /** ISO timestamp when the entity was created */
     created_at?: string;
+    /** ISO timestamp when the entity was last updated */
     updated_at?: string;
 }
 
+/**
+ * Record history tracking interface
+ * 
+ * Used to track creation and update timestamps for entities that
+ * maintain historical records.
+ */
 export interface RecordHistory {
+    /** ISO timestamp when the record was last updated */
     updated_at: string;
+    /** ISO timestamp when the record was created */
     created_at: string;
 }
 
-// User interfaces
+/**
+ * User entity interface
+ * 
+ * Represents a user account in the Mosaia platform. Users can be associated
+ * with organizations and have various profile information.
+ * 
+ * @example
+ * ```typescript
+ * const user: UserInterface = {
+ *   id: 'user-123',
+ *   email: 'john.doe@example.com',
+ *   first_name: 'John',
+ *   last_name: 'Doe',
+ *   org: 'org-456',
+ *   active: true
+ * };
+ * ```
+ */
 export interface UserInterface extends BaseEntity {
+    /** Unique identifier for the user */
     id?: string;
+    /** User's email address (required) */
     email: string;
+    /** User's first name */
     first_name?: string;
+    /** User's last name */
     last_name?: string;
+    /** User's username/handle */
     username?: string;
+    /** URL to user's profile image */
     image?: string;
+    /** User's public blockchain address */
     public_address?: string;
+    /** Organization ID the user belongs to */
     org?: string;
+    /** Reference to another user (for delegation) */
     user?: string;
+    /** External system identifier */
     external_id?: string;
+    /** Extended properties for custom integrations */
     extensors?: {
         [key: string]: string;
     }
 }
 
-// Organization interfaces
+/**
+ * Organization entity interface
+ * 
+ * Represents an organization in the Mosaia platform. Organizations can contain
+ * multiple users, applications, and other resources.
+ * 
+ * @example
+ * ```typescript
+ * const org: OrganizationInterface = {
+ *   id: 'org-123',
+ *   name: 'Acme Corp',
+ *   short_description: 'Leading technology company',
+ *   long_description: 'Acme Corp is a leading technology company...',
+ *   active: true
+ * };
+ * ```
+ */
 export interface OrganizationInterface extends BaseEntity {
+    /** Unique identifier for the organization */
     id?: string;
+    /** Organization name (required) */
     name: string;
+    /** Brief description of the organization */
     short_description?: string;
+    /** Detailed description of the organization */
     long_description?: string;
+    /** URL to organization's logo/image */
     image?: string;
+    /** External system identifier */
     external_id?: string;
+    /** Extended properties for custom integrations */
     extensors?: {
         [key: string]: string;
     }
 }
 
-// App interfaces
+/**
+ * Application entity interface
+ * 
+ * Represents an application in the Mosaia platform. Applications can have
+ * bots, tools, and other integrations associated with them.
+ * 
+ * @example
+ * ```typescript
+ * const app: AppInterface = {
+ *   id: 'app-123',
+ *   name: 'My AI Assistant',
+ *   org: 'org-456',
+ *   short_description: 'AI-powered customer support assistant',
+ *   external_app_url: 'https://myapp.com',
+ *   tags: ['ai', 'support', 'automation'],
+ *   active: true
+ * };
+ * ```
+ */
 export interface AppInterface extends BaseEntity {
+    /** Unique identifier for the application */
     id?: string;
+    /** Application name (required) */
     name: string;
+    /** Organization ID the app belongs to */
     org?: string;
+    /** User ID the app belongs to (if not org-scoped) */
     user?: string;
+    /** Brief description of the application (required) */
     short_description: string;
+    /** Detailed description of the application */
     long_description?: string;
+    /** URL to application's icon/image */
     image?: string;
+    /** External application URL for integrations */
     external_app_url?: string;
-    external_api_key?: string
+    /** API key for external integrations */
+    external_api_key?: string;
+    /** Custom headers for external API calls */
     external_headers?: {
         [key: string]: string;
     }
+    /** Whether the application is currently active */
     active?: boolean;
+    /** Tags for categorizing the application */
     tags?: string[];
+    /** Keywords for search functionality */
     keywords?: string[];
+    /** Extended properties for custom integrations */
     extensors?: {
         [key: string]: string;
     }
+    /** External system identifier */
     external_id?: string;
 }
 
@@ -776,26 +933,91 @@ export type GetApiRequestLogPayload = {
     data: ApiRequestLogInterface;
 }
 
+/**
+ * OAuth configuration interface
+ * 
+ * Configuration object for OAuth2 Authorization Code flow with PKCE.
+ * Used when initializing OAuth instances for secure authentication.
+ * 
+ * @example
+ * ```typescript
+ * const oauthConfig: OAuthConfig = {
+ *   clientId: 'your-client-id',
+ *   redirectUri: 'https://your-app.com/callback',
+ *   appURL: 'https://mosaia.ai',
+ *   scopes: ['read', 'write'],
+ *   state: 'random-state-string'
+ * };
+ * ```
+ */
 export interface OAuthConfig {
+    /** OAuth client ID (required) */
     clientId: string;
+    /** Redirect URI for the OAuth flow (required) */
     redirectUri: string;
+    /** App URL for authorization endpoints (required) */
     appURL: string;
+    /** Array of scopes to request (optional) */
     scopes?: string[];
+    /** State parameter for CSRF protection (optional) */
     state?: string;
 }
 
+/**
+ * OAuth token response interface
+ * 
+ * Response structure returned when exchanging authorization codes for tokens
+ * or refreshing access tokens.
+ * 
+ * @example
+ * ```typescript
+ * const tokenResponse: OAuthTokenResponse = {
+ *   access_token: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...',
+ *   refresh_token: 'refresh-token-here',
+ *   token_type: 'Bearer',
+ *   expires_in: 3600,
+ *   sub: 'user-123',
+ *   iat: '1640995200',
+ *   exp: '1640998800'
+ * };
+ * ```
+ */
 export interface OAuthTokenResponse {
+    /** JWT access token for API authentication */
     access_token: string;
+    /** Refresh token for obtaining new access tokens */
     refresh_token?: string;
+    /** Token type (typically 'Bearer') */
     token_type: string;
+    /** Token expiration time in seconds */
     expires_in: number;
+    /** Subject identifier (user ID) */
     sub: string;
+    /** Token issued at timestamp */
     iat: string;
+    /** Token expiration timestamp */
     exp: string;
 }
 
+/**
+ * OAuth error response interface
+ * 
+ * Error response structure returned when OAuth operations fail.
+ * 
+ * @example
+ * ```typescript
+ * const errorResponse: OAuthErrorResponse = {
+ *   error: 'invalid_grant',
+ *   error_description: 'The authorization code has expired',
+ *   error_uri: 'https://docs.mosaia.ai/oauth/errors'
+ * };
+ * ```
+ */
 export interface OAuthErrorResponse {
+    /** OAuth error code */
     error: string;
+    /** Human-readable error description */
     error_description?: string;
+    /** URL to error documentation */
     error_uri?: string;
 }

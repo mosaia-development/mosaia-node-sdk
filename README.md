@@ -56,12 +56,12 @@ const {
 } = process.env;
 // Apply API configs 
 const mosaia = new Mosaia({
-    apiKey: MOSAIA_API_KEY as string,
-    version: MOSAIA_CORE_VERSION as string,
-    apiURL: MOSAIA_CORE_URL as string,
-    appURL: MOSAIA_FRONTEND_URL as string,
-    clientId: MOSAIA_CLIENT_ID as string,
-    clientSecret: MOSAIA_CLIENT_SECRET as string
+    apiKey: MOSAIA_API_KEY as string, // Optional (Only needed if not using client authentication)
+    clientId: MOSAIA_CLIENT_ID as string, // Optional (Only needed if not using apiKey)
+    clientSecret: MOSAIA_CLIENT_SECRET as string, // Optional (Only needed if not using apiKey)
+    version: MOSAIA_CORE_VERSION as string, // Optional (Defaults to 1)
+    apiURL: MOSAIA_CORE_URL as string, // Optional (Defaults to https://api.mosaia.ai)
+    appURL: MOSAIA_FRONTEND_URL as string // Optional (Defaults to https://mosaia.ai)
 });
 ```
 
@@ -71,10 +71,9 @@ const mosaia = new Mosaia({
 import Mosaia from '@mosaia/mosaia-node-sdk';
 
 const mosaia = new Mosaia({
-    apiKey: 'your-api-key',
-    apiURL: 'https://api.mosaia.com',
-    appURL: 'https://mosaia.ai',
-    version: '1'
+    apiKey: 'your-api-key', // Optional (Only needed if not using client authentication)
+    clientId: 'your-mosaia-client-id', // Optional (Only needed if not using apiKey)
+    clientSecret: 'your-mosaia-client-secret' // Optional (Only needed if not using apiKey)
 });
 
 // Get all apps
@@ -94,14 +93,14 @@ const orgs = await mosaia.organizations.getAll();
 
 ```typescript
 interface MosiaConfig {
-    apiKey?: string;
-    version?: string;
-    apiURL?: string;      // API base URL (defaults to https://api.mosaia.ai)
-    appURL?: string;      // App URL for OAuth flows (defaults to https://mosaia.ai)
-    clientId?: string;    // Required for OAuth flows
-    clientSecret?: string; // Optional: for client credentials flow
-    user?: string;        // Optional: for user-specific operations
-    org?: string;         // Optional: for organization-specific operations
+    apiKey?: string;        // Optional: for apiKey
+    version?: string;       // defaults to 1
+    apiURL?: string;        // API base URL (defaults to https://api.mosaia.ai)
+    appURL?: string;        // App URL for OAuth flows (defaults to https://mosaia.ai)
+    clientId?: string;      // Required for OAuth flows
+    clientSecret?: string;  // Optional: for client credentials flow
+    user?: string;          // Optional: for user-specific operations
+    org?: string;           // Optional: for organization-specific operations
 }
 ```
 
