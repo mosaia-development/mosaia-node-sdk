@@ -142,7 +142,44 @@ const session = await mosaia.auth.getSession();
 const self = await mosaia.auth.getSelf();
 ```
 
+### OAuth
 
+The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Exchange) for secure authentication.
+
+```typescript
+// Initialize OAuth (requires clientId in config)
+const oauth = mosaia.oauth({
+    redirectUri: 'https://your-app.com/callback',
+    scopes: ['read', 'write']
+});
+
+// Get authorization URL and code verifier
+const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
+
+// Redirect user to the authorization URL
+// After user authorizes, you'll receive a code in your callback
+
+// Exchange code for token (requires the code verifier)
+const token = await oauth.exchangeCodeForToken(code, codeVerifier);
+
+// Assign the access token to the SDK for subsequent API calls
+mosaia.apiKey = token.access_token;
+
+// Now you can make authenticated API calls
+const users = await mosaia.users.getAll();
+
+// Refresh token when needed
+const newToken = await oauth.refreshToken(token.refresh_token);
+
+// Update the SDK with the new access token
+mosaia.apiKey = newToken.access_token;
+```
+
+**Important Notes:**
+- `clientId` must be provided in the SDK configuration
+- `appURL` must be provided in the SDK configuration for OAuth authorization URLs
+- The `codeVerifier` must be stored securely and used with the same authorization code
+- PKCE ensures security even for public clients
 
 ### Users
 
@@ -558,45 +595,6 @@ const updatedUserPermission = await mosaia.permissions.updateUserPermission('per
 
 await mosaia.permissions.deleteUserPermission('permission-id');
 ```
-
-## OAuth
-
-The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Exchange) for secure authentication.
-
-```typescript
-// Initialize OAuth (requires clientId in config)
-const oauth = mosaia.oauth({
-    redirectUri: 'https://your-app.com/callback',
-    scopes: ['read', 'write']
-});
-
-// Get authorization URL and code verifier
-const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
-
-// Redirect user to the authorization URL
-// After user authorizes, you'll receive a code in your callback
-
-// Exchange code for token (requires the code verifier)
-const token = await oauth.exchangeCodeForToken(code, codeVerifier);
-
-// Assign the access token to the SDK for subsequent API calls
-mosaia.apiKey = token.access_token;
-
-// Now you can make authenticated API calls
-const users = await mosaia.users.getAll();
-
-// Refresh token when needed
-const newToken = await oauth.refreshToken(token.refresh_token);
-
-// Update the SDK with the new access token
-mosaia.apiKey = newToken.access_token;
-```
-
-**Important Notes:**
-- `clientId` must be provided in the SDK configuration
-- `appURL` must be provided in the SDK configuration for OAuth authorization URLs
-- The `codeVerifier` must be stored securely and used with the same authorization code
-- PKCE ensures security even for public clients
 
 ## Error Handling
 
