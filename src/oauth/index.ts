@@ -104,7 +104,7 @@ export class OAuth {
             response_type: 'code',
             code_challenge: code_challenge,
             code_challenge_method: 'S256',
-            ...(this.config.scopes && { scope: this.config.scopes.join(' ') }),
+            ...(this.config.scopes && { scope: this.config.scopes.join(',') }),
             ...(this.config.state && { state: this.config.state })
         });
 
