@@ -46,7 +46,7 @@ describe('OAuth API', () => {
       expect(result.url).toContain('https://app.test.com/oauth');
       expect(result.url).toContain('client_id=test-client-id');
       expect(result.url).toContain('redirect_uri=https%3A%2F%2Fmyapp.com%2Fcallback');
-      expect(result.url).toContain('scope=read+write');
+      expect(result.url).toContain('scope=read%2Cwrite');
       expect(result.url).toContain('response_type=code');
       expect(result.url).toContain('code_challenge=');
       expect(result.url).toContain('code_challenge_method=S256');
@@ -86,7 +86,26 @@ describe('OAuth API', () => {
 
       const result = multiScopeOauth.getAuthorizationUrlAndCodeVerifier();
 
-      expect(result.url).toContain('scope=read+write+admin');
+      expect(result.url).toContain('scope=read%2Cwrite%2Cadmin');
+    });
+
+    it('should handle real-world scope examples', () => {
+      const realWorldConfig: OAuthConfig = {
+        ...mockConfig,
+        scopes: ['agent:read', 'agent:create', 'agent:update', 'agent:delete', 'completions:*']
+      };
+      const realWorldOauth = new OAuth(realWorldConfig);
+
+      const result = realWorldOauth.getAuthorizationUrlAndCodeVerifier();
+
+      // Verify the URL contains the correctly formatted scopes
+      // The scopes should be comma-separated and URL encoded
+      expect(result.url).toContain('scope=agent%3Aread%2Cagent%3Acreate%2Cagent%3Aupdate%2Cagent%3Adelete%2Ccompletions%3A*');
+      
+      // Verify the URL structure is correct
+      expect(result.url).toContain('https://app.test.com/oauth?');
+      expect(result.url).toContain('client_id=test-client-id');
+      expect(result.url).toContain('response_type=code');
     });
   });
 
