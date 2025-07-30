@@ -180,7 +180,7 @@ mosaia.config = authConfig;
 await mosaia.auth.signOut();
 
 // Get session info
-const self = await mosaia.getSelf();
+const self = await mosaia.self();
 ```
 
 ### Runtime Configuration Updates
