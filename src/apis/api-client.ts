@@ -1,5 +1,5 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { MosiaConfig, APIResponse, ErrorResponse } from '../types';
+import { MosaiaConfig, APIResponse, ErrorResponse } from '../types';
 import { DEFAULT_CONFIG, ConfigurationManager } from '../config';
 
 /**
@@ -98,7 +98,7 @@ export default class APIClient {
      * @returns The current configuration object
      * @private
      */
-    private get config(): MosiaConfig {
+    private get config(): MosaiaConfig {
         return this.configManager.getConfig();
     }
 
@@ -144,7 +144,7 @@ export default class APIClient {
      * const filteredUsers = await client.GET<UserInterface[]>('/user', { limit: 10, offset: 0 });
      * ```
      */
-    async GET<T>(path: string, params?: object): Promise<APIResponse<T>> {
+    async GET<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
         try {
             // Update client config in case it changed
             this.updateClientConfig();
@@ -173,7 +173,7 @@ export default class APIClient {
      * });
      * ```
      */
-    async POST<T>(path: string, data?: object): Promise<APIResponse<T>> {
+    async POST<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
         try {
             // Update client config in case it changed
             this.updateClientConfig();
@@ -200,7 +200,7 @@ export default class APIClient {
      * });
      * ```
      */
-    async PUT<T>(path: string, data?: object): Promise<APIResponse<T>> {
+    async PUT<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
         try {
             // Update client config in case it changed
             this.updateClientConfig();
@@ -226,12 +226,28 @@ export default class APIClient {
      * await client.DELETE<void>('/org/456', { force: true });
      * ```
      */
-    async DELETE<T>(path: string, params?: object): Promise<APIResponse<T>> {
+    async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
         try {
             // Update client config in case it changed
             this.updateClientConfig();
             
             const res = await this.client.delete(path, { params });
+
+            // Handle 204 No Content responses
+            if (res.status === 204) {
+                return Promise.resolve({
+                    meta: {
+                        status: 204,
+                        message: 'Success'
+                    },
+                    data: undefined as T,
+                    error: {
+                        message: '',
+                        code: '',
+                        status: 204
+                    }
+                });
+            }
 
             return Promise.resolve(res.data);
         } catch (error) { 

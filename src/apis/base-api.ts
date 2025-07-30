@@ -1,5 +1,5 @@
 import {
-    MosiaConfig,
+    MosaiaConfig,
     QueryParams,
     APIResponse,
     ErrorResponse
@@ -49,7 +49,7 @@ export abstract class BaseAPI<
     /**
      * Get the current configuration
      */
-    protected get config(): MosiaConfig {
+    protected get config(): MosaiaConfig {
         return this.configManager.getConfig();
     }
 
@@ -96,6 +96,8 @@ export abstract class BaseAPI<
             throw new Error('Unknown error occurred');
         }
     }
+
+
 
     /**
      * Create a new entity

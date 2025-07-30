@@ -1,209 +1,87 @@
-import { DEFAULT_CONFIG } from '../config';
-import { Tool } from '../models';
 import {
-    MosiaConfig,
-    ToolInterface
+    ToolInterface,
+    GetToolsPayload,
+    GetToolPayload,
 } from '../types';
-import APIClient from './api-client';
-import { ConfigurationManager } from '../config';
+import { Tool } from '../models';
+import { BaseAPI } from './base-api';
 
 /**
- * Tools API client for managing tools and integrations
+ * Tools API client for the Mosaia SDK
  * 
- * This class provides methods for creating, reading, updating, and deleting
- * tools on the Mosaia platform. Tools are integrations that can be used by
- * agents and applications. Requires either a user or organization context.
+ * Provides CRUD operations for managing tools in the Mosaia platform.
+ * Tools are external integrations and utilities that agents can use to
+ * perform specific tasks, such as API calls, data processing, or
+ * external service integrations.
+ * 
+ * This class inherits from BaseAPI and provides the following functionality:
+ * - Retrieve tools with filtering and pagination
+ * - Create new tool integrations
+ * - Update existing tool configurations
+ * - Delete tools
+ * - Manage tool schemas and configurations
+ * - Handle tool-specific environment variables and requirements
  * 
  * @example
  * ```typescript
- * const tools = new Tools();
+ * import { Mosaia } from 'mosaia-node-sdk';
+ * 
+ * const mosaia = new Mosaia({ apiKey: 'your-api-key' });
+ * const tools = mosaia.tools;
  * 
  * // Get all tools
  * const allTools = await tools.get();
  * 
- * // Get specific tool
- * const tool = await tools.get({ id: 'tool-id' });
+ * // Get a specific tool
+ * const tool = await tools.get({}, 'tool-id');
  * 
- * // Get tool by name
- * const tool = await tools.getByName('my-tool');
- * 
- * // Create new tool
+ * // Create a new tool
  * const newTool = await tools.create({
- *   name: 'My Tool',
- *   short_description: 'Description',
- *   tool_schema: '{}'
+ *   name: 'Weather API Tool',
+ *   friendly_name: 'Weather Information',
+ *   short_description: 'Get current weather information for any location',
+ *   tool_schema: JSON.stringify({
+ *     type: 'object',
+ *     properties: {
+ *       location: { type: 'string' }
+ *     }
+ *   }),
+ *   required_environment_variables: ['WEATHER_API_KEY'],
+ *   source_url: 'https://api.weatherapi.com'
  * });
  * ```
+ * 
+ * @extends BaseAPI<ToolInterface, Tool, GetToolsPayload, GetToolPayload>
  */
-export default class Tools {
-    private client: APIClient;
-    private configManager: ConfigurationManager;
-
+export default class Tools extends BaseAPI<
+    ToolInterface,
+    Tool,
+    GetToolsPayload,
+    GetToolPayload
+> {
     /**
      * Creates a new Tools API client instance
      * 
-     * Uses ConfigurationManager for configuration settings.
-     */
-    constructor() {
-        this.configManager = ConfigurationManager.getInstance();
-        this.client = new APIClient();
-    }
-
-    /**
-     * Get the current configuration
-     */
-    private get config(): MosiaConfig {
-        return this.configManager.getConfig();
-    }
-
-    /**
-     * Get tools with optional filtering
+     * Initializes the tools client with the appropriate endpoint URI
+     * and model class for handling tool operations.
      * 
-     * Retrieves tools from the platform. If a tool parameter with an ID
-     * is provided, returns a single tool. Otherwise, returns all tools.
+     * The constructor sets up the API endpoint to `/tool` (or `${uri}/tool` if a base URI is provided),
+     * which corresponds to the Mosaia API's tools endpoint.
      * 
-     * @param tool - Optional tool object with ID to get a specific tool
-     * @returns Promise that resolves to an array of tools, a single tool, or null
+     * @param uri - Optional base URI path. If provided, the endpoint will be `${uri}/tool`.
+     *              If not provided, defaults to `/tool`.
      * 
      * @example
      * ```typescript
-     * // Get all tools
-     * const allTools = await tools.get();
+     * // Create with default endpoint (/tool)
+     * const tools = new Tools();
      * 
-     * // Get specific tool by ID
-     * const tool = await tools.get({ id: 'tool-123' });
-     * 
-     * // Get specific tool by full tool object
-     * const toolData = { id: 'tool-123', name: 'My Tool' };
-     * const tool = await tools.get(toolData);
+     * // Create with custom base URI
+     * const tools = new Tools('/api/v1');
+     * // This will use endpoint: /api/v1/tool
      * ```
      */
-    async get(tool?: ToolInterface): Promise<Tool[] | Tool | null> {
-        let uri = '';
-
-        if (tool && tool.id) uri += `/${tool.id}`;
-        const { data } = await this.client.GET(uri);
-
-        if (Array.isArray(data)) {
-            return data.map(tool => new Tool(tool));
-        }
-
-        if (data) {
-            return new Tool(data as ToolInterface);
-        }
-        return null;
-    }
-
-    /**
-     * Get a tool by its name
-     * 
-     * Retrieves a specific tool from the platform by searching for its name.
-     * 
-     * @param name - The name of the tool to find
-     * @returns Promise that resolves to the tool if found, or null
-     * 
-     * @example
-     * ```typescript
-     * const tool = await tools.getByName('web-search-tool');
-     * if (tool) {
-     *   console.log('Found tool:', tool.name);
-     * } else {
-     *   console.log('Tool not found');
-     * }
-     * ```
-     */
-    async getByName(name: string): Promise<Tool | null> {
-        const uri = `?name=${name}`;
-        const { data } = await this.client.GET(uri);
-
-        if (Array.isArray(data)) {
-            if(data.length) {
-                return (data.map(tool => new Tool(tool)))[0];
-            } else {
-                return null;
-            }
-        }
-
-        if (data) {
-            return new Tool(data as ToolInterface);
-        }
-        return null;
-    }
-
-    /**
-     * Create a new tool
-     * 
-     * Creates a new tool on the platform with the provided data.
-     * 
-     * @param tool - Tool data for the new tool (ID will be generated)
-     * @returns Promise that resolves to the created tool
-     * 
-     * @example
-     * ```typescript
-     * const newTool = await tools.create({
-     *   name: 'Web Search Tool',
-     *   friendly_name: 'Web Search',
-     *   short_description: 'Search the web for information',
-     *   tool_schema: JSON.stringify({
-     *     type: 'object',
-     *     properties: {
-     *       query: { type: 'string', description: 'Search query' }
-     *     }
-     *   }),
-     *   public: true
-     * });
-     * 
-     * console.log('Created tool ID:', newTool.id);
-     * ```
-     */
-    async create(tool: ToolInterface): Promise<Tool> {
-        const { data } = await this.client.POST('', tool);
-
-        return new Tool(data as ToolInterface);
-    }
-
-    /**
-     * Update an existing tool
-     * 
-     * Updates a tool with the provided data. The tool parameter must
-     * include an ID to identify which tool to update.
-     * 
-     * @param tool - Tool data to update (must include ID)
-     * @returns Promise that resolves to the updated tool
-     * 
-     * @example
-     * ```typescript
-     * const updatedTool = await tools.update({
-     *   id: 'tool-123',
-     *   name: 'Updated Tool Name',
-     *   short_description: 'Updated description'
-     * });
-     * ```
-     */
-    async update(tool: ToolInterface): Promise<Tool> {
-        const { data } = await this.client.PUT(`/${tool.id}`, tool);
-
-        return new Tool(data as ToolInterface);
-    }
-
-    /**
-     * Delete a tool
-     * 
-     * Removes a tool from the platform. The tool parameter must
-     * include an ID to identify which tool to delete.
-     * 
-     * @param tool - Tool to delete (must include ID)
-     * @returns Promise that resolves to null when deletion is successful
-     * 
-     * @example
-     * ```typescript
-     * await tools.delete({ id: 'tool-123' });
-     * console.log('Tool deleted successfully');
-     * ```
-     */
-    async delete(tool: ToolInterface): Promise<null> {
-        const response = await this.client.DELETE<null>(`/${tool.id}`);
-
-        return response.data;
+    constructor(uri = '') {
+        super(`${uri}/tool`, Tool);
     }
 }

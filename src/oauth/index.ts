@@ -1,6 +1,9 @@
 import crypto from 'crypto';
-import { OAuthConfig, OAuthTokenResponse, OAuthErrorResponse } from '../types';
-import { DEFAULT_CONFIG } from '../config';
+import {
+    OAuthConfig,
+    OAuthErrorResponse,
+    MosaiaConfig
+} from '../types';
 
 /**
  * OAuth client for handling OAuth2 Authorization Code flow with PKCE
@@ -132,13 +135,14 @@ export class OAuth {
      * const codeVerifier = sessionStorage.getItem('codeVerifier');
      * 
      * if (code && codeVerifier) {
-     *   const token = await oauth.exchangeCodeForToken(code, codeVerifier);
-     *   console.log('Access token:', token.access_token);
-     *   console.log('Refresh token:', token.refresh_token);
+     *   const mosaiaConfig = await oauth.exchangeCodeForToken(code, codeVerifier);
+     *   mosaia.config = mosaiaConfig;
+     *   console.log('Access token:', mosaiaConfig.apiKey);
+     *   console.log('Refresh token:', mosaiaConfig.refreshToken);
      * }
      * ```
      */
-    async exchangeCodeForToken(code: string, codeVerifier: string): Promise<OAuthTokenResponse> {
+    async authenticateWithCodeAndVerifier(code: string, codeVerifier: string): Promise<MosaiaConfig> {
         const params = new URLSearchParams({
             client_id: this.config.clientId,
             redirect_uri: this.config.redirectUri,
@@ -162,59 +166,16 @@ export class OAuth {
                 throw data as OAuthErrorResponse;
             }
 
-            return data as OAuthTokenResponse;
-        } catch (error) {
-            throw error as OAuthErrorResponse;
-        }
-    }
-
-    /**
-     * Refreshes an access token using a refresh token
-     * 
-     * This method exchanges a refresh token for a new access token when the current
-     * access token expires. This allows for long-term authentication without requiring
-     * user re-authentication.
-     * 
-     * @param refreshToken - The refresh token received from the initial token exchange
-     * @returns Promise that resolves to a new OAuth token response
-     * @throws {OAuthErrorResponse} When the refresh fails (invalid refresh token, expired, etc.)
-     * 
-     * @example
-     * ```typescript
-     * // When access token expires, use refresh token to get new tokens
-     * try {
-     *   const newToken = await oauth.refreshToken(refreshToken);
-     *   console.log('New access token:', newToken.access_token);
-     *   console.log('New refresh token:', newToken.refresh_token);
-     * } catch (error) {
-     *   // Refresh token expired, user needs to re-authenticate
-     *   console.error('Token refresh failed:', error);
-     * }
-     * ```
-     */
-    async refreshToken(refreshToken: string): Promise<OAuthTokenResponse> {
-        const params = new URLSearchParams({
-            client_id: this.config.clientId,
-            refresh_token: refreshToken,
-            grant_type: 'refresh_token'
-        });
-
-        try {
-            const response = await fetch(`${this.config.apiURL}/oauth/token`, {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/x-www-form-urlencoded',
-                },
-                body: params.toString()
+            return Promise.resolve({
+                ...this.config,
+                apiKey: data.access_token,
+                refreshToken: data.refresh_token,
+                expiresIn: data.expires_in,
+                sub: data.sub,
+                iat: data.iat,
+                exp: data.exp,
+                authType: 'oauth' as const
             });
-
-            const data = await response.json();
-
-            if (!response.ok) {
-                throw data as OAuthErrorResponse;
-            }
-
-            return data as OAuthTokenResponse;
         } catch (error) {
             throw error as OAuthErrorResponse;
         }

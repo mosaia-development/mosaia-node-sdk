@@ -1,4 +1,4 @@
-import { MosiaConfig } from './types';
+import { MosaiaConfig } from './types';
 
 /**
  * Global configuration file for the Mosaia SDK
@@ -66,7 +66,7 @@ export const DEFAULT_CONFIG = {
  */
 export class ConfigurationManager {
     private static instance: ConfigurationManager;
-    private config: MosiaConfig | null = null;
+    private config: MosaiaConfig | null = null;
     private readonly defaultConfig = DEFAULT_CONFIG;
 
     private constructor() {}
@@ -86,7 +86,7 @@ export class ConfigurationManager {
      * 
      * @param userConfig - User-provided configuration
      */
-    public initialize(userConfig: Partial<MosiaConfig>): void {
+    public initialize(userConfig: Partial<MosaiaConfig>): void {
         const apiURL = userConfig.apiURL || this.defaultConfig.API.BASE_URL;
         const version = userConfig.version || this.defaultConfig.API.VERSION;
         const appURL = userConfig.appURL || this.defaultConfig.APP.URL;
@@ -96,7 +96,7 @@ export class ConfigurationManager {
             apiURL,
             version,
             appURL
-        } as MosiaConfig;
+        } as MosaiaConfig;
     }
 
     /**
@@ -105,7 +105,7 @@ export class ConfigurationManager {
      * @returns The current configuration object
      * @throws Error if configuration hasn't been initialized
      */
-    public getConfig(): MosiaConfig {
+    public getConfig(): MosaiaConfig {
         if (!this.config) {
             throw new Error('Configuration not initialized. Call initialize() first.');
         }
@@ -117,7 +117,7 @@ export class ConfigurationManager {
      * 
      * @returns A frozen copy of the configuration
      */
-    public getReadOnlyConfig(): Readonly<MosiaConfig> {
+    public getReadOnlyConfig(): Readonly<MosaiaConfig> {
         return Object.freeze({ ...this.getConfig() });
     }
 
@@ -127,7 +127,7 @@ export class ConfigurationManager {
      * @param key - The configuration key to update
      * @param value - The new value
      */
-    public updateConfig<K extends keyof MosiaConfig>(key: K, value: MosiaConfig[K]): void {
+    public updateConfig<K extends keyof MosaiaConfig>(key: K, value: MosaiaConfig[K]): void {
         if (!this.config) {
             throw new Error('Configuration not initialized. Call initialize() first.');
         }

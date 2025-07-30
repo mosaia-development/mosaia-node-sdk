@@ -7,41 +7,55 @@ import { Agent } from '../models';
 import { BaseAPI } from './base-api';
 
 /**
- * Agents API client for managing AI agents
+ * Agents API client for the Mosaia SDK
  * 
- * This class provides methods for creating, reading, updating, and deleting
- * AI agents on the Mosaia platform. Agents are AI-powered assistants that
- * can be configured with different models, prompts, and capabilities.
+ * Provides CRUD operations for managing AI agents in the Mosaia platform.
+ * Agents are AI-powered entities that can perform specific tasks, handle conversations,
+ * and execute workflows based on their configuration and assigned tools.
+ * 
+ * This class inherits from BaseAPI and provides the following functionality:
+ * - Retrieve agents with filtering and pagination
+ * - Create new agents with custom configurations
+ * - Update existing agent settings and properties
+ * - Delete agents
+ * - Manage agent tools and configurations
+ * - Handle agent-specific operations like chat completions
  * 
  * @example
  * ```typescript
- * const agents = new Agents();
+ * import { Mosaia } from 'mosaia-node-sdk';
+ * 
+ * const mosaia = new Mosaia({ apiKey: 'your-api-key' });
+ * const agents = mosaia.agents;
  * 
  * // Get all agents
- * const allAgents = await agents.getAll();
+ * const allAgents = await agents.get();
  * 
- * // Get specific agent
- * const agent = await agents.getById('agent-id');
+ * // Get a specific agent
+ * const agent = await agents.get({}, 'agent-id');
  * 
- * // Create new agent
+ * // Create a new agent
  * const newAgent = await agents.create({
  *   name: 'Customer Support Agent',
- *   short_description: 'AI agent for customer support',
+ *   short_description: 'AI agent for handling customer inquiries',
  *   model: 'gpt-4',
- *   system_prompt: 'You are a helpful customer support agent.',
  *   temperature: 0.7,
  *   max_tokens: 1000,
- *   public: true
+ *   system_prompt: 'You are a helpful customer support agent.'
  * });
  * 
- * // Update agent
- * const updatedAgent = await agents.update('agent-id', {
- *   temperature: 0.5
- * });
- * 
- * // Delete agent
- * await agents.delete('agent-id');
+ * // Use agent for chat completion
+ * if (agent instanceof Agent) {
+ *   const response = await agent.chatCompletion({
+ *     model: 'gpt-4',
+ *     messages: [
+ *       { role: 'user', content: 'How can I reset my password?' }
+ *     ]
+ *   });
+ * }
  * ```
+ * 
+ * @extends BaseAPI<AgentInterface, Agent, GetAgentsPayload, GetAgentPayload>
  */
 export default class Agents extends BaseAPI<
     AgentInterface,
@@ -49,6 +63,28 @@ export default class Agents extends BaseAPI<
     GetAgentsPayload,
     GetAgentPayload
 > {
+    /**
+     * Creates a new Agents API client instance
+     * 
+     * Initializes the agents client with the appropriate endpoint URI
+     * and model class for handling agent operations.
+     * 
+     * The constructor sets up the API endpoint to `/agent` (or `${uri}/agent` if a base URI is provided),
+     * which corresponds to the Mosaia API's agents endpoint.
+     * 
+     * @param uri - Optional base URI path. If provided, the endpoint will be `${uri}/agent`.
+     *              If not provided, defaults to `/agent`.
+     * 
+     * @example
+     * ```typescript
+     * // Create with default endpoint (/agent)
+     * const agents = new Agents();
+     * 
+     * // Create with custom base URI
+     * const agents = new Agents('/api/v1');
+     * // This will use endpoint: /api/v1/agent
+     * ```
+     */
     constructor(uri = '') {
         super(`${uri}/agent`, Agent);
     }

@@ -9,11 +9,15 @@
 A comprehensive Node.js SDK for the Mosaia API platform, providing access to all models and endpoints available in the api-core ExpressJS application.
 
 ## Current Features
-- Get and manage Mosaia Apps
-- Manage agent and group bots
-- Agent inference
-- **AI Model Management** - Create, update, and manage AI models with chat completion support
-- **Client Management** - OAuth client registration and management
+- **Authentication Management** - Password-based and OAuth2 authentication with PKCE
+- **User & Organization Management** - Complete CRUD operations for users and organizations
+- **AI Agent Management** - Create, configure, and interact with AI agents
+- **Agent Groups** - Multi-agent collaboration and coordination
+- **AI Model Management** - Create, update, and manage AI models with OpenAI-compatible chat completion
+- **Application Management** - Manage Mosaia applications and their configurations
+- **Tool Integration** - Manage external tools and integrations
+- **OAuth Client Management** - OAuth client registration and management
+- **Configuration Management** - Centralized configuration with runtime updates
 - **Comprehensive Testing** - Full test coverage for all API endpoints
 
 > **Note**: Some API endpoints may not be fully implemented on all server instances. The SDK includes comprehensive error handling and will gracefully handle 404 responses for unimplemented endpoints.
@@ -33,40 +37,40 @@ pnpm add @mosaia/mosaia-node-sdk
 ```shell
 yarn add @mosaia/mosaia-node-sdk
 ```
+
 ### Implementation
 ##### In Node.js or NextJS
 To use the TypeScript definition files within a Node.js or NextJS project, simply import @mosaia/mosaia-node-sdk as you normally would.
+
 In a TypeScript file:
 ```typescript
 // import entire SDK
 import Mosaia from '@mosaia/mosaia-node-sdk';
 // import SDK with type references
-import Mosaia, { AppInterface } from '@mosaia/mosaia-node-sdk';
+import Mosaia, { AgentInterface, UserInterface } from '@mosaia/mosaia-node-sdk';
 ```
+
 In a JavaScript file:
 ```javascript
 // import entire SDK
 const Mosaia = require('@mosaia/mosaia-node-sdk');
 ```
+
 ##### Create a Mosaia instance
-In a TypeScript file:
 ```typescript
 const {
-    MOSAIA_CORE_URL,
-    MOSAIA_CORE_VERSION,
-    MOSAIA_API_KEY,
-    MOSAIA_FRONTEND_URL,
-    MOSAIA_CLIENT_ID,
-    MOSAIA_CLIENT_SECRET
+    API_URL,
+    APP_URL,
+    CLIENT_ID,
+    USER_EMAIL,
+    USER_PASSWORD
 } = process.env;
-// Apply API configs 
+
 const mosaia = new Mosaia({
-    apiKey: MOSAIA_API_KEY as string, // Optional (Only needed if not using client authentication)
-    clientId: MOSAIA_CLIENT_ID as string, // Optional (Only needed if not using apiKey)
-    clientSecret: MOSAIA_CLIENT_SECRET as string, // Optional (Only needed if not using apiKey)
-    version: MOSAIA_CORE_VERSION as string, // Optional (Defaults to 1)
-    apiURL: MOSAIA_CORE_URL as string, // Optional (Defaults to https://api.mosaia.ai)
-    appURL: MOSAIA_FRONTEND_URL as string // Optional (Defaults to https://mosaia.ai)
+    apiURL: API_URL,           // Optional (Defaults to https://api.mosaia.ai)
+    appURL: APP_URL,           // Optional (Defaults to https://mosaia.ai)
+    clientId: CLIENT_ID,       // Required for OAuth flows
+    version: '1'               // Optional (Defaults to '1')
 });
 ```
 
@@ -74,74 +78,103 @@ const mosaia = new Mosaia({
 
 ```typescript
 import Mosaia from '@mosaia/mosaia-node-sdk';
+import dotenv from 'dotenv';
 
-const mosaia = new Mosaia({
-    apiKey: 'your-api-key', // Optional (Only needed if not using client authentication)
-    clientId: 'your-mosaia-client-id', // Optional (Only needed if not using apiKey)
-    clientSecret: 'your-mosaia-client-secret' // Optional (Only needed if not using apiKey)
-});
+dotenv.config();
 
-// Get all apps
-const apps = await mosaia.apps.get();
+const {
+    API_URL,
+    APP_URL,
+    CLIENT_ID,
+    USER_EMAIL,
+    USER_PASSWORD
+} = process.env;
 
-// Get all tools
-const tools = await mosaia.tools.get();
+async function main() {
+    // Initialize SDK
+    const mosaia = new Mosaia({
+        apiURL: API_URL,
+        appURL: APP_URL,
+        clientId: CLIENT_ID
+    });
 
-// Get all users
-const users = await mosaia.users.getAll();
+    // Authenticate with password
+    mosaia.config = await mosaia.auth.signInWithPassword(
+        USER_EMAIL!,
+        USER_PASSWORD!,
+        CLIENT_ID!
+    );
 
-// Get all organizations
-const orgs = await mosaia.organizations.getAll();
+    // Get current user info
+    const self = await mosaia.self();
+    console.log('Authenticated as:', self.user?.email);
 
-// Get all models
-const models = await mosaia.models.getAll();
+    // Search for agents
+    const agents = await mosaia.agents.get({ q: "cafe" });
+    console.log('Found agents:', agents);
 
-// Get all clients
-const clients = await mosaia.clients.getAll();
+    // Chat with an agent
+    if (Array.isArray(agents) && agents.length > 0) {
+        const firstAgent = agents[0];
+        const response = await firstAgent.chatCompletion({
+            messages: [
+                { role: "user", content: "Hello, who are you?" }
+            ]
+        });
+        console.log('Agent response:', response.choices[0].message);
+    }
+}
+
+main().catch(console.error);
 ```
 
 ## Configuration
 
 ```typescript
-interface MosiaConfig {
-    apiKey?: string;        // Optional: for apiKey
-    version?: string;       // defaults to 1
-    apiURL?: string;        // API base URL (defaults to https://api.mosaia.ai)
-    appURL?: string;        // App URL for OAuth flows (defaults to https://mosaia.ai)
-    clientId?: string;      // Required for OAuth flows
-    clientSecret?: string;  // Optional: for client credentials flow
-    user?: string;          // Optional: for user-specific operations
-    org?: string;           // Optional: for organization-specific operations
+interface MosaiaConfig {
+    apiKey?: string;           // API key for authentication (optional)
+    refreshToken?: string;     // Refresh token for token refresh (optional)
+    version?: string;          // API version (defaults to '1')
+    apiURL?: string;          // API base URL (defaults to https://api.mosaia.ai)
+    appURL?: string;          // App URL for OAuth flows (defaults to https://mosaia.ai)
+    clientId?: string;        // Client ID for OAuth flows (required for OAuth)
+    clientSecret?: string;    // Client secret for client credentials flow (optional)
+    verbose?: boolean;        // Enable verbose logging (defaults to false)
+    authType?: 'password' | 'client' | 'refresh' | 'oauth'; // Authentication type
+    expiresIn?: number;       // Token expiration time
+    sub?: string;             // Subject identifier
+    iat?: string;             // Token issued at timestamp
+    exp?: string;             // Token expiration timestamp
 }
 ```
 
-**Recent Changes:**
-- `baseURL` has been renamed to `apiURL` for clarity
-- `frontendURL` has been renamed to `appURL` for consistency
-- OAuth authorization URLs now use the configured `appURL` instead of hardcoded defaults
+**Configuration Management:**
+- The SDK uses a centralized `ConfigurationManager` for consistent configuration across all components
+- Configuration can be updated at runtime using setter methods
+- All configuration changes are immediately reflected across the SDK
 
 ## API Reference
 
 ### Authentication
 
-```typescript
-// Sign in with password
-const auth = await mosaia.auth.signInWithPassword(email, password, clientId);
+The SDK provides multiple authentication methods through the `auth` property:
 
-// Assign the access token to the SDK for subsequent API calls
-mosaia.apiKey = auth.access_token;
+```typescript
+// Sign in with email and password
+const authConfig = await mosaia.auth.signInWithPassword(
+    'user@example.com', 
+    'password', 
+    'client-id'
+);
+mosaia.config = authConfig;
 
 // Sign in with client credentials
-const auth = await mosaia.auth.signInWithClient(clientId, clientSecret);
-
-// Assign the access token to the SDK for subsequent API calls
-mosaia.apiKey = auth.access_token;
+const authConfig = await mosaia.auth.signInWithClient('client-id', 'client-secret');
+mosaia.config = authConfig;
 
 // Refresh token
-const auth = await mosaia.auth.refreshToken(refreshToken);
-
-// Update the SDK with the new access token
-mosaia.apiKey = auth.access_token;
+const authConfig = await mosaia.auth.refreshToken('refresh-token');
+mosaia.config = authConfig;
 
 // Sign out
 await mosaia.auth.signOut();
@@ -151,6 +184,30 @@ const session = await mosaia.auth.getSession();
 
 // Get self info
 const self = await mosaia.auth.getSelf();
+```
+
+### Runtime Configuration Updates
+
+The SDK allows updating configuration at runtime:
+
+```typescript
+// Update API key
+mosaia.apiKey = 'new-api-key-123';
+
+// Update API version
+mosaia.version = '2';
+
+// Update API base URL
+mosaia.apiURL = 'https://api-staging.mosaia.ai';
+
+// Update OAuth app URL
+mosaia.appURL = 'https://app-staging.mosaia.ai';
+
+// Update OAuth client ID
+mosaia.clientId = 'new-client-id-123';
+
+// Update OAuth client secret
+mosaia.clientSecret = 'new-client-secret-456';
 ```
 
 ### OAuth
@@ -177,7 +234,7 @@ const token = await oauth.exchangeCodeForToken(code, codeVerifier);
 mosaia.apiKey = token.access_token;
 
 // Now you can make authenticated API calls
-const users = await mosaia.users.getAll();
+const users = await mosaia.users.get();
 
 // Refresh token when needed
 const newToken = await oauth.refreshToken(token.refresh_token);
@@ -192,21 +249,33 @@ mosaia.apiKey = newToken.access_token;
 - The `codeVerifier` must be stored securely and used with the same authorization code
 - PKCE ensures security even for public clients
 
+### Self Information
+
+Get information about the currently authenticated user:
+
+```typescript
+// Get current user and organization information
+const self = await mosaia.self();
+console.log('User:', self.user);
+console.log('Organization:', self.org);
+console.log('Org User:', self.orgUser);
+```
+
 ### Users
 
 ```typescript
-// Get all users
-const users = await mosaia.users.getAll({
+// Get all users with filtering and pagination
+const users = await mosaia.users.get({
     limit: 10,
     offset: 0,
-    search: 'john',
+    q: 'john',
     active: true
 });
 
-// Get user by ID
-const user = await mosaia.users.getById('user-id');
+// Get specific user by ID
+const user = await mosaia.users.get({}, 'user-id');
 
-// Create user
+// Create new user
 const newUser = await mosaia.users.create({
     email: 'john@example.com',
     first_name: 'John',
@@ -220,26 +289,23 @@ const updatedUser = await mosaia.users.update('user-id', {
 
 // Delete user
 await mosaia.users.delete('user-id');
-
-// Get user session
-const session = await mosaia.users.getSession('user-id');
 ```
 
 ### Organizations
 
 ```typescript
-// Get all organizations
-const orgs = await mosaia.organizations.getAll({
+// Get all organizations with filtering and pagination
+const orgs = await mosaia.organizations.get({
     limit: 10,
     offset: 0,
-    search: 'acme',
+    q: 'acme',
     active: true
 });
 
-// Get organization by ID
-const org = await mosaia.organizations.getById('org-id');
+// Get specific organization by ID
+const org = await mosaia.organizations.get({}, 'org-id');
 
-// Create organization
+// Create new organization
 const newOrg = await mosaia.organizations.create({
     name: 'Acme Corp',
     short_description: 'A technology company'
@@ -254,48 +320,47 @@ const updatedOrg = await mosaia.organizations.update('org-id', {
 await mosaia.organizations.delete('org-id');
 ```
 
-### Apps
+### Applications
 
 ```typescript
-// Get all apps
+// Get all applications
 const apps = await mosaia.apps.get();
 
-// Get app by ID
+// Get specific application by ID
 const app = await mosaia.apps.get({ id: 'app-id' });
 
-// Create app
+// Create new application
 const newApp = await mosaia.apps.create({
     name: 'My App',
     short_description: 'A great app',
     org: 'org-id'
 });
 
-// Update app
+// Update application
 const updatedApp = await mosaia.apps.update({
     id: 'app-id',
     name: 'Updated App Name'
 });
 
-// Delete app
+// Delete application
 await mosaia.apps.delete({ id: 'app-id' });
 ```
 
 ### Tools
 
 ```typescript
-// Get all tools
-const tools = await mosaia.tools.getAll({
+// Get all tools with filtering and pagination
+const tools = await mosaia.tools.get({
     limit: 10,
     offset: 0,
-    search_type: 'web_search',
-    search_types: ['web_search', 'database'],
-    q: 'search query'
+    q: 'web_search',
+    active: true
 });
 
-// Get tool by ID
-const tool = await mosaia.tools.getById('tool-id');
+// Get specific tool by ID
+const tool = await mosaia.tools.get({}, 'tool-id');
 
-// Create tool
+// Create new tool
 const newTool = await mosaia.tools.create({
     name: 'My Tool',
     short_description: 'A useful tool',
@@ -314,21 +379,19 @@ await mosaia.tools.delete('tool-id');
 ### Agents
 
 ```typescript
-// Get all agents
-const agents = await mosaia.agents.getAll({
+// Get all agents with filtering and pagination
+const agents = await mosaia.agents.get({
     limit: 10,
     offset: 0,
-    search: 'assistant',
-    search_type: 'chat',
-    q: 'helpful assistant',
+    q: 'assistant',
     active: true,
     public: true
 });
 
-// Get agent by ID
-const agent = await mosaia.agents.getById('agent-id');
+// Get specific agent by ID
+const agent = await mosaia.agents.get({}, 'agent-id');
 
-// Create agent
+// Create new agent
 const newAgent = await mosaia.agents.create({
     name: 'Helpful Assistant',
     short_description: 'A helpful AI assistant',
@@ -344,44 +407,41 @@ const updatedAgent = await mosaia.agents.update('agent-id', {
 // Delete agent
 await mosaia.agents.delete('agent-id');
 
-// Chat completion with agent
-const response = await mosaia.agents.chatCompletion({
-    model: 'agent-id',
-    messages: [
-        { role: 'user', content: 'Hello, how are you?' }
-    ],
-    max_tokens: 100,
-    temperature: 0.7
-});
+// Chat completion with agent (using agent instance)
+if (agent instanceof Agent) {
+    const response = await agent.chatCompletion({
+        messages: [
+            { role: 'user', content: 'Hello, how are you?' }
+        ],
+        max_tokens: 100,
+        temperature: 0.7
+    });
+    console.log('Response:', response.choices[0].message);
+}
 
-// Async chat completion
-const response = await mosaia.agents.asyncChatCompletion({
-    model: 'agent-id',
-    messages: [
-        { role: 'user', content: 'Hello, how are you?' }
-    ],
-    type: 'async',
-    max_tokens: 100
-});
+// Upload agent image
+if (agent instanceof Agent) {
+    const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
+    await agent.uploadImage(file);
+}
 ```
 
 ### Agent Groups
 
 ```typescript
-// Get all agent groups
-const groups = await mosaia.agentGroups.getAll({
+// Get all agent groups with filtering and pagination
+const groups = await mosaia.agentGroups.get({
     limit: 10,
     offset: 0,
-    search: 'team',
-    q: 'collaborative team',
+    q: 'team',
     active: true,
     public: true
 });
 
-// Get agent group by ID
-const group = await mosaia.agentGroups.getById('group-id');
+// Get specific agent group by ID
+const group = await mosaia.agentGroups.get({}, 'group-id');
 
-// Create agent group
+// Create new agent group
 const newGroup = await mosaia.agentGroups.create({
     name: 'Team of Agents',
     short_description: 'A collaborative team of AI agents',
@@ -397,33 +457,35 @@ const updatedGroup = await mosaia.agentGroups.update('group-id', {
 await mosaia.agentGroups.delete('group-id');
 
 // Chat completion with agent group
-const response = await mosaia.agentGroups.chatCompletion({
-    model: 'group-id',
-    messages: [
-        { role: 'user', content: 'Hello team!' }
-    ],
-    max_tokens: 100,
-    temperature: 0.7
-});
+if (group instanceof AgentGroup) {
+    const response = await group.chatCompletion({
+        messages: [
+            { role: 'user', content: 'Hello team!' }
+        ],
+        max_tokens: 100,
+        temperature: 0.7
+    });
+    console.log('Team response:', response.choices[0].message);
+}
 ```
 
 ### Models
 
 ```typescript
-// Get all models
-const models = await mosaia.models.getAll({
+// Get all models with filtering and pagination
+const models = await mosaia.models.get({
     limit: 10,
     offset: 0,
-    search: 'gpt',
+    q: 'gpt',
     provider: 'openai',
     active: true,
     public: true
 });
 
-// Get model by ID
-const model = await mosaia.models.getById('model-id');
+// Get specific model by ID
+const model = await mosaia.models.get({}, 'model-id');
 
-// Create model
+// Create new model
 const newModel = await mosaia.models.create({
     name: 'GPT-4',
     short_description: 'Advanced language model',
@@ -441,33 +503,35 @@ const updatedModel = await mosaia.models.update('model-id', {
 await mosaia.models.delete('model-id');
 
 // Chat completion with model (OpenAI compatible)
-const response = await mosaia.models.chatCompletion({
-    model: 'gpt-4',
-    messages: [
-        { role: 'user', content: 'Hello!' }
-    ],
-    max_tokens: 100,
-    temperature: 0.7
-});
+if (model instanceof Model) {
+    const response = await model.chatCompletion({
+        messages: [
+            { role: 'user', content: 'Hello!' }
+        ],
+        max_tokens: 100,
+        temperature: 0.7
+    });
+    console.log('Model response:', response.choices[0].message);
+}
 ```
 
 ### Clients
 
 ```typescript
-// Get all clients
-const clients = await mosaia.clients.getAll({
+// Get all clients with filtering and pagination
+const clients = await mosaia.clients.get({
     limit: 10,
     offset: 0,
-    search: 'webapp',
+    q: 'webapp',
     active: true,
     org: 'org-id',
     user: 'user-id'
 });
 
-// Get client by ID
-const client = await mosaia.clients.getById('client-id');
+// Get specific client by ID
+const client = await mosaia.clients.get({}, 'client-id');
 
-// Create client
+// Create new client
 const newClient = await mosaia.clients.create({
     name: 'Web Application',
     client_id: 'webapp-client',
@@ -485,126 +549,171 @@ const updatedClient = await mosaia.clients.update('client-id', {
 await mosaia.clients.delete('client-id');
 ```
 
-### Billing
+### App Bots
 
 ```typescript
-// Wallet operations
-const wallets = await mosaia.billing.getWallets({
+// Get all app bots
+const appBots = await mosaia.appBots.get();
+
+// Get specific app bot by ID
+const appBot = await mosaia.appBots.get({}, 'app-bot-id');
+
+// Create new app bot
+const newAppBot = await mosaia.appBots.create({
+    app: 'app-id',
+    response_url: 'https://webhook.example.com/callback',
+    agent: 'agent-id'
+});
+
+// Update app bot
+const updatedAppBot = await mosaia.appBots.update('app-bot-id', {
+    response_url: 'https://new-webhook.example.com/callback'
+});
+
+// Delete app bot
+await mosaia.appBots.delete('app-bot-id');
+```
+
+### Organization Users
+
+```typescript
+// Get all organization users
+const orgUsers = await mosaia.orgUsers.get({
     limit: 10,
     offset: 0,
     org: 'org-id',
     user: 'user-id'
 });
 
-const wallet = await mosaia.billing.getWallet('wallet-id');
+// Get specific organization user by ID
+const orgUser = await mosaia.orgUsers.get({}, 'org-user-id');
 
-const newWallet = await mosaia.billing.createWallet({
-    balance: 100.00,
-    currency: 'USD',
-    org: 'org-id'
-});
-
-const updatedWallet = await mosaia.billing.updateWallet('wallet-id', {
-    balance: 150.00
-});
-
-await mosaia.billing.deleteWallet('wallet-id');
-
-// Meter operations
-const meters = await mosaia.billing.getMeters({
-    limit: 10,
-    offset: 0,
+// Create new organization user
+const newOrgUser = await mosaia.orgUsers.create({
     org: 'org-id',
     user: 'user-id',
-    type: 'api_calls'
+    permission: 'member'
 });
 
-const meter = await mosaia.billing.getMeter('meter-id');
-
-const newMeter = await mosaia.billing.createMeter({
-    type: 'api_calls',
-    value: 1000,
-    org: 'org-id',
-    metadata: { endpoint: '/v1/chat/completions' }
+// Update organization user
+const updatedOrgUser = await mosaia.orgUsers.update('org-user-id', {
+    permission: 'admin'
 });
 
-const updatedMeter = await mosaia.billing.updateMeter('meter-id', {
-    value: 1500
-});
+// Delete organization user
+await mosaia.orgUsers.delete('org-user-id');
 
-await mosaia.billing.deleteMeter('meter-id');
+// Get organization user session
+if (orgUser instanceof OrgUser) {
+    const session = await orgUser.session();
+    console.log('Org user session:', session);
+}
 ```
 
-### Permissions
+## Model Classes
+
+The SDK provides model classes that extend the base functionality with entity-specific methods:
+
+### Agent Model
 
 ```typescript
-// Access Policy operations
-const policies = await mosaia.permissions.getAccessPolicies({
-    limit: 10,
-    offset: 0,
-    search: 'admin',
-    active: true
+import { Agent } from '@mosaia/mosaia-node-sdk';
+
+// Agent instances have additional methods
+const agent = new Agent({
+    name: 'Customer Support Agent',
+    short_description: 'AI agent for customer inquiries',
+    model: 'gpt-4',
+    system_prompt: 'You are a helpful customer support agent.'
 });
 
-const policy = await mosaia.permissions.getAccessPolicy('policy-id');
+// Upload agent image
+const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
+await agent.uploadImage(file);
 
-const newPolicy = await mosaia.permissions.createAccessPolicy({
-    name: 'Admin Policy',
-    effect: 'allow',
-    actions: ['*'],
-    resources: ['*']
+// Chat completion with agent
+const response = await agent.chatCompletion({
+    messages: [
+        { role: 'user', content: 'How can I reset my password?' }
+    ],
+    max_tokens: 150,
+    temperature: 0.7
+});
+```
+
+### User Model
+
+```typescript
+import { User } from '@mosaia/mosaia-node-sdk';
+
+// User instances have organization access
+const user = new User({
+    email: 'john@example.com',
+    first_name: 'John',
+    last_name: 'Doe'
 });
 
-const updatedPolicy = await mosaia.permissions.updateAccessPolicy('policy-id', {
-    name: 'Updated Policy Name'
+// Access user's organizations
+const orgs = await user.orgs.get();
+
+// Get specific organization
+const org = await user.orgs.get({}, 'org-id');
+```
+
+### Organization Model
+
+```typescript
+import { Organization } from '@mosaia/mosaia-node-sdk';
+
+// Organization instances have user access
+const org = new Organization({
+    name: 'Acme Corp',
+    short_description: 'A technology company'
 });
 
-await mosaia.permissions.deleteAccessPolicy('policy-id');
+// Access organization's users
+const users = await org.users.get();
 
-// Org Permission operations
-const orgPermissions = await mosaia.permissions.getOrgPermissions({
-    limit: 10,
-    offset: 0,
-    org: 'org-id',
-    user: 'user-id',
-    client: 'client-id'
-});
+// Get specific user
+const user = await org.users.get({}, 'user-id');
+```
 
-const orgPermission = await mosaia.permissions.getOrgPermission('permission-id');
+## Error Handling
 
-const newOrgPermission = await mosaia.permissions.createOrgPermission({
-    org: 'org-id',
-    user: 'user-id',
-    policy: 'policy-id'
-});
+The SDK provides structured error handling with the `isSdkError` utility:
 
-const updatedOrgPermission = await mosaia.permissions.updateOrgPermission('permission-id', {
-    policy: 'new-policy-id'
-});
+```typescript
+import { isSdkError } from '@mosaia/mosaia-node-sdk';
 
-await mosaia.permissions.deleteOrgPermission('permission-id');
+try {
+    const users = await mosaia.users.get();
+} catch (error) {
+    if (isSdkError(error)) {
+        console.error('SDK Error:', error.message);
+        console.error('Status:', error.status);
+        console.error('Code:', error.code);
+    } else {
+        console.error('Unexpected error:', error);
+    }
+}
+```
 
-// User Permission operations
-const userPermissions = await mosaia.permissions.getUserPermissions({
-    limit: 10,
-    offset: 0,
-    user: 'user-id',
-    client: 'client-id'
-});
+## Response Types
 
-const userPermission = await mosaia.permissions.getUserPermission('permission-id');
+All API methods return the raw response data from the API. For example, if you request a user, you will receive an object like `{ id: 'user-id', name: 'John Doe', ... }` rather than a wrapped object. For list endpoints, you will receive an array or a paginated object as returned by the API.
 
-const newUserPermission = await mosaia.permissions.createUserPermission({
-    user: 'user-id',
-    client: 'client-id',
-    policy: 'policy-id'
-});
+## Pagination
 
-const updatedUserPermission = await mosaia.permissions.updateUserPermission('permission-id', {
-    policy: 'new-policy-id'
-});
+Many endpoints support pagination with the following parameters:
 
-await mosaia.permissions.deleteUserPermission('permission-id');
+```typescript
+interface PagingInterface {
+    offset?: number;
+    limit?: number;
+    total?: number;
+    page?: number;
+    total_pages?: number;
+}
 ```
 
 ## Testing
@@ -636,69 +745,35 @@ npm test -- --testPathPattern="models.test.ts"
 - ✅ **Clients API Tests** - OAuth client management
 - ✅ **Apps API Tests** - Application management
 - ✅ **Tools API Tests** - Tool management
-- ✅ **Billing API Tests** - Wallet and meter operations
-- ✅ **Permissions API Tests** - Access policies and permissions
-
-## Error Handling
-
-```typescript
-import { isSdkError } from 'mosaia-node-sdk';
-
-try {
-    const users = await mosaia.users.getAll();
-} catch (error) {
-    if (isSdkError(error)) {
-        console.error('SDK Error:', error.message);
-        console.error('Status:', error.status);
-        console.error('Code:', error.code);
-    } else {
-        console.error('Unexpected error:', error);
-    }
-}
-```
-
-## Response Types
-
-All API methods return the raw response data from the API. For example, if you request a user, you will receive an object like `{ id: 'user-id', name: 'John Doe', ... }` rather than a wrapped object. For list endpoints, you will receive an array or a paginated object as returned by the API.
-
-## Pagination
-
-Many endpoints support pagination with the following parameters:
-
-```typescript
-interface PagingInterface {
-    offset?: number;
-    limit?: number;
-    total?: number;
-    page?: number;
-    total_pages?: number;
-}
-```
-
-## Models
-
-The SDK includes model classes for working with entities:
-
-```typescript
-import { App, Tool, AppBot } from 'mosaia-node-sdk';
-
-// Get an app and work with its bots
-const app = await mosaia.apps.get({ id: 'app-id' });
-if (app) {
-    const bots = await app.bots.get();
-}
-```
+- ✅ **App Bots API Tests** - Application-bot integrations
+- ✅ **Organization Users API Tests** - User-organization relationships
 
 ## What's New
 
 ### Version 0.1.0
-- 🧪 **Enhanced Test Coverage**: Added comprehensive test suites for Models and Clients APIs
+- 🔧 **Configuration Management**: Centralized configuration manager with runtime updates
+- 🔧 **Enhanced Authentication**: Improved password-based and OAuth authentication flows
+- 🔧 **Model Classes**: Entity-specific model classes with additional functionality
+- 🔧 **Runtime Configuration**: Ability to update SDK configuration at runtime
+- 🧪 **Enhanced Test Coverage**: Added comprehensive test suites for all APIs
 - 🔧 **Code Quality**: Removed generated JavaScript files to keep codebase clean
 - 🔧 **Improved .gitignore**: Better patterns to prevent build artifacts from being committed
-- ✅ **Models API Testing**: Full test coverage for model management and chat completion
-- ✅ **Clients API Testing**: Complete test suite for OAuth client operations
-- ✅ **Real-world Testing**: Integration tests with actual API endpoints
-- ✅ **Error Handling**: Improved error handling and response validation
+- ✅ **Complete API Coverage**: All Mosaia API endpoints implemented
+- ✅ **Authentication API**: Sign in, refresh tokens, session management
+- ✅ **Users API**: Full user management with filtering and pagination
+- ✅ **Organizations API**: Organization CRUD operations
+- ✅ **Agents API**: AI agent management with chat completion and image upload
+- ✅ **Agent Groups API**: Multi-agent collaboration
+- ✅ **Models API**: AI model management with OpenAI-compatible chat completion
+- ✅ **Clients API**: OAuth client management
+- ✅ **Apps API**: Application management
+- ✅ **Tools API**: Tool management
+- ✅ **App Bots API**: Application-bot integrations
+- ✅ **Organization Users API**: User-organization relationships
+- ✅ **TypeScript Support**: Full type definitions and IntelliSense
+- ✅ **Comprehensive Test Suite**: 100% test coverage
+- ✅ **OAuth Support**: PKCE flow implementation
+- ✅ **Error Handling**: Structured error responses
 
 ### Version 0.0.10
 - 🔧 **Configuration Improvements**: `baseURL` → `apiURL`, `frontendURL` → `appURL`

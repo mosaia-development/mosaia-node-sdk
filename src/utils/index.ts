@@ -186,7 +186,7 @@ export function serverErrorToString(err: any) {
  * @example
  * ```typescript
  * try {
- *   const users = await mosaia.users.getAll();
+ *   const users = await mosaia.users.get();
  * } catch (error) {
  *   if (isSdkError(error)) {
  *     console.log('SDK Error:', error.message);

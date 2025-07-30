@@ -19,9 +19,11 @@
  * };
  * ```
  */
-export interface MosiaConfig {
+export interface MosaiaConfig {
     /** API key for authentication (optional if using OAuth) */
     apiKey?: string;
+    /** Refresh token for token refresh operations (optional) */
+    refreshToken?: string;
     /** API version to use (defaults to '1') */
     version?: string;
     /** Base URL for API requests (defaults to https://api.mosaia.ai) */
@@ -34,6 +36,16 @@ export interface MosiaConfig {
     clientSecret?: string;
     /** Enable verbose HTTP request/response logging (defaults to false) */
     verbose?: boolean;
+    /** Authentication type (defaults to 'password') */
+    authType?: 'password' | 'client' | 'refresh' | 'oauth';
+    /** Expires in (optional) */
+    expiresIn?: number;
+    /** Subject (optional) */
+    sub?: string;
+    /** Token issued at timestamp (optional) */
+    iat?: string;
+    /** Token expiration timestamp (optional) */
+    exp?: string;
 }
 
 export interface MosaiaAuth {
@@ -701,7 +713,7 @@ export interface ChatMessage {
 }
 
 export interface ChatCompletionRequest {
-    model: string;
+    model?: string;
     messages: ChatMessage[];
     max_tokens?: number;
     temperature?: number;
@@ -714,7 +726,7 @@ export interface ChatCompletionResponse {
     id: string;
     object: string;
     created: number;
-    model: string;
+    model?: string;
     choices: Array<{
         index: number;
         message: ChatMessage;

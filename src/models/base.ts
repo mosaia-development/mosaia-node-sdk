@@ -1,5 +1,5 @@
 import {
-    MosiaConfig,
+    MosaiaConfig,
     BaseEntity
 } from '../types';
 import APIClient from '../apis/api-client';
@@ -44,7 +44,7 @@ export abstract class BaseModel<T> {
     /**
      * Get the current configuration
      */
-    protected get config(): MosiaConfig {
+    protected get config(): MosaiaConfig {
         return this.configManager.getConfig();
     }
 

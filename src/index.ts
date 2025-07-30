@@ -4,23 +4,20 @@ import {
     AppBots,
     Users,
     Organizations,
+    OrgUsers,
     Agents,
     AgentGroups,
     Models,
     Clients,
-    Auth,
-    Billing,
-    Permissions,
+    Auth
 } from './apis';
 import { Self } from './models';
 import APIClient from './apis/api-client';
 import {
-    MosiaConfig,
-    OAuthConfig,
-    UserInterface,
-    MosaiaAuth
+    MosaiaConfig,
+    UserInterface
 } from './types';
-import { DEFAULT_CONFIG, ConfigurationManager } from './config';
+import { ConfigurationManager } from './config';
 import { OAuth } from './oauth';
 import { isSdkError } from './utils';
 
@@ -43,7 +40,7 @@ import { isSdkError } from './utils';
  * });
  * 
  * // Get all users
- * const users = await mosaia.users.getAll();
+ * const users = await mosaia.users.get();
  * 
  * // Create an OAuth instance
  * const oauth = mosaia.oauth({
@@ -78,7 +75,7 @@ class Mosaia {
      * });
      * ```
      */
-    constructor(config: MosiaConfig) {
+    constructor(config: MosaiaConfig) {
         this.configManager = ConfigurationManager.getInstance();
         this.configManager.initialize(config);
     }
@@ -86,8 +83,17 @@ class Mosaia {
     /**
      * Get the current configuration
      */
-    get config(): MosiaConfig {
+    get config(): MosaiaConfig {
         return this.configManager.getConfig();
+    }
+
+    /**
+     * Set the configuration
+     * 
+     * @param config - The new configuration object
+     */
+    set config(config: MosaiaConfig) {
+        this.configManager.initialize(config);
     }
 
     /**
@@ -106,7 +112,7 @@ class Mosaia {
      * mosaia.apiKey = 'new-api-key-123';
      * 
      * // Now all subsequent requests will use the new API key
-     * const users = await mosaia.users.getAll();
+     * const users = await mosaia.users.get();
      * ```
      */
     set apiKey(apiKey: string) {
@@ -129,7 +135,7 @@ class Mosaia {
      * mosaia.version = '2';
      * 
      * // Now all subsequent requests will use API v2
-     * const users = await mosaia.users.getAll();
+     * const users = await mosaia.users.get();
      * ```
      */
     set version(version: string) {
@@ -284,10 +290,10 @@ class Mosaia {
      * @example
      * ```typescript
      * // Get all agents
-     * const agents = await mosaia.agents.getAll();
+     * const agents = await mosaia.agents.get();
      * 
      * // Get specific agent
-     * const agent = await mosaia.agents.getById('agent-id');
+     * const agent = await mosaia.agents.get({}, 'agent-id');
      * 
      * // Create chat completion
      * const completion = await mosaia.agents.chatCompletion('agent-id', {
@@ -388,11 +394,11 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * // Get all users
-     * const users = await mosaia.users.getAll();
+      * // Get all users
+ * const users = await mosaia.users.get();
      * 
      * // Get specific user
-     * const user = await mosaia.users.getById('user-id');
+     * const user = await mosaia.users.get({}, 'user-id');
      * 
      * // Create new user
      * const newUser = await mosaia.users.create({
@@ -416,10 +422,10 @@ class Mosaia {
      * @example
      * ```typescript
      * // Get all organizations
-     * const orgs = await mosaia.organizations.getAll();
+     * const orgs = await mosaia.organizations.get();
      * 
      * // Get specific organization
-     * const org = await mosaia.organizations.getById('org-id');
+     * const org = await mosaia.organizations.get({}, 'org-id');
      * 
      * // Create new organization
      * const newOrg = await mosaia.organizations.create({
@@ -442,10 +448,10 @@ class Mosaia {
      * @example
      * ```typescript
      * // Get all agent groups
-     * const groups = await mosaia.agentGroups.getAll();
+     * const groups = await mosaia.agentGroups.get();
      * 
      * // Get specific agent group
-     * const group = await mosaia.agentGroups.getById('group-id');
+     * const group = await mosaia.agentGroups.get({}, 'group-id');
      * 
      * // Create chat completion with group
      * const completion = await mosaia.agentGroups.chatCompletion('group-id', {
@@ -467,10 +473,10 @@ class Mosaia {
      * @example
      * ```typescript
      * // Get all models
-     * const models = await mosaia.models.getAll();
+     * const models = await mosaia.models.get();
      * 
      * // Get specific model
-     * const model = await mosaia.models.getById('model-id');
+     * const model = await mosaia.models.get({}, 'model-id');
      * 
      * // Create new model
      * const newModel = await mosaia.models.create({
@@ -494,10 +500,10 @@ class Mosaia {
      * @example
      * ```typescript
      * // Get all clients
-     * const clients = await mosaia.clients.getAll();
+     * const clients = await mosaia.clients.get();
      * 
      * // Get specific client
-     * const client = await mosaia.clients.getById('client-id');
+     * const client = await mosaia.clients.get({}, 'client-id');
      * 
      * // Create new client
      * const newClient = await mosaia.clients.create({
@@ -511,57 +517,59 @@ class Mosaia {
     }
 
     /**
-     * Access to Billing API
+     * Access to App Bots API
      * 
-     * Manage billing and usage, including wallet operations and meter tracking.
+     * Manage application-bot integrations, including CRUD operations and bot-specific functionality.
      * 
-     * @returns {Billing} Billing API client
+     * @returns {AppBots} App Bots API client
      * 
      * @example
      * ```typescript
-     * // Get wallet
-     * const wallet = await mosaia.billing.getWallet('wallet-id');
+     * // Get all app bots
+     * const appBots = await mosaia.appBots.get();
      * 
-     * // Get meters
-     * const meters = await mosaia.billing.getMeters();
+     * // Get specific app bot
+     * const appBot = await mosaia.appBots.get({}, 'app-bot-id');
      * 
-     * // Create meter
-     * const newMeter = await mosaia.billing.createMeter({
-     *   type: 'api_calls',
-     *   value: 100
+     * // Create new app bot
+     * const newAppBot = await mosaia.appBots.create({
+     *   app: 'app-id',
+     *   response_url: 'https://webhook.example.com/callback',
+     *   agent: 'agent-id'
      * });
      * ```
      */
-    get billing() {
-        return new Billing();
+    get appBots() {
+        return new AppBots();
     }
 
     /**
-     * Access to Permissions API
+     * Access to Organization Users API
      * 
-     * Manage access policies and permissions, including CRUD operations for policies and user/org permissions.
+     * Manage user-organization relationships, including CRUD operations and permission management.
      * 
-     * @returns {Permissions} Permissions API client
+     * @returns {OrgUsers} Organization Users API client
      * 
      * @example
      * ```typescript
-     * // Get access policies
-     * const policies = await mosaia.permissions.getAccessPolicies();
+     * // Get all organization users
+     * const orgUsers = await mosaia.orgUsers.get();
      * 
-     * // Get org permissions
-     * const orgPermissions = await mosaia.permissions.getOrgPermissions();
+     * // Get specific organization user
+     * const orgUser = await mosaia.orgUsers.get({}, 'org-user-id');
      * 
-     * // Create user permission
-     * const newPermission = await mosaia.permissions.createUserPermission({
+     * // Create new organization user
+     * const newOrgUser = await mosaia.orgUsers.create({
+     *   org: 'org-id',
      *   user: 'user-id',
-     *   client: 'client-id',
-     *   policy: 'policy-id'
+     *   permission: 'member'
      * });
      * ```
      */
-    get permissions() {
-        return new Permissions();
+    get orgUsers() {
+        return new OrgUsers();
     }
+
 
     /**
      * Creates a new OAuth instance for handling OAuth2 Authorization Code flow with PKCE
