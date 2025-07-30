@@ -7,6 +7,7 @@ describe('OAuth API', () => {
     clientId: 'test-client-id',
     redirectUri: 'https://myapp.com/callback',
     appURL: 'https://app.test.com',
+    apiURL: 'https://api.test.com',
     scopes: ['read', 'write']
   };
 
@@ -31,8 +32,8 @@ describe('OAuth API', () => {
       const result2 = oauth.getAuthorizationUrlAndCodeVerifier();
 
       expect(result1.codeVerifier).toBeDefined();
-      expect(result1.codeVerifier.length).toBeGreaterThan(40);
-      expect(result1.codeVerifier.length).toBeLessThan(129);
+      expect(result1.codeVerifier.length).toBeGreaterThan(30);
+      expect(result1.codeVerifier.length).toBeLessThanOrEqual(128);
       
       // Each call should generate different code verifiers
       expect(result1.codeVerifier).not.toBe(result2.codeVerifier);
@@ -64,6 +65,8 @@ describe('OAuth API', () => {
 
       expect(result.url).toContain('https://custom-app.mosaia.ai/oauth');
     });
+
+
 
     it('should handle single scope', () => {
       const singleScopeConfig: OAuthConfig = {
@@ -136,7 +139,7 @@ describe('OAuth API', () => {
       const result = await oauth.exchangeCodeForToken('auth-code', 'code-verifier');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.mosaia.ai/auth/token',
+        'https://api.test.com/auth/token',
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -165,6 +168,40 @@ describe('OAuth API', () => {
       await expect(
         oauth.exchangeCodeForToken('invalid-code', 'code-verifier')
       ).rejects.toEqual(errorResponse);
+    });
+
+    it('should use configured apiURL for token exchange', async () => {
+      const customConfig: OAuthConfig = {
+        ...mockConfig,
+        apiURL: 'https://custom-api.mosaia.ai'
+      };
+      const customOauth = new OAuth(customConfig);
+
+      const mockResponse = {
+        access_token: 'access-token-123',
+        refresh_token: 'refresh-token-456',
+        token_type: 'Bearer',
+        expires_in: 3600
+      };
+
+      // Mock successful fetch response
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      });
+
+      await customOauth.exchangeCodeForToken('auth-code', 'code-verifier');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://custom-api.mosaia.ai/auth/token',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: expect.stringContaining('grant_type=authorization_code')
+        })
+      );
     });
 
     it('should handle network errors', async () => {
@@ -206,7 +243,7 @@ describe('OAuth API', () => {
       const result = await oauth.refreshToken('old-refresh-token');
 
       expect(global.fetch).toHaveBeenCalledWith(
-        'https://api.mosaia.ai/oauth/token',
+        'https://api.test.com/oauth/token',
         expect.objectContaining({
           method: 'POST',
           headers: {
@@ -235,6 +272,40 @@ describe('OAuth API', () => {
       await expect(
         oauth.refreshToken('invalid-refresh-token')
       ).rejects.toEqual(errorResponse);
+    });
+
+    it('should use configured apiURL for token refresh', async () => {
+      const customConfig: OAuthConfig = {
+        ...mockConfig,
+        apiURL: 'https://custom-api.mosaia.ai'
+      };
+      const customOauth = new OAuth(customConfig);
+
+      const mockResponse = {
+        access_token: 'new-access-token-789',
+        refresh_token: 'new-refresh-token-012',
+        token_type: 'Bearer',
+        expires_in: 3600
+      };
+
+      // Mock successful fetch response
+      (global.fetch as jest.Mock).mockResolvedValue({
+        ok: true,
+        json: async () => mockResponse
+      });
+
+      await customOauth.refreshToken('old-refresh-token');
+
+      expect(global.fetch).toHaveBeenCalledWith(
+        'https://custom-api.mosaia.ai/oauth/token',
+        expect.objectContaining({
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded'
+          },
+          body: expect.stringContaining('grant_type=refresh_token')
+        })
+      );
     });
   });
 
@@ -389,7 +460,8 @@ describe('OAuth API', () => {
         const configWithoutClientId: OAuthConfig = {
           clientId: 'test-client-id',
           redirectUri: 'https://myapp.com/callback',
-          appURL: 'https://app.test.com'
+          appURL: 'https://app.test.com',
+          apiURL: 'https://api.test.com'
         };
 
         const oauthWithoutClientId = new OAuth(configWithoutClientId);

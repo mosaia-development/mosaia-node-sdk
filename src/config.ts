@@ -1,3 +1,5 @@
+import { MosiaConfig } from './types';
+
 /**
  * Global configuration file for the Mosaia SDK
  */
@@ -44,5 +46,136 @@ export const DEFAULT_CONFIG = {
     }
 } as const;
 
-// Type for the configuration
-export type MosaiaConfig = typeof DEFAULT_CONFIG; 
+/**
+ * Configuration Manager for the Mosaia SDK
+ * 
+ * Provides a single source of truth for configuration across the entire SDK.
+ * This prevents configuration copies and mutations, ensuring consistency.
+ * 
+ * @example
+ * ```typescript
+ * const configManager = ConfigurationManager.getInstance();
+ * configManager.initialize({
+ *   apiKey: 'your-api-key',
+ *   apiURL: 'https://api.mosaia.ai'
+ * });
+ * 
+ * // Access configuration anywhere in the SDK
+ * const config = configManager.getConfig();
+ * ```
+ */
+export class ConfigurationManager {
+    private static instance: ConfigurationManager;
+    private config: MosiaConfig | null = null;
+    private readonly defaultConfig = DEFAULT_CONFIG;
+
+    private constructor() {}
+
+    /**
+     * Get the singleton instance of ConfigurationManager
+     */
+    public static getInstance(): ConfigurationManager {
+        if (!ConfigurationManager.instance) {
+            ConfigurationManager.instance = new ConfigurationManager();
+        }
+        return ConfigurationManager.instance;
+    }
+
+    /**
+     * Initialize the configuration manager with user settings
+     * 
+     * @param userConfig - User-provided configuration
+     */
+    public initialize(userConfig: Partial<MosiaConfig>): void {
+        const apiURL = userConfig.apiURL || this.defaultConfig.API.BASE_URL;
+        const version = userConfig.version || this.defaultConfig.API.VERSION;
+        const appURL = userConfig.appURL || this.defaultConfig.APP.URL;
+
+        this.config = {
+            ...userConfig,
+            apiURL,
+            version,
+            appURL
+        } as MosiaConfig;
+    }
+
+    /**
+     * Get the current configuration
+     * 
+     * @returns The current configuration object
+     * @throws Error if configuration hasn't been initialized
+     */
+    public getConfig(): MosiaConfig {
+        if (!this.config) {
+            throw new Error('Configuration not initialized. Call initialize() first.');
+        }
+        return this.config;
+    }
+
+    /**
+     * Get a read-only copy of the configuration
+     * 
+     * @returns A frozen copy of the configuration
+     */
+    public getReadOnlyConfig(): Readonly<MosiaConfig> {
+        return Object.freeze({ ...this.getConfig() });
+    }
+
+    /**
+     * Update a specific configuration value
+     * 
+     * @param key - The configuration key to update
+     * @param value - The new value
+     */
+    public updateConfig<K extends keyof MosiaConfig>(key: K, value: MosiaConfig[K]): void {
+        if (!this.config) {
+            throw new Error('Configuration not initialized. Call initialize() first.');
+        }
+        this.config = { ...this.config, [key]: value };
+    }
+
+    /**
+     * Get the API base URL with version
+     * 
+     * @returns The full API URL with version
+     */
+    public getApiUrl(): string {
+        const config = this.getConfig();
+        return `${config.apiURL || this.defaultConfig.API.BASE_URL}/v${config.version || this.defaultConfig.API.VERSION}`;
+    }
+
+    /**
+     * Get the app URL
+     * 
+     * @returns The app URL
+     */
+    public getAppUrl(): string {
+        const config = this.getConfig();
+        return config.appURL || this.defaultConfig.APP.URL;
+    }
+
+    /**
+     * Get the API key
+     * 
+     * @returns The API key
+     */
+    public getApiKey(): string | undefined {
+        return this.getConfig().apiKey;
+    }
+
+    /**
+     * Check if configuration is initialized
+     * 
+     * @returns True if configuration has been initialized
+     */
+    public isInitialized(): boolean {
+        return this.config !== null;
+    }
+
+    /**
+     * Reset configuration to default
+     */
+    public reset(): void {
+        this.config = null;
+    }
+} 

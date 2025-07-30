@@ -1,5 +1,7 @@
 import APIClient from './api-client';
+import Mosaia from '../index';
 import { MosiaConfig, AuthRequest, AuthResponse, APIResponse } from '../types';
+import { ConfigurationManager } from '../config';
 
 /**
  * Authentication API client for managing user authentication
@@ -10,7 +12,7 @@ import { MosiaConfig, AuthRequest, AuthResponse, APIResponse } from '../types';
  * 
  * @example
  * ```typescript
- * const auth = new Auth(config);
+ * const auth = new Auth();
  * 
  * // Sign in with password
  * const authResponse = await auth.signInWithPassword(
@@ -31,14 +33,23 @@ import { MosiaConfig, AuthRequest, AuthResponse, APIResponse } from '../types';
  */
 export default class Auth {
     private client: APIClient;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new Authentication API client instance
      * 
-     * @param config - Configuration object containing API settings
+     * Uses ConfigurationManager for configuration settings.
      */
-    constructor(config: MosiaConfig) {
-        this.client = new APIClient(config);
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.client = new APIClient();
+    }
+
+    /**
+     * Get the current configuration
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**
@@ -64,14 +75,37 @@ export default class Auth {
      * console.log('Refresh token:', authResponse.data.refresh_token);
      * ```
      */
-    async signInWithPassword(email: string, password: string, clientId: string): Promise<APIResponse<AuthResponse>> {
+    async signInWithPassword(email: string, password: string, clientId: string): Promise<Mosaia> {
         const request: AuthRequest = {
             grant_type: 'password',
             email,
             password,
             client_id: clientId
         };
-        return this.client.POST<AuthResponse>('/auth/signin', request);
+
+        try {
+            const {
+                meta,
+                data,
+                error
+            } = await this.client.POST<AuthResponse>('/auth/signin', request);
+
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            const config = {
+                ...this.config,
+                apiKey: data.access_token,
+                refreshToken: data.refresh_token
+            }
+            return Promise.resolve(new Mosaia(config));
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error((error as any).message);
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 
     /**
@@ -100,7 +134,16 @@ export default class Auth {
             client_id: clientId,
             client_secret: clientSecret
         };
-        return this.client.POST<AuthResponse>('/auth/signin', request);
+        
+        try {
+            const response = await this.client.POST<AuthResponse>('/auth/signin', request);
+            return response;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error((error as any).message);
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 
     /**

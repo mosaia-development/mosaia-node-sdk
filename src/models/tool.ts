@@ -1,16 +1,8 @@
-import {
-    Tools
-} from '../apis';
-import {
-    ToolInterface
-} from '../types';
+import { ToolInterface } from '../types';
+import { BaseModel } from './base';
 
-export default class Tool {
-    private tools: Tools;
-    public props: ToolInterface;
-
-    constructor(tools: Tools, tool: ToolInterface) {
-        this.props = tool;
-        this.tools = tools;
+export default class Tool extends BaseModel<ToolInterface> {
+    constructor(data: Partial<ToolInterface>, uri?: string) {
+        super(data, uri || '/tool');
     }
-}
+} 

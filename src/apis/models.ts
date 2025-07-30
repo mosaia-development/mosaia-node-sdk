@@ -1,16 +1,17 @@
 import APIClient from './api-client';
-import { MosiaConfig, ModelInterface, GetModelsPayload, GetModelPayload, APIResponse, ChatCompletionRequest, ChatCompletionResponse } from '../types';
+import { MosiaConfig, ModelInterface, GetModelsPayload, GetModelPayload, QueryParams, APIResponse, ChatCompletionRequest, ChatCompletionResponse } from '../types';
+import { ConfigurationManager } from '../config';
 
 /**
  * Models API client for managing AI models
  * 
  * This class provides methods for creating, reading, updating, and deleting
- * AI models on the Mosaia platform. Models can be used by agents and
- * support OpenAI-compatible chat completions.
+ * AI models on the Mosaia platform. Models define the AI capabilities
+ * available for agents and applications.
  * 
  * @example
  * ```typescript
- * const models = new Models(config);
+ * const models = new Models();
  * 
  * // Get all models
  * const allModels = await models.getAll();
@@ -20,31 +21,32 @@ import { MosiaConfig, ModelInterface, GetModelsPayload, GetModelPayload, APIResp
  * 
  * // Create new model
  * const newModel = await models.create({
- *   name: 'Custom GPT-4',
- *   short_description: 'Custom GPT-4 model',
+ *   name: 'GPT-4 Model',
  *   provider: 'openai',
  *   model_id: 'gpt-4',
- *   max_tokens: 4000,
- *   temperature: 0.7
- * });
- * 
- * // Chat completion with model
- * const completion = await models.chatCompletion({
- *   model: 'gpt-4',
- *   messages: [{ role: 'user', content: 'Hello!' }]
+ *   short_description: 'Advanced language model'
  * });
  * ```
  */
 export default class Models {
     private client: APIClient;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new Models API client instance
      * 
-     * @param config - Configuration object containing API settings
+     * Uses ConfigurationManager for configuration settings.
      */
-    constructor(config: MosiaConfig) {
-        this.client = new APIClient(config);
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.client = new APIClient();
+    }
+
+    /**
+     * Get the current configuration
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**

@@ -32,10 +32,19 @@ export interface MosiaConfig {
     clientId?: string;
     /** Client secret for client credentials flow (optional) */
     clientSecret?: string;
-    /** User ID for user-scoped operations (optional) */
-    user?: string;
-    /** Organization ID for org-scoped operations (optional) */
-    org?: string;
+    /** Enable verbose HTTP request/response logging (defaults to false) */
+    verbose?: boolean;
+}
+
+export interface MosaiaAuth {
+    grant_type: 'password' | 'client' | 'refresh';
+    email?: string;
+    password?: string;
+    client_id?: string;
+    client_secret?: string;
+    refresh_token?: string;
+    code?: string;
+    code_verifier?: string;
 }
 
 /**
@@ -47,12 +56,12 @@ export interface MosiaConfig {
  * @template T - The type of data contained in the response
  */
 export interface APIResponse<T> {
-    /** The actual response data */
+    meta: {
+        status: number;
+        message: string;
+    }
     data: T;
-    /** HTTP status code of the response */
-    status: number;
-    /** Optional message from the API */
-    message?: string;
+    error: ErrorResponse;
 }
 
 /**
@@ -88,6 +97,43 @@ export interface PagingInterface {
 }
 
 /**
+ * Query parameters interface for API requests
+ * 
+ * Used to define common query parameters that can be passed to API endpoints
+ * for filtering, sorting, and pagination.
+ * 
+ * @example
+ * ```typescript
+ * const queryParams: QueryParams = {
+ *   limit: 10,
+ *   offset: 0,
+ *   sort: 'created_at',
+ *   order: 'desc',
+ *   search: 'ai assistant',
+ *   tags: ['ai', 'automation'],
+ *   active: true,
+ *   org: 'org-123'
+ * };
+ * ```
+ */
+export interface QueryParams {
+    /** Search term for text-based filtering */
+    q?: string;
+    /** Maximum number of items to return */
+    limit?: number;
+    /** Number of items to skip (for offset-based pagination) */
+    offset?: number;
+    /** Array of tags to filter by */
+    tags?: string[];
+    /** Filter by active status */
+    active?: boolean;
+    /** Filter by external ID */
+    external_id?: string;
+    /** Additional custom query parameters */
+    [key: string]: any;
+}
+
+/**
  * Base entity interface for all platform resources
  * 
  * All entities in the Mosaia platform extend this interface to provide
@@ -96,12 +142,15 @@ export interface PagingInterface {
 export interface BaseEntity {
     /** Unique identifier for the entity */
     id?: string;
-    /** Whether the entity is currently active */
+    /** Whether the entity is active */
     active?: boolean;
-    /** ISO timestamp when the entity was created */
-    created_at?: string;
-    /** ISO timestamp when the entity was last updated */
-    updated_at?: string;
+    /** External system identifier for integration with third-party systems */
+    external_id?: string;
+    /** Extended properties for custom integrations */
+    extensors?: {
+        [key: string]: string;
+    }
+    record_history?: RecordHistory;
 }
 
 /**
@@ -111,10 +160,18 @@ export interface BaseEntity {
  * maintain historical records.
  */
 export interface RecordHistory {
-    /** ISO timestamp when the record was last updated */
-    updated_at: string;
-    /** ISO timestamp when the record was created */
-    created_at: string;
+    /** Timestamp when the record was created */
+    created_at: Date,
+    /** Identifier of who created the record */
+    created_by: String,
+    /** Type of entity that created the record (e.g., 'user', 'client', 'system') */
+    created_by_type: String,
+    /** Timestamp when the record was last updated */
+    updated_at: Date,
+    /** Identifier of who last updated the record */
+    updated_by: String,
+    /** Type of entity that last updated the record (e.g., 'user', 'client', 'system') */
+    updated_by_type: String
 }
 
 /**
@@ -136,28 +193,14 @@ export interface RecordHistory {
  * ```
  */
 export interface UserInterface extends BaseEntity {
-    /** Unique identifier for the user */
-    id?: string;
-    /** User's email address (required) */
-    email: string;
-    /** User's first name */
-    first_name?: string;
-    /** User's last name */
-    last_name?: string;
-    /** User's username/handle */
     username?: string;
-    /** URL to user's profile image */
+    name?: string;
     image?: string;
-    /** User's public blockchain address */
-    public_address?: string;
-    /** Organization ID the user belongs to */
-    org?: string;
-    /** Reference to another user (for delegation) */
-    user?: string;
-    /** External system identifier */
-    external_id?: string;
-    /** Extended properties for custom integrations */
-    extensors?: {
+    description?: string;
+    email?: string;
+    url?: string;
+    location?: string;
+    links?: {
         [key: string]: string;
     }
 }
@@ -196,6 +239,18 @@ export interface OrganizationInterface extends BaseEntity {
     extensors?: {
         [key: string]: string;
     }
+}
+
+/**
+ * Self entity interface
+ * 
+ * Represents the current user's session in the Mosaia platform.
+ */
+export interface SelfInterface extends BaseEntity {
+    user?: UserInterface;
+    org?: OrganizationInterface;
+    orgUser?: OrgUserInterface;
+    client?: ClientInterface;
 }
 
 /**
@@ -957,6 +1012,8 @@ export interface OAuthConfig {
     redirectUri: string;
     /** App URL for authorization endpoints (required) */
     appURL: string;
+    /** API URL for API endpoints (required) */
+    apiURL: string;
     /** Array of scopes to request (optional) */
     scopes?: string[];
     /** State parameter for CSRF protection (optional) */

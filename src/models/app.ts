@@ -1,22 +1,8 @@
-import {
-    AppInterface,
-    MosiaConfig
-} from '../types';
-import {
-    Apps,
-    AppBots
-} from '../apis';
+import { AppInterface } from '../types';
+import { BaseModel } from './base';
 
-export default class App {
-    private apps: Apps;
-    public props: AppInterface;
-
-    constructor(apps: Apps, app: AppInterface) {
-        this.props = app;
-        this.apps = apps;
-    }
-
-    get bots(): AppBots {
-        return new AppBots(this.apps, this.props);
+export default class App extends BaseModel<AppInterface> {
+    constructor(data: Partial<AppInterface>, uri?: string) {
+        super(data, uri || '/app');
     }
 }

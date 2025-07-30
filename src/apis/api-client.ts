@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
 import { MosiaConfig, APIResponse, ErrorResponse } from '../types';
-import { DEFAULT_CONFIG } from '../config';
+import { DEFAULT_CONFIG, ConfigurationManager } from '../config';
 
 /**
  * Internal API client for making HTTP requests to the Mosaia API
@@ -10,37 +10,108 @@ import { DEFAULT_CONFIG } from '../config';
  * 
  * @example
  * ```typescript
- * const client = new APIClient(config);
+ * const client = new APIClient();
  * const users = await client.GET<UserInterface[]>('/user');
  * const newUser = await client.POST<UserInterface>('/user', userData);
  * ```
  */
 export default class APIClient {
-    private client: AxiosInstance;
-    private config: MosiaConfig;
+    private client!: AxiosInstance;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new API client instance
      * 
-     * @param config - Configuration object containing API settings
-     * @param config.apiURL - Base URL for API requests
-     * @param config.apiKey - API key for authentication
+     * Uses the ConfigurationManager to get configuration settings.
+     * No longer requires config parameter as it uses the centralized configuration.
      */
-    constructor(config: MosiaConfig) {
-        this.config = config;
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.initializeClient();
+    }
+
+    /**
+     * Initialize the Axios client with current configuration
+     * 
+     * @private
+     */
+    private initializeClient(): void {
+        const config = this.configManager.getConfig();
+        
         this.client = axios.create({
-            baseURL: config.apiURL,
+            baseURL: `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`,
             headers: {
-                'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey}`,
+                'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
                 'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
             },
         });
 
-        // Add response interceptor for error handling
-        this.client.interceptors.response.use(
-            (response) => response,
-            (error: AxiosError) => this.handleError(error)
-        );
+        // Add request interceptor for logging (only if enabled)
+        if (config.verbose) {
+            this.client.interceptors.request.use(
+                (config) => {
+                    console.log(`🚀 HTTP Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+                    if (config.params) {
+                        console.log('📋 Query Params:', config.params);
+                    }
+                    if (config.data) {
+                        console.log('📦 Request Body:', config.data);
+                    }
+                    return config;
+                },
+                (error) => {
+                    console.error('❌ Request Error:', error);
+                    return Promise.reject(error);
+                }
+            );
+
+            // Add response interceptor for logging and error handling
+            this.client.interceptors.response.use(
+                (response) => {
+                    console.log(`✅ HTTP Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+                    console.log('📄 Response Data:', response.data);
+                    return response;
+                },
+                (error: AxiosError) => {
+                    console.error(`❌ HTTP Error: ${error.response?.status || 'NO_STATUS'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+                    console.error('🚨 Error Details:', {
+                        message: error.message,
+                        status: error.response?.status,
+                        statusText: error.response?.statusText,
+                        data: error.response?.data
+                    });
+                    return this.handleError(error);
+                }
+            );
+        } else {
+            // Add response interceptor for error handling only (no logging)
+            this.client.interceptors.response.use(
+                (response) => response,
+                (error: AxiosError) => this.handleError(error)
+            );
+        }
+    }
+
+    /**
+     * Get the current configuration
+     * 
+     * @returns The current configuration object
+     * @private
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
+    }
+
+    /**
+     * Update the client configuration
+     * 
+     * Reinitializes the Axios client with updated configuration.
+     * This is useful when configuration changes at runtime.
+     * 
+     * @private
+     */
+    private updateClientConfig(): void {
+        this.initializeClient();
     }
 
     /**
@@ -75,6 +146,9 @@ export default class APIClient {
      */
     async GET<T>(path: string, params?: object): Promise<APIResponse<T>> {
         try {
+            // Update client config in case it changed
+            this.updateClientConfig();
+            
             const res = await this.client.get(path, { params });
 
             return Promise.resolve(res.data);
@@ -101,6 +175,9 @@ export default class APIClient {
      */
     async POST<T>(path: string, data?: object): Promise<APIResponse<T>> {
         try {
+            // Update client config in case it changed
+            this.updateClientConfig();
+            
             const res = await this.client.post(path, data);
 
             return Promise.resolve(res.data);
@@ -125,6 +202,9 @@ export default class APIClient {
      */
     async PUT<T>(path: string, data?: object): Promise<APIResponse<T>> {
         try {
+            // Update client config in case it changed
+            this.updateClientConfig();
+            
             const res = await this.client.put(path, data);
 
             return Promise.resolve(res.data);
@@ -148,6 +228,9 @@ export default class APIClient {
      */
     async DELETE<T>(path: string, params?: object): Promise<APIResponse<T>> {
         try {
+            // Update client config in case it changed
+            this.updateClientConfig();
+            
             const res = await this.client.delete(path, { params });
 
             return Promise.resolve(res.data);

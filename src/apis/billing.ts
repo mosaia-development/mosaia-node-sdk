@@ -1,16 +1,16 @@
 import APIClient from './api-client';
-import { MosiaConfig, WalletInterface, MeterInterface, GetWalletsPayload, GetWalletPayload, GetMetersPayload, GetMeterPayload, APIResponse } from '../types';
+import { MosiaConfig, WalletInterface, MeterInterface, GetWalletsPayload, GetWalletPayload, GetMetersPayload, GetMeterPayload, QueryParams, APIResponse } from '../types';
+import { ConfigurationManager } from '../config';
 
 /**
- * Billing API client for managing wallets and usage meters
+ * Billing API client for managing wallets and meters
  * 
- * This class provides methods for managing billing-related resources including
- * wallets (for tracking balances) and meters (for tracking usage). Supports
- * both organization and user-scoped billing operations.
+ * This class provides methods for managing billing-related resources
+ * including wallets and usage meters.
  * 
  * @example
  * ```typescript
- * const billing = new Billing(config);
+ * const billing = new Billing();
  * 
  * // Get all wallets
  * const wallets = await billing.getWallets();
@@ -18,27 +18,29 @@ import { MosiaConfig, WalletInterface, MeterInterface, GetWalletsPayload, GetWal
  * // Get specific wallet
  * const wallet = await billing.getWallet('wallet-id');
  * 
- * // Create new wallet
- * const newWallet = await billing.createWallet({
- *   balance: 100.00,
- *   currency: 'USD',
- *   org: 'org-123'
- * });
- * 
- * // Get usage meters
- * const meters = await billing.getMeters({ type: 'api_calls' });
+ * // Get meters
+ * const meters = await billing.getMeters();
  * ```
  */
 export default class Billing {
     private client: APIClient;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new Billing API client instance
      * 
-     * @param config - Configuration object containing API settings
+     * Uses ConfigurationManager for configuration settings.
      */
-    constructor(config: MosiaConfig) {
-        this.client = new APIClient(config);
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.client = new APIClient();
+    }
+
+    /**
+     * Get the current configuration
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**

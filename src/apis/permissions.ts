@@ -42,8 +42,8 @@ export default class Permissions {
      * 
      * @param config - Configuration object containing API settings
      */
-    constructor(config: MosiaConfig) {
-        this.client = new APIClient(config);
+    constructor() {
+        this.client = new APIClient();
     }
 
     /**

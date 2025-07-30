@@ -148,7 +148,7 @@ export class OAuth {
         });
 
         try {
-            const response = await fetch(`${DEFAULT_CONFIG.API.BASE_URL}/auth/token`, {
+            const response = await fetch(`${this.config.apiURL}/auth/token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -200,7 +200,7 @@ export class OAuth {
         });
 
         try {
-            const response = await fetch(`${DEFAULT_CONFIG.API.BASE_URL}/oauth/token`, {
+            const response = await fetch(`${this.config.apiURL}/oauth/token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',

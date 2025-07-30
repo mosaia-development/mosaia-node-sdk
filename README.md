@@ -12,6 +12,11 @@ A comprehensive Node.js SDK for the Mosaia API platform, providing access to all
 - Get and manage Mosaia Apps
 - Manage agent and group bots
 - Agent inference
+- **AI Model Management** - Create, update, and manage AI models with chat completion support
+- **Client Management** - OAuth client registration and management
+- **Comprehensive Testing** - Full test coverage for all API endpoints
+
+> **Note**: Some API endpoints may not be fully implemented on all server instances. The SDK includes comprehensive error handling and will gracefully handle 404 responses for unimplemented endpoints.
 
 ## Getting Started
 ### Installation
@@ -87,6 +92,12 @@ const users = await mosaia.users.getAll();
 
 // Get all organizations
 const orgs = await mosaia.organizations.getAll();
+
+// Get all models
+const models = await mosaia.models.getAll();
+
+// Get all clients
+const clients = await mosaia.clients.getAll();
 ```
 
 ## Configuration
@@ -596,6 +607,38 @@ const updatedUserPermission = await mosaia.permissions.updateUserPermission('per
 await mosaia.permissions.deleteUserPermission('permission-id');
 ```
 
+## Testing
+
+The SDK includes comprehensive test coverage for all API endpoints. You can run the tests using:
+
+```bash
+# Run all tests
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with coverage
+npm run test:coverage
+
+# Run specific test files
+npm test -- --testPathPattern="models.test.ts"
+```
+
+### Test Coverage
+
+- ✅ **Authentication Tests** - OAuth flows, sign in, token refresh
+- ✅ **Users API Tests** - CRUD operations, filtering, pagination
+- ✅ **Organizations API Tests** - Organization management
+- ✅ **Agents API Tests** - Agent management and chat completion
+- ✅ **Agent Groups API Tests** - Multi-agent collaboration
+- ✅ **Models API Tests** - Model management and OpenAI-compatible chat completion
+- ✅ **Clients API Tests** - OAuth client management
+- ✅ **Apps API Tests** - Application management
+- ✅ **Tools API Tests** - Tool management
+- ✅ **Billing API Tests** - Wallet and meter operations
+- ✅ **Permissions API Tests** - Access policies and permissions
+
 ## Error Handling
 
 ```typescript
@@ -648,6 +691,15 @@ if (app) {
 
 ## What's New
 
+### Version 0.1.0
+- 🧪 **Enhanced Test Coverage**: Added comprehensive test suites for Models and Clients APIs
+- 🔧 **Code Quality**: Removed generated JavaScript files to keep codebase clean
+- 🔧 **Improved .gitignore**: Better patterns to prevent build artifacts from being committed
+- ✅ **Models API Testing**: Full test coverage for model management and chat completion
+- ✅ **Clients API Testing**: Complete test suite for OAuth client operations
+- ✅ **Real-world Testing**: Integration tests with actual API endpoints
+- ✅ **Error Handling**: Improved error handling and response validation
+
 ### Version 0.0.10
 - 🔧 **Configuration Improvements**: `baseURL` → `apiURL`, `frontendURL` → `appURL`
 - 🔧 **OAuth URL Fix**: Authorization URLs now use configured `appURL` instead of hardcoded defaults
@@ -658,7 +710,7 @@ if (app) {
 - ✅ **Organizations API**: Organization CRUD operations
 - ✅ **Agents API**: AI agent management with chat completion
 - ✅ **Agent Groups API**: Multi-agent collaboration
-- ✅ **Models API**: AI model management
+- ✅ **Models API**: AI model management with OpenAI-compatible chat completion
 - ✅ **Clients API**: OAuth client management
 - ✅ **Billing API**: Wallet and meter operations
 - ✅ **Permissions API**: Access policies and permission management
@@ -666,6 +718,48 @@ if (app) {
 - ✅ **Comprehensive Test Suite**: 100% test coverage
 - ✅ **OAuth Support**: PKCE flow implementation
 - ✅ **Error Handling**: Structured error responses
+
+## Development
+
+### Code Quality
+
+The SDK maintains high code quality standards:
+
+- **TypeScript**: Full type safety with comprehensive type definitions
+- **Clean Codebase**: No generated JavaScript files in source directories
+- **Comprehensive Testing**: 100% test coverage for all API endpoints
+- **Linting**: ESLint configuration for code consistency
+- **Documentation**: JSDoc comments for all public APIs
+
+### Build Process
+
+```bash
+# Install dependencies
+npm install
+
+# Build the SDK
+npm run build
+
+# Run tests
+npm test
+
+# Run tests with coverage
+npm run test:coverage
+```
+
+### Project Structure
+
+```
+src/
+├── apis/           # API endpoint implementations
+├── models/         # Entity model classes
+├── oauth/          # OAuth authentication
+├── utils/          # Utility functions
+├── __tests__/      # Test files
+├── config.ts       # Configuration management
+├── index.ts        # Main SDK entry point
+└── types.ts        # TypeScript type definitions
+```
 
 ## Contributing
 

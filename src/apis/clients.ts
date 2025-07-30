@@ -1,5 +1,6 @@
 import APIClient from './api-client';
 import { MosiaConfig, ClientInterface, GetClientsPayload, GetClientPayload, APIResponse } from '../types';
+import { ConfigurationManager } from '../config';
 
 /**
  * Clients API client for managing OAuth clients
@@ -10,7 +11,7 @@ import { MosiaConfig, ClientInterface, GetClientsPayload, GetClientPayload, APIR
  * 
  * @example
  * ```typescript
- * const clients = new Clients(config);
+ * const clients = new Clients();
  * 
  * // Get all clients
  * const allClients = await clients.getAll();
@@ -29,14 +30,23 @@ import { MosiaConfig, ClientInterface, GetClientsPayload, GetClientPayload, APIR
  */
 export default class Clients {
     private client: APIClient;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new Clients API client instance
      * 
-     * @param config - Configuration object containing API settings
+     * Uses ConfigurationManager for configuration settings.
      */
-    constructor(config: MosiaConfig) {
-        this.client = new APIClient(config);
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.client = new APIClient();
+    }
+
+    /**
+     * Get the current configuration
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**

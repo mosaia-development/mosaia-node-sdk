@@ -1,7 +1,26 @@
-import { Apps, Tools, AppBots, Users, Organizations, Agents, AgentGroups, Models, Clients, Auth, Billing, Permissions } from './apis';
-import { App, Tool, AppBot } from './models';
-import { MosiaConfig, OAuthConfig } from './types';
-import { DEFAULT_CONFIG } from './config';
+import {
+    Apps,
+    Tools,
+    AppBots,
+    Users,
+    Organizations,
+    Agents,
+    AgentGroups,
+    Models,
+    Clients,
+    Auth,
+    Billing,
+    Permissions,
+} from './apis';
+import { Self } from './models';
+import APIClient from './apis/api-client';
+import {
+    MosiaConfig,
+    OAuthConfig,
+    UserInterface,
+    MosaiaAuth
+} from './types';
+import { DEFAULT_CONFIG, ConfigurationManager } from './config';
 import { OAuth } from './oauth';
 import { isSdkError } from './utils';
 
@@ -34,7 +53,7 @@ import { isSdkError } from './utils';
  * ```
  */
 class Mosaia {
-    private config: MosiaConfig;
+    private configManager: ConfigurationManager;
     
     /**
      * Creates a new Mosaia SDK instance
@@ -60,18 +79,15 @@ class Mosaia {
      * ```
      */
     constructor(config: MosiaConfig) {
-        const apiURL = `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`;
-        const appURL = config.appURL || DEFAULT_CONFIG.APP.URL;
-        const user = config.user;
-        const org = config.org;
+        this.configManager = ConfigurationManager.getInstance();
+        this.configManager.initialize(config);
+    }
 
-        this.config = {
-            ...config,
-            apiURL,
-            appURL,
-            user,
-            org,
-        };
+    /**
+     * Get the current configuration
+     */
+    get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**
@@ -94,7 +110,7 @@ class Mosaia {
      * ```
      */
     set apiKey(apiKey: string) {
-        this.config.apiKey = apiKey;
+        this.configManager.updateConfig('apiKey', apiKey);
     }
 
     /**
@@ -117,7 +133,7 @@ class Mosaia {
      * ```
      */
     set version(version: string) {
-        this.config.version = version;
+        this.configManager.updateConfig('version', version);
     }
 
     /**
@@ -143,7 +159,7 @@ class Mosaia {
      * ```
      */
     set apiURL(apiURL: string) {
-        this.config.apiURL = apiURL;
+        this.configManager.updateConfig('apiURL', apiURL);
     }
 
     /**
@@ -172,7 +188,7 @@ class Mosaia {
      * ```
      */
     set appURL(appURL: string) {
-        this.config.appURL = appURL;
+        this.configManager.updateConfig('appURL', appURL);
     }
 
     /**
@@ -198,7 +214,7 @@ class Mosaia {
      * ```
      */
     set clientId(clientId: string) {
-        this.config.clientId = clientId;
+        this.configManager.updateConfig('clientId', clientId);
     }
 
     /**
@@ -225,7 +241,89 @@ class Mosaia {
      * ```
      */
     set clientSecret(clientSecret: string) {
-        this.config.clientSecret = clientSecret;
+        this.configManager.updateConfig('clientSecret', clientSecret);
+    }
+
+    /**
+     * Access to Authentication API
+     * 
+     * Handle authentication flows, including sign in, sign out, token refresh, and session management.
+     * 
+     * @returns {Auth} Authentication API client
+     * 
+     * @example
+     * ```typescript
+     * // Sign in with password
+     * const auth = await mosaia.auth.signInWithPassword('user@example.com', 'password', 'client-id');
+     * 
+     * // Sign in with client credentials
+     * const auth = await mosaia.auth.signInWithClient('client-id', 'client-secret');
+     * 
+     * // Refresh token
+     * const newAuth = await mosaia.auth.refreshToken('refresh-token');
+     * 
+     * // Sign out
+     * await mosaia.auth.signOut();
+     * ```
+     */
+    get auth() {
+        return new Auth();
+    }
+
+    /**
+     * API Functions
+     */
+
+    /**
+     * Access to Agents API
+     * 
+     * Manage AI agents, including CRUD operations, chat completions, and agent-specific functionality.
+     * 
+     * @returns {Agents} Agents API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all agents
+     * const agents = await mosaia.agents.getAll();
+     * 
+     * // Get specific agent
+     * const agent = await mosaia.agents.getById('agent-id');
+     * 
+     * // Create chat completion
+     * const completion = await mosaia.agents.chatCompletion('agent-id', {
+     *   model: 'gpt-4',
+     *   messages: [{ role: 'user', content: 'Hello' }]
+     * });
+     * ```
+     */
+    get agents() {
+        return new Agents();
+    }
+
+    async self() {
+        try {
+            if (!this.config) {
+                throw new Error('Mosaia is not initialized');
+            }
+    
+            const client = new APIClient();
+            const {
+                meta,
+                data,
+                error
+            } = await client.GET<UserInterface>('/self');
+    
+            if (error) {
+                throw new Error(error.message);
+            }
+
+            return new Self(data);
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error((error as any).message);
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 
     /**
@@ -251,7 +349,7 @@ class Mosaia {
      * ```
      */
     get apps() {
-        return new Apps(this.config);
+        return new Apps();
     }
 
     /**
@@ -278,7 +376,7 @@ class Mosaia {
      * ```
      */
     get tools() {
-        return new Tools(this.config);
+        return new Tools();
     }
 
     /**
@@ -305,7 +403,7 @@ class Mosaia {
      * ```
      */
     get users() {
-        return new Users(this.config);
+        return new Users();
     }
 
     /**
@@ -331,33 +429,7 @@ class Mosaia {
      * ```
      */
     get organizations() {
-        return new Organizations(this.config);
-    }
-
-    /**
-     * Access to Agents API
-     * 
-     * Manage AI agents, including CRUD operations, chat completions, and agent-specific functionality.
-     * 
-     * @returns {Agents} Agents API client
-     * 
-     * @example
-     * ```typescript
-     * // Get all agents
-     * const agents = await mosaia.agents.getAll();
-     * 
-     * // Get specific agent
-     * const agent = await mosaia.agents.getById('agent-id');
-     * 
-     * // Create chat completion
-     * const completion = await mosaia.agents.chatCompletion('agent-id', {
-     *   model: 'gpt-4',
-     *   messages: [{ role: 'user', content: 'Hello' }]
-     * });
-     * ```
-     */
-    get agents() {
-        return new Agents(this.config);
+        return new Organizations();
     }
 
     /**
@@ -382,7 +454,7 @@ class Mosaia {
      * ```
      */
     get agentGroups() {
-        return new AgentGroups(this.config);
+        return new AgentGroups();
     }
 
     /**
@@ -409,7 +481,7 @@ class Mosaia {
      * ```
      */
     get models() {
-        return new Models(this.config);
+        return new Models();
     }
 
     /**
@@ -435,33 +507,7 @@ class Mosaia {
      * ```
      */
     get clients() {
-        return new Clients(this.config);
-    }
-
-    /**
-     * Access to Authentication API
-     * 
-     * Handle authentication flows, including sign in, sign out, token refresh, and session management.
-     * 
-     * @returns {Auth} Authentication API client
-     * 
-     * @example
-     * ```typescript
-     * // Sign in with password
-     * const auth = await mosaia.auth.signInWithPassword('user@example.com', 'password', 'client-id');
-     * 
-     * // Sign in with client credentials
-     * const auth = await mosaia.auth.signInWithClient('client-id', 'client-secret');
-     * 
-     * // Refresh token
-     * const newAuth = await mosaia.auth.refreshToken('refresh-token');
-     * 
-     * // Sign out
-     * await mosaia.auth.signOut();
-     * ```
-     */
-    get auth() {
-        return new Auth(this.config);
+        return new Clients();
     }
 
     /**
@@ -487,7 +533,7 @@ class Mosaia {
      * ```
      */
     get billing() {
-        return new Billing(this.config);
+        return new Billing();
     }
 
     /**
@@ -514,7 +560,7 @@ class Mosaia {
      * ```
      */
     get permissions() {
-        return new Permissions(this.config);
+        return new Permissions();
     }
 
     /**
@@ -567,10 +613,15 @@ class Mosaia {
             throw new Error('appURL is required to initialize OAuth');
         }
 
+        if (!this.config.apiURL) {
+            throw new Error('apiURL is required to initialize OAuth');
+        }
+
         return new OAuth({
             clientId: this.config.clientId,
             redirectUri,
             appURL: this.config.appURL,
+            apiURL: this.config.apiURL,
             scopes
         });
     }

@@ -5,6 +5,7 @@ import {
     ToolInterface
 } from '../types';
 import APIClient from './api-client';
+import { ConfigurationManager } from '../config';
 
 /**
  * Tools API client for managing tools and integrations
@@ -15,7 +16,7 @@ import APIClient from './api-client';
  * 
  * @example
  * ```typescript
- * const tools = new Tools(config);
+ * const tools = new Tools();
  * 
  * // Get all tools
  * const allTools = await tools.get();
@@ -36,29 +37,23 @@ import APIClient from './api-client';
  */
 export default class Tools {
     private client: APIClient;
-    public config: MosiaConfig;
+    private configManager: ConfigurationManager;
 
     /**
      * Creates a new Tools API client instance
      * 
-     * @param config - Configuration object containing API settings
-     * @throws {Error} When neither user nor org ID is provided in config
+     * Uses ConfigurationManager for configuration settings.
      */
-    constructor(config: MosiaConfig) {
-        let apiURL;
-        if (config.user) {
-            apiURL = `${config.apiURL}/user/${config.user}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
-        } else if(config.org) {
-            apiURL = `${config.apiURL}/org/${config.org}${DEFAULT_CONFIG.ENDPOINTS.TOOLS}`;
-        } else {
-            throw new Error('User or org id is required to call tools endpoint');
-        }
+    constructor() {
+        this.configManager = ConfigurationManager.getInstance();
+        this.client = new APIClient();
+    }
 
-        this.config = {
-            ...config,
-            apiURL,
-        };
-        this.client = new APIClient(this.config);
+    /**
+     * Get the current configuration
+     */
+    private get config(): MosiaConfig {
+        return this.configManager.getConfig();
     }
 
     /**
@@ -90,11 +85,11 @@ export default class Tools {
         const { data } = await this.client.GET(uri);
 
         if (Array.isArray(data)) {
-            return data.map(tool => new Tool(this, tool));
+            return data.map(tool => new Tool(tool));
         }
 
         if (data) {
-            return new Tool(this, data as ToolInterface);
+            return new Tool(data as ToolInterface);
         }
         return null;
     }
@@ -123,14 +118,14 @@ export default class Tools {
 
         if (Array.isArray(data)) {
             if(data.length) {
-                return (data.map(tool => new Tool(this, tool)))[0];
+                return (data.map(tool => new Tool(tool)))[0];
             } else {
                 return null;
             }
         }
 
         if (data) {
-            return new Tool(this, data as ToolInterface);
+            return new Tool(data as ToolInterface);
         }
         return null;
     }
@@ -164,7 +159,7 @@ export default class Tools {
     async create(tool: ToolInterface): Promise<Tool> {
         const { data } = await this.client.POST('', tool);
 
-        return new Tool(this, data as ToolInterface);
+        return new Tool(data as ToolInterface);
     }
 
     /**
@@ -188,7 +183,7 @@ export default class Tools {
     async update(tool: ToolInterface): Promise<Tool> {
         const { data } = await this.client.PUT(`/${tool.id}`, tool);
 
-        return new Tool(this, data as ToolInterface);
+        return new Tool(data as ToolInterface);
     }
 
     /**

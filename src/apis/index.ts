@@ -22,18 +22,25 @@
  * ```
  */
 
+import Agents from './agents';
 import Apps from './apps';
-import Tools from './tools';
-import AppBots from './app-bots';
+import Auth from './auth';
 import Users from './users';
 import Organizations from './organizations';
-import Agents from './agents';
-import AgentGroups from './agent-groups';
-import Models from './models';
-import Clients from './clients';
-import Auth from './auth';
+import OrgUsers from './org-users';
+import Tools from './tools';
 import Billing from './billing';
 import Permissions from './permissions';
+import Clients from './clients';
+import Models from './models';
+import AppBots from './app-bots';
+import AgentGroups from './agent-groups';
+
+/**
+ * Agents API client for managing AI agents
+ * @see {@link Agents}
+ */
+export { Agents };
 
 /**
  * Applications API client for managing applications
@@ -42,16 +49,10 @@ import Permissions from './permissions';
 export { Apps };
 
 /**
- * Tools API client for managing tools and integrations
- * @see {@link Tools}
+ * Authentication API client for managing user authentication
+ * @see {@link Auth}
  */
-export { Tools };
-
-/**
- * App Bots API client for managing application bots
- * @see {@link AppBots}
- */
-export { AppBots };
+export { Auth };
 
 /**
  * Users API client for managing user accounts
@@ -66,43 +67,49 @@ export { Users };
 export { Organizations };
 
 /**
- * Agents API client for managing AI agents
- * @see {@link Agents}
+ * Org user API client for managing org users
+ * @see {@link OrgUsers}
  */
-export { Agents };
+export { OrgUsers };
 
 /**
- * Agent Groups API client for managing AI agent groups
- * @see {@link AgentGroups}
+ * Tools API client for managing tools
+ * @see {@link Tools}
  */
-export { AgentGroups };
+export { Tools };
 
 /**
- * Models API client for managing AI models
- * @see {@link Models}
- */
-export { Models };
-
-/**
- * Clients API client for managing OAuth clients
- * @see {@link Clients}
- */
-export { Clients };
-
-/**
- * Authentication API client for managing user authentication
- * @see {@link Auth}
- */
-export { Auth };
-
-/**
- * Billing API client for managing wallets and usage meters
+ * Billing API client for managing billing
  * @see {@link Billing}
  */
 export { Billing };
 
 /**
- * Permissions API client for managing access policies and permissions
+ * Permissions API client for managing permissions
  * @see {@link Permissions}
  */
 export { Permissions };
+
+/**
+ * Clients API client for managing clients
+ * @see {@link Clients}
+ */
+export { Clients };
+
+/**
+ * Models API client for managing models
+ * @see {@link Models}
+ */
+export { Models };
+
+/**
+ * AppBots API client for managing app bots
+ * @see {@link AppBots}
+ */
+export { AppBots };
+
+/**
+ * AgentGroups API client for managing agent groups
+ * @see {@link AgentGroups}
+ */
+export { AgentGroups };
