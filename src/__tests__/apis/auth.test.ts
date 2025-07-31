@@ -1,4 +1,4 @@
-import Auth from '../../apis/auth';
+import MosaiaAuth from '../../apis/auth';
 import { ConfigurationManager } from '../../config';
 import APIClient from '../../apis/api-client';
 import { AuthRequest, AuthResponse } from '../../types';
@@ -29,8 +29,8 @@ jest.mock('../../apis/api-client', () => {
 // Mock fetch for OAuth tests
 global.fetch = jest.fn();
 
-describe('Auth', () => {
-  let auth: Auth;
+describe('MosaiaAuth', () => {
+  let auth: MosaiaAuth;
   let mockAPIClient: jest.Mocked<APIClient>;
   let mockConfigManager: jest.Mocked<ConfigurationManager>;
 
@@ -60,12 +60,12 @@ describe('Auth', () => {
       version: '1',
     });
 
-    auth = new Auth();
+    auth = new MosaiaAuth();
   });
 
   describe('constructor', () => {
-    it('should create Auth instance with APIClient and ConfigurationManager', () => {
-      expect(auth).toBeInstanceOf(Auth);
+    it('should create MosaiaAuth instance with APIClient and ConfigurationManager', () => {
+      expect(auth).toBeInstanceOf(MosaiaAuth);
       expect(APIClient).toHaveBeenCalled();
       expect(ConfigurationManager.getInstance).toHaveBeenCalled();
     });
@@ -263,6 +263,9 @@ describe('Auth', () => {
         version: '1',
       });
 
+      // Recreate auth instance to pick up the new config
+      auth = new MosaiaAuth();
+
       const mockResponse = {
         data: {
           access_token: 'new-access-token',
@@ -437,6 +440,9 @@ describe('Auth', () => {
         version: '1',
       });
 
+      // Recreate auth instance to pick up the new config
+      auth = new MosaiaAuth();
+
       const mockResponse = {
         data: { success: true },
         error: null
@@ -491,6 +497,9 @@ describe('Auth', () => {
         apiURL: 'https://api.test.com',
         version: '1',
       });
+
+      // Recreate auth instance to pick up the new config
+      auth = new MosaiaAuth();
 
       const mockResponse = {
         data: {

@@ -9,7 +9,7 @@ import {
     AgentGroups,
     Models,
     Clients,
-    Auth
+    MosaiaAuth
 } from './apis';
 import { Session } from './models';
 import APIClient from './apis/api-client';
@@ -273,7 +273,7 @@ class Mosaia {
      * ```
      */
     get auth() {
-        return new Auth();
+        return new MosaiaAuth();
     }
 
     /**
@@ -306,6 +306,11 @@ class Mosaia {
         return new Agents();
     }
 
+    /**
+     * Get the current user session
+     * 
+     * @returns {Session} Session object
+     */
     async session() {
         try {
             if (!this.config) {

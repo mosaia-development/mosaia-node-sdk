@@ -1,4 +1,4 @@
-import Mosaia from './src';
+import Mosaia, { MosaiaAuth } from './src';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -32,11 +32,22 @@ const authentication = async () => {
         });
 
         console.log(' Attempting to sign in...');
-        mosaia.config = await mosaia.auth.signInWithPassword(
+        const authConfig = await mosaia.auth.signInWithPassword(
             USER_EMAIL as string, 
             USER_PASSWORD as string, 
             CLIENT_ID as string
         );
+
+        console.log('authConfig:', authConfig);
+        console.log(' Attempting to refresh...');
+        const auth = new MosaiaAuth(authConfig);
+        const refreshConfig = await auth.refreshToken();
+
+        console.log('refreshConfig:', refreshConfig);
+        mosaia.config = refreshConfig;
+
+        const session = await mosaia.session();
+        console.log('session:', session);
         
         return mosaia;
     } catch (error) {

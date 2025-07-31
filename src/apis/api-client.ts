@@ -1,6 +1,12 @@
 import axios, { AxiosInstance, AxiosError } from 'axios';
-import { MosaiaConfig, APIResponse, ErrorResponse } from '../types';
+import MosaiaAuth from './auth';
+import {
+    MosaiaConfig,
+    APIResponse,
+    ErrorResponse
+} from '../types';
 import { DEFAULT_CONFIG, ConfigurationManager } from '../config';
+import { isTimestampExpired } from '../utils';
 
 /**
  * Internal API client for making HTTP requests to the Mosaia API
@@ -18,6 +24,7 @@ import { DEFAULT_CONFIG, ConfigurationManager } from '../config';
 export default class APIClient {
     private apiClient!: AxiosInstance;
     private configManager: ConfigurationManager;
+    private config?: MosaiaConfig;
 
     /**
      * Creates a new API client instance
@@ -25,7 +32,8 @@ export default class APIClient {
      * Uses the ConfigurationManager to get configuration settings.
      * No longer requires config parameter as it uses the centralized configuration.
      */
-    constructor() {
+    constructor(config?: MosaiaConfig) {
+        if (config) this.config = config;
         this.configManager = ConfigurationManager.getInstance();
         this.initializeClient();
     }
@@ -35,71 +43,77 @@ export default class APIClient {
      * 
      * @private
      */
-    private initializeClient(): void {
-        const config = this.configManager.getConfig();
-        
-        this.apiClient = axios.create({
-            baseURL: `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`,
-            headers: {
-                'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
-                'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
-            },
-        });
+    private async initializeClient(): Promise<void> {
+        try {
+            let config = this.config;
 
-        // Add request interceptor for logging (only if enabled)
-        if (config.verbose) {
-            this.apiClient.interceptors.request.use(
-                (config) => {
-                    console.log(`🚀 HTTP Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-                    if (config.params) {
-                        console.log('📋 Query Params:', config.params);
-                    }
-                    if (config.data) {
-                        console.log('📦 Request Body:', config.data);
-                    }
-                    return config;
-                },
-                (error) => {
-                    console.error('❌ Request Error:', error);
-                    return Promise.reject(error);
-                }
-            );
+            if (!this.config) config = this.configManager.getConfig();        
+            // Parse and validate expiration timestamp if it exists
+            if (config?.exp && isTimestampExpired(config.exp)) {
+                const auth = new MosaiaAuth();
 
-            // Add response interceptor for logging and error handling
-            this.apiClient.interceptors.response.use(
-                (response) => {
-                    console.log(`✅ HTTP Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
-                    console.log('📄 Response Data:', response.data);
-                    return response;
+                const refreshedConfig = await auth.refreshToken();
+                this.configManager.setConfig(refreshedConfig);
+                config = refreshedConfig;
+            }
+
+            if (!config) throw new Error('No valid config found');
+
+            this.apiClient = axios.create({
+                baseURL: `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`,
+                headers: {
+                    'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
+                    'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
                 },
-                (error: AxiosError) => {
-                    console.error(`❌ HTTP Error: ${error.response?.status || 'NO_STATUS'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
-                    console.error('🚨 Error Details:', {
-                        message: error.message,
-                        status: error.response?.status,
-                        statusText: error.response?.statusText,
-                        data: error.response?.data
-                    });
-                    return this.handleError(error);
-                }
-            );
-        } else {
-            // Add response interceptor for error handling only (no logging)
-            this.apiClient.interceptors.response.use(
-                (response) => response,
-                (error: AxiosError) => this.handleError(error)
-            );
+            });
+
+            // Add request interceptor for logging (only if enabled)
+            if (config.verbose) {
+                this.apiClient.interceptors.request.use(
+                    (config) => {
+                        console.log(`🚀 HTTP Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
+                        if (config.params) {
+                            console.log('📋 Query Params:', config.params);
+                        }
+                        if (config.data) {
+                            console.log('📦 Request Body:', config.data);
+                        }
+                        return config;
+                    },
+                    (error) => {
+                        console.error('❌ Request Error:', error);
+                        return Promise.reject(error);
+                    }
+                );
+
+                // Add response interceptor for logging and error handling
+                this.apiClient.interceptors.response.use(
+                    (response) => {
+                        console.log(`✅ HTTP Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
+                        console.log('📄 Response Data:', response.data);
+                        return response;
+                    },
+                    (error: AxiosError) => {
+                        console.error(`❌ HTTP Error: ${error.response?.status || 'NO_STATUS'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
+                        console.error('🚨 Error Details:', {
+                            message: error.message,
+                            status: error.response?.status,
+                            statusText: error.response?.statusText,
+                            data: error.response?.data
+                        });
+                        return this.handleError(error);
+                    }
+                );
+            } else {
+                // Add response interceptor for error handling only (no logging)
+                this.apiClient.interceptors.response.use(
+                    (response) => response,
+                    (error: AxiosError) => this.handleError(error)
+                );
+            }
+        } catch (error) {
+            throw error;
         }
-    }
-
-    /**
-     * Get the current configuration
-     * 
-     * @returns The current configuration object
-     * @private
-     */
-    private get config(): MosaiaConfig {
-        return this.configManager.getConfig();
     }
 
     /**
@@ -110,8 +124,12 @@ export default class APIClient {
      * 
      * @private
      */
-    private updateClientConfig(): void {
-        this.initializeClient();
+    private async updateClientConfig(): Promise<void> {
+        try {
+            this.initializeClient();
+        } catch (error) {
+            throw error;
+        }
     }
 
     /**
@@ -146,7 +164,7 @@ export default class APIClient {
      */
     async GET<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
         // Update client config in case it changed
-        this.updateClientConfig();
+        await this.updateClientConfig();
         
         const res = await this.apiClient.get(path, { params });
 
@@ -171,7 +189,7 @@ export default class APIClient {
      */
     async POST<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
         // Update client config in case it changed
-        this.updateClientConfig();
+        await this.updateClientConfig();
         
         const res = await this.apiClient.post(path, data);
 
@@ -194,7 +212,7 @@ export default class APIClient {
      */
     async PUT<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
         // Update client config in case it changed
-        this.updateClientConfig();
+        await this.updateClientConfig();
         
         const res = await this.apiClient.put(path, data);
 
@@ -216,7 +234,7 @@ export default class APIClient {
      */
     async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
         // Update client config in case it changed
-        this.updateClientConfig();
+        await this.updateClientConfig();
         
         const res = await this.apiClient.delete(path, { params });
 

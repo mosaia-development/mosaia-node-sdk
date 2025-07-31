@@ -97,6 +97,15 @@ export class ConfigurationManager {
     }
 
     /**
+     * Set the current configuration
+     * 
+     * @param config - The new configuration object
+     */
+    public setConfig(config: MosaiaConfig): void {
+        this.config = config;
+    }
+
+    /**
      * Get a read-only copy of the configuration
      * 
      * @returns A frozen copy of the configuration

@@ -16,7 +16,7 @@ import { ConfigurationManager } from '../config';
  * 
  * @example
  * ```typescript
- * const auth = new Auth();
+ * const auth = new MosaiaAuth();
  * 
  * // Sign in with email and password
  * const mosaia = await auth.signInWithPassword('user@example.com', 'password', 'client-id');
@@ -31,9 +31,10 @@ import { ConfigurationManager } from '../config';
  * await auth.signOut('api-key');
  * ```
  */
-export default class Auth {
+export default class MosaiaAuth {
     private apiClient: APIClient;
-    private configManager: ConfigurationManager;
+    private configManager?: ConfigurationManager;
+    private config?: MosaiaConfig;
 
     /**
      * Creates a new Authentication API client instance
@@ -43,19 +44,13 @@ export default class Auth {
      * 
      * Uses ConfigurationManager for configuration settings.
      */
-    constructor() {
-        this.configManager = ConfigurationManager.getInstance();
-        this.apiClient = new APIClient();
-    }
-
-    /**
-     * Get the current configuration
-     * 
-     * @returns The current configuration object
-     * @private
-     */
-    private get config(): MosaiaConfig {
-        return this.configManager.getConfig();
+    constructor(config?: MosaiaConfig) {
+        this.config = config;
+        if (!this.config) {
+            this.configManager = ConfigurationManager.getInstance();
+            this.config = this.configManager.getConfig();
+        }
+        this.apiClient = new APIClient(this.config);
     }
 
     /**
@@ -72,7 +67,7 @@ export default class Auth {
      * 
      * @example
      * ```typescript
-     * const auth = new Auth();
+     * const auth = new MosaiaAuth();
      * try {
      *   const mosaiaConfig = await auth.signInWithPassword('user@example.com', 'password', 'client-id');
      *   mosaia.config = mosaiaConfig;
@@ -89,7 +84,7 @@ export default class Auth {
             password,
             client_id: clientId
         };
-
+        
         try {
             const {
                 data,
@@ -132,7 +127,7 @@ export default class Auth {
      * 
      * @example
      * ```typescript
-     * const auth = new Auth();
+     * const auth = new MosaiaAuth();
      * try {
      *   const mosaiaConfig = await auth.signInWithClient('client-id', 'client-secret');
      *   mosaia.config = mosaiaConfig;
@@ -191,7 +186,7 @@ export default class Auth {
      * 
      * @example
      * ```typescript
-     * const auth = new Auth();
+     * const auth = new MosaiaAuth();
      * try {
      *   // Use refresh token from config
      *   const mosaia = await auth.refreshToken();
@@ -205,7 +200,7 @@ export default class Auth {
      * ```
      */
     async refreshToken(token?: string): Promise<MosaiaConfig> {
-        const refreshToken = token || this.config.refreshToken;
+        const refreshToken = token || this.config?.refreshToken;
 
         if (!refreshToken) {
             throw new Error('Refresh token is required and not found in config');
@@ -276,7 +271,7 @@ export default class Auth {
         });
 
         try {
-            const response = await fetch(`${this.config.apiURL}/auth/token`, {
+            const response = await fetch(`${this.config?.apiURL}/auth/token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -314,7 +309,7 @@ export default class Auth {
      * 
      * @example
      * ```typescript
-     * const auth = new Auth();
+     * const auth = new MosaiaAuth();
      * try {
      *   // Sign out using API key from config
      *   await auth.signOut();
@@ -328,7 +323,7 @@ export default class Auth {
      * ```
      */
     async signOut(apiKey?: string): Promise<void> {
-        const token = apiKey || this.config.apiKey;
+        const token = apiKey || this.config?.apiKey;
 
         if (!token) {
             throw new Error('apiKey is required and not found in config');
@@ -337,7 +332,7 @@ export default class Auth {
         try {
             await this.apiClient.DELETE<void>('/auth/signout', { token });
 
-            this.configManager.reset();
+            if (this.configManager) this.configManager.reset();
         } catch (error) {
             if ((error as any).message) {
                 throw new Error((error as any).message);

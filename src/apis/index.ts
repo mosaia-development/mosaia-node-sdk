@@ -27,7 +27,7 @@
  * const apps = new Apps();
  * const tools = new Tools();
  * const agents = new Agents();
- * const auth = new Auth();
+ * const auth = new MosaiaAuth();
  * 
  * // Use the clients
  * const allApps = await apps.get();
@@ -38,7 +38,7 @@
 
 import Agents from './agents';
 import Apps from './apps';
-import Auth from './auth';
+import MosaiaAuth from './auth';
 import Users from './users';
 import Organizations from './organizations';
 import OrgUsers from './org-users';
@@ -74,9 +74,9 @@ export { Apps };
  * Provides authentication methods including password-based login, client credentials,
  * and token refresh operations for secure access to the Mosaia platform.
  * 
- * @see {@link Auth}
+ * @see {@link MosaiaAuth}
  */
-export { Auth };
+export { MosaiaAuth };
 
 /**
  * Users API client for managing user accounts

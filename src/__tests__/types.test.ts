@@ -1,6 +1,6 @@
 import {
   MosaiaConfig,
-  MosaiaAuth,
+  AuthInterface,
   APIResponse,
   ErrorResponse,
   PagingInterface,
@@ -78,9 +78,9 @@ describe('MosaiaConfig', () => {
   });
 });
 
-describe('MosaiaAuth', () => {
+describe('AuthInterface', () => {
   it('should support password grant type', () => {
-    const auth: MosaiaAuth = {
+    const auth: AuthInterface = {
       grant_type: 'password',
       email: 'user@example.com',
       password: 'password123'
@@ -91,7 +91,7 @@ describe('MosaiaAuth', () => {
   });
 
   it('should support client grant type', () => {
-    const auth: MosaiaAuth = {
+    const auth: AuthInterface = {
       grant_type: 'client',
       client_id: 'client-id',
       client_secret: 'client-secret'
@@ -102,7 +102,7 @@ describe('MosaiaAuth', () => {
   });
 
   it('should support refresh grant type', () => {
-    const auth: MosaiaAuth = {
+    const auth: AuthInterface = {
       grant_type: 'refresh',
       refresh_token: 'refresh-token'
     };

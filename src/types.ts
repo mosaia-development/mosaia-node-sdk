@@ -48,7 +48,7 @@ export interface MosaiaConfig {
     exp?: string;
 }
 
-export interface MosaiaAuth {
+export interface AuthInterface {
     grant_type: 'password' | 'client' | 'refresh';
     email?: string;
     password?: string;

@@ -104,6 +104,40 @@ export type SuccessResponse<T = any> = {
 }
 
 /**
+ * Validates if a timestamp string is expired
+ * 
+ * This function parses a timestamp string (typically from JWT tokens) and checks
+ * if it represents a time that has already passed.
+ * 
+ * @param timestamp - The timestamp string to validate (e.g., '1754078962511')
+ * @returns True if the timestamp is in the past (expired), false otherwise
+ * 
+ * @example
+ * ```typescript
+ * isTimestampExpired('1754078962511'); // true if current time > 1754078962511
+ * isTimestampExpired('9999999999999'); // false (future timestamp)
+ * isTimestampExpired(''); // false (invalid timestamp)
+ * ```
+ */
+export function isTimestampExpired(timestamp: string): boolean {
+    if (!timestamp || timestamp.trim() === '') {
+        return false;
+    }
+    
+    // Check if the string contains non-numeric characters (except for the first character which could be a minus sign)
+    if (!/^-?\d+$/.test(timestamp)) {
+        return false;
+    }
+    
+    const parsedTimestamp = parseInt(timestamp, 10);
+    if (isNaN(parsedTimestamp)) {
+        return false;
+    }
+    
+    return parsedTimestamp < Date.now();
+}
+
+/**
  * Creates a standardized failure response
  * 
  * @param error - Error message describing the failure
