@@ -20,7 +20,7 @@ import { ConfigurationManager } from '../config';
  * @template T - The interface type that this model implements
  */
 export abstract class BaseModel<T> {
-    protected client: APIClient;
+    protected apiClient: APIClient;
     protected configManager: ConfigurationManager;
     protected data: Partial<T>;
     protected uri: string = '';
@@ -38,7 +38,7 @@ export abstract class BaseModel<T> {
             }
         });
         // Create API client (uses ConfigurationManager internally)
-        this.client = new APIClient();
+        this.apiClient = new APIClient();
     }
 
     /**
@@ -87,24 +87,6 @@ export abstract class BaseModel<T> {
         Object.assign(this, updates);
     }
 
-
-
-    /**
-     * Create a new instance
-     * 
-     * @returns Promise that resolves to the created model instance
-     */
-    async create(): Promise<T> {
-        try {
-            const response = await this.client.POST<T>(this.uri, this.toAPIPayload() as any);
-            // Update the model's data with the response
-            this.update(response.data);
-            return response.data;
-        } catch (error) {
-            throw this.handleError(error);
-        }
-    }
-
     /**
      * Save an existing instance
      * 
@@ -117,7 +99,7 @@ export abstract class BaseModel<T> {
             if (!this.hasId()) {
                 throw new Error('Entity ID is required for update');
             }
-            const response = await this.client.PUT<T>(`${this.uri}/${(this as any).id}`, this.toJSON() as any);
+            const response = await this.apiClient.PUT<T>(`${this.uri}/${(this as any).id}`, this.toJSON() as any);
             // Update the model's data with the response
             this.update(response.data);
             return response.data;
@@ -137,7 +119,7 @@ export abstract class BaseModel<T> {
             if (!this.hasId()) {
                 throw new Error('Entity ID is required for deletion');
             }
-            await this.client.DELETE<void>(`${this.uri}/${(this as any).id}`);
+            await this.apiClient.DELETE<void>(`${this.uri}/${(this as any).id}`);
             // Clear the model's data after deletion
             this.clearData();
         } catch (error) {

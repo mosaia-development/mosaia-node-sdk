@@ -32,7 +32,7 @@ import { ConfigurationManager } from '../config';
  * ```
  */
 export default class Auth {
-    private client: APIClient;
+    private apiClient: APIClient;
     private configManager: ConfigurationManager;
 
     /**
@@ -45,7 +45,7 @@ export default class Auth {
      */
     constructor() {
         this.configManager = ConfigurationManager.getInstance();
-        this.client = new APIClient();
+        this.apiClient = new APIClient();
     }
 
     /**
@@ -94,7 +94,7 @@ export default class Auth {
             const {
                 data,
                 error
-            } = await this.client.POST<AuthResponse>('/auth/signin', request);
+            } = await this.apiClient.POST<AuthResponse>('/auth/signin', request);
 
             if (error) {
                 throw new Error(error.message);
@@ -153,7 +153,7 @@ export default class Auth {
             const {
                 data,
                 error
-            } = await this.client.POST<AuthResponse>('/auth/signin', request);
+            } = await this.apiClient.POST<AuthResponse>('/auth/signin', request);
 
             if (error) {
                 throw new Error(error.message);
@@ -220,7 +220,7 @@ export default class Auth {
             const {
                 data,
                 error
-            } = await this.client.POST<AuthResponse>('/auth/signin', request);
+            } = await this.apiClient.POST<AuthResponse>('/auth/signin', request);
 
             if (error) {
                 throw new Error(error.message);
@@ -335,7 +335,7 @@ export default class Auth {
         }
 
         try {
-            await this.client.DELETE<void>('/auth/signout', { token });
+            await this.apiClient.DELETE<void>('/auth/signout', { token });
 
             this.configManager.reset();
         } catch (error) {

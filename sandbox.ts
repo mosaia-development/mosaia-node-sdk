@@ -48,10 +48,6 @@ const authentication = async () => {
     }
 }
 
-const getSelf = async (mosaia: Mosaia) => {
-    return mosaia.self();
-}
-
 async function testSDK() {
     const mosaia = await authentication();
 
@@ -80,17 +76,9 @@ async function testSDK() {
         }
     }
 
-
-    // const res = await firstAgent.chatCompletion({
-    //     messages: [
-    //         { role: "user", content: "Hello, who are you?" }
-    //     ]
-    // });
-    // console.log('res:', res);
-    // const self = await getSelf(mosaia);
-    // const { user } = self;
-    // console.log('user:', user);
-    // console.log('agents api:', user?.agents);
+    const { user } = await mosaia.session();
+    console.log('user:', user);
+    console.log('agents api:', user?.agents);
 
 
     

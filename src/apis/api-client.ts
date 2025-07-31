@@ -16,7 +16,7 @@ import { DEFAULT_CONFIG, ConfigurationManager } from '../config';
  * ```
  */
 export default class APIClient {
-    private client!: AxiosInstance;
+    private apiClient!: AxiosInstance;
     private configManager: ConfigurationManager;
 
     /**
@@ -38,7 +38,7 @@ export default class APIClient {
     private initializeClient(): void {
         const config = this.configManager.getConfig();
         
-        this.client = axios.create({
+        this.apiClient = axios.create({
             baseURL: `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`,
             headers: {
                 'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
@@ -48,7 +48,7 @@ export default class APIClient {
 
         // Add request interceptor for logging (only if enabled)
         if (config.verbose) {
-            this.client.interceptors.request.use(
+            this.apiClient.interceptors.request.use(
                 (config) => {
                     console.log(`🚀 HTTP Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
                     if (config.params) {
@@ -66,7 +66,7 @@ export default class APIClient {
             );
 
             // Add response interceptor for logging and error handling
-            this.client.interceptors.response.use(
+            this.apiClient.interceptors.response.use(
                 (response) => {
                     console.log(`✅ HTTP Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
                     console.log('📄 Response Data:', response.data);
@@ -85,7 +85,7 @@ export default class APIClient {
             );
         } else {
             // Add response interceptor for error handling only (no logging)
-            this.client.interceptors.response.use(
+            this.apiClient.interceptors.response.use(
                 (response) => response,
                 (error: AxiosError) => this.handleError(error)
             );
@@ -145,16 +145,12 @@ export default class APIClient {
      * ```
      */
     async GET<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
-        try {
-            // Update client config in case it changed
-            this.updateClientConfig();
-            
-            const res = await this.client.get(path, { params });
+        // Update client config in case it changed
+        this.updateClientConfig();
+        
+        const res = await this.apiClient.get(path, { params });
 
-            return Promise.resolve(res.data);
-        } catch (error) { 
-            return Promise.reject(error);
-        }
+        return Promise.resolve(res.data);
     }
 
     /**
@@ -174,16 +170,12 @@ export default class APIClient {
      * ```
      */
     async POST<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        try {
-            // Update client config in case it changed
-            this.updateClientConfig();
-            
-            const res = await this.client.post(path, data);
+        // Update client config in case it changed
+        this.updateClientConfig();
+        
+        const res = await this.apiClient.post(path, data);
 
-            return Promise.resolve(res.data);
-        } catch (error) { 
-            return Promise.reject(error);
-        }
+        return Promise.resolve(res.data);
     }
     
     /**
@@ -201,16 +193,12 @@ export default class APIClient {
      * ```
      */
     async PUT<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        try {
-            // Update client config in case it changed
-            this.updateClientConfig();
-            
-            const res = await this.client.put(path, data);
+        // Update client config in case it changed
+        this.updateClientConfig();
+        
+        const res = await this.apiClient.put(path, data);
 
-            return Promise.resolve(res.data);
-        } catch (error) { 
-            return Promise.reject(error);
-        }
+        return Promise.resolve(res.data);
     }
 
     /**
@@ -227,31 +215,27 @@ export default class APIClient {
      * ```
      */
     async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
-        try {
-            // Update client config in case it changed
-            this.updateClientConfig();
-            
-            const res = await this.client.delete(path, { params });
+        // Update client config in case it changed
+        this.updateClientConfig();
+        
+        const res = await this.apiClient.delete(path, { params });
 
-            // Handle 204 No Content responses
-            if (res.status === 204) {
-                return Promise.resolve({
-                    meta: {
-                        status: 204,
-                        message: 'Success'
-                    },
-                    data: undefined as T,
-                    error: {
-                        message: '',
-                        code: '',
-                        status: 204
-                    }
-                });
-            }
-
-            return Promise.resolve(res.data);
-        } catch (error) { 
-            return Promise.reject(error);
+        // Handle 204 No Content responses
+        if (res.status === 204) {
+            return Promise.resolve({
+                meta: {
+                    status: 204,
+                    message: 'Success'
+                },
+                data: undefined as T,
+                error: {
+                    message: '',
+                    code: '',
+                    status: 204
+                }
+            });
         }
+
+        return Promise.resolve(res.data);
     }
 }

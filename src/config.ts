@@ -24,25 +24,9 @@ export const DEFAULT_CONFIG = {
 
     // Error Messages
     ERRORS: {
-        NO_AUTH: 'Run bot.auth($YOUR_MOSAIA_BOT_KEY) first',
         UNKNOWN_ERROR: 'Unknown Error',
         DEFAULT_STATUS: 'UNKNOWN',
         DEFAULT_STATUS_CODE: 400,
-    },
-
-    // API Endpoints
-    ENDPOINTS: {
-        APPS: '/app',
-        TOOLS: '/tool',
-        BOTS: '/bot',
-    },
-
-    // Response Types
-    RESPONSE: {
-        SUCCESS: {
-            data: null,
-            error: null
-        }
     }
 } as const;
 

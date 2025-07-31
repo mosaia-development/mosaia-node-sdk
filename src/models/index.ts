@@ -45,7 +45,7 @@
 import { BaseModel } from './base';
 import Agent from './agent';
 import App from './app';
-import Self from './self';
+import Session from './session';
 import User from './user';
 import Organization from './organization';
 import OrgUser from './org-user';
@@ -74,10 +74,10 @@ export { User };
 export { App };
 
 /**
- * Self model for managing current authenticated entity information
- * @see {@link Self}
+ * Session model for managing current authenticated entity information
+ * @see {@link Session}
  */
-export { Self };
+export { Session };
 
 /**
  * Agent model for managing AI agent configurations and operations

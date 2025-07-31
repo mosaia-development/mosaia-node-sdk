@@ -9,7 +9,9 @@
     "prepare": "npm run build",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage"
+    "test:coverage": "jest --coverage",
+    "test:runner": "tsx src/__tests__/run-tests.ts",
+    "test:all": "npm run test:coverage && npm run test:runner"
   },
   "repository": {
     "type": "git",

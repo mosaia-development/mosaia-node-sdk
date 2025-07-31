@@ -191,7 +191,7 @@ export default class User extends BaseModel<UserInterface> {
             const {
                 data,
                 error
-            } = await this.client.POST<GetUserPayload>(`${this.getUri()}/profile/image/upload`, formData);
+            } = await this.apiClient.POST<GetUserPayload>(`${this.getUri()}/profile/image/upload`, formData);
             
             if (error) {
                 throw new Error(error.message);

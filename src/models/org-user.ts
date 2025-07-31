@@ -182,7 +182,7 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
             const {
                 data,
                 error
-            } = await this.client.GET<AuthResponse>(`${this.uri}/session`);
+            } = await this.apiClient.GET<AuthResponse>(`${this.uri}/session`);
 
             if (error) {
                 throw new Error(error.message);
@@ -224,7 +224,7 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
      */
     async disable(): Promise<void> {
         try {
-            const { error } = await this.client.DELETE<void>(`${this.getUri()}`);
+            const { error } = await this.apiClient.DELETE<void>(`${this.getUri()}`);
 
             if (error) {
                 throw new Error(error.message);

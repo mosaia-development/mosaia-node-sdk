@@ -105,7 +105,7 @@ export default class Agent extends BaseModel<AgentInterface> {
             const {
                 data,
                 error
-            } = await this.client.POST<GetAgentPayload>(`${this.getUri()}/image/upload`, formData);
+            } = await this.apiClient.POST<GetAgentPayload>(`${this.getUri()}/image/upload`, formData);
             
             if (error) {
                 throw new Error(error.message);
@@ -159,6 +159,6 @@ export default class Agent extends BaseModel<AgentInterface> {
 
         if (isAsync) uri += '?type=async';
 
-        return this.client.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
+        return this.apiClient.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
     }
 }

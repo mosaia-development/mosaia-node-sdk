@@ -11,7 +11,7 @@ import {
     Clients,
     Auth
 } from './apis';
-import { Self } from './models';
+import { Session } from './models';
 import APIClient from './apis/api-client';
 import {
     MosaiaConfig,
@@ -306,7 +306,7 @@ class Mosaia {
         return new Agents();
     }
 
-    async self() {
+    async session() {
         try {
             if (!this.config) {
                 throw new Error('Mosaia is not initialized');
@@ -314,7 +314,6 @@ class Mosaia {
     
             const client = new APIClient();
             const {
-                meta,
                 data,
                 error
             } = await client.GET<UserInterface>('/self');
@@ -323,7 +322,7 @@ class Mosaia {
                 throw new Error(error.message);
             }
 
-            return new Self(data);
+            return new Session(data);
         } catch (error) {
             if ((error as any).message) {
                 throw new Error((error as any).message);
@@ -491,87 +490,6 @@ class Mosaia {
     }
 
     /**
-     * Access to Clients API
-     * 
-     * Manage OAuth clients, including CRUD operations and client-specific functionality.
-     * 
-     * @returns {Clients} Clients API client
-     * 
-     * @example
-     * ```typescript
-     * // Get all clients
-     * const clients = await mosaia.clients.get();
-     * 
-     * // Get specific client
-     * const client = await mosaia.clients.get({}, 'client-id');
-     * 
-     * // Create new client
-     * const newClient = await mosaia.clients.create({
-     *   name: 'My Client',
-     *   client_id: 'client-id'
-     * });
-     * ```
-     */
-    get clients() {
-        return new Clients();
-    }
-
-    /**
-     * Access to App Bots API
-     * 
-     * Manage application-bot integrations, including CRUD operations and bot-specific functionality.
-     * 
-     * @returns {AppBots} App Bots API client
-     * 
-     * @example
-     * ```typescript
-     * // Get all app bots
-     * const appBots = await mosaia.appBots.get();
-     * 
-     * // Get specific app bot
-     * const appBot = await mosaia.appBots.get({}, 'app-bot-id');
-     * 
-     * // Create new app bot
-     * const newAppBot = await mosaia.appBots.create({
-     *   app: 'app-id',
-     *   response_url: 'https://webhook.example.com/callback',
-     *   agent: 'agent-id'
-     * });
-     * ```
-     */
-    get appBots() {
-        return new AppBots();
-    }
-
-    /**
-     * Access to Organization Users API
-     * 
-     * Manage user-organization relationships, including CRUD operations and permission management.
-     * 
-     * @returns {OrgUsers} Organization Users API client
-     * 
-     * @example
-     * ```typescript
-     * // Get all organization users
-     * const orgUsers = await mosaia.orgUsers.get();
-     * 
-     * // Get specific organization user
-     * const orgUser = await mosaia.orgUsers.get({}, 'org-user-id');
-     * 
-     * // Create new organization user
-     * const newOrgUser = await mosaia.orgUsers.create({
-     *   org: 'org-id',
-     *   user: 'user-id',
-     *   permission: 'member'
-     * });
-     * ```
-     */
-    get orgUsers() {
-        return new OrgUsers();
-    }
-
-
-    /**
      * Creates a new OAuth instance for handling OAuth2 Authorization Code flow with PKCE
      * 
      * This method creates an OAuth client that supports the PKCE (Proof Key for Code Exchange)
@@ -599,11 +517,11 @@ class Mosaia {
      * // Redirect user to the authorization URL
      * // After user authorizes, you'll receive a code in your callback
      * 
-     * // Exchange code for token (requires the code verifier)
-     * const token = await oauth.exchangeCodeForToken(code, codeVerifier);
+     * // Exchange code for new authenticated config (requires the code verifier)
+     * const newConfig = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
      * 
-     * // Refresh token when needed
-     * const newToken = await oauth.refreshToken(token.refresh_token);
+     * // create new instance with authenticated config
+     * const newMosaiaInstance = new Mosaia(newConfig);
      * ```
      */
     oauth({

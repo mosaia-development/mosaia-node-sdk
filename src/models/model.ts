@@ -111,6 +111,6 @@ export default class Model extends BaseModel<ModelInterface> {
         let uri = '/chat/completions';
 
         if (isAsync) uri += '?type=async';
-        return this.client.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
+        return this.apiClient.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
     }
 }

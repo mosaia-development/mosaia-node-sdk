@@ -229,7 +229,7 @@ const agents = new Agents();
 class MyClass {
   constructor(config) {
     this.config = { ...config }; // Copying config
-    this.client = new APIClient(config);
+    this.apiClient = new APIClient(config);
   }
 }
 
@@ -237,7 +237,7 @@ class MyClass {
 class MyClass {
   constructor() {
     const configManager = ConfigurationManager.getInstance();
-    this.client = new APIClient(configManager.getConfig());
+    this.apiClient = new APIClient(configManager.getConfig());
   }
 }
 ```

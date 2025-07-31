@@ -71,7 +71,7 @@ export default class Organization extends BaseModel<OrganizationInterface> {
             const {
                 data,
                 error
-            } = await this.client.POST<GetUserPayload>(`${this.getUri}/profile/image/upload`, formData);
+            } = await this.apiClient.POST<GetUserPayload>(`${this.getUri}/profile/image/upload`, formData);
             
             if (error) {
                 throw new Error(error.message);

@@ -73,7 +73,7 @@ export interface APIResponse<T> {
         message: string;
     }
     data: T;
-    error: ErrorResponse;
+    error?: ErrorResponse | null;
 }
 
 /**
@@ -254,11 +254,11 @@ export interface OrganizationInterface extends BaseEntity {
 }
 
 /**
- * Self entity interface
+ * Session entity interface
  * 
  * Represents the current user's session in the Mosaia platform.
  */
-export interface SelfInterface extends BaseEntity {
+export interface SessionInterface extends BaseEntity {
     user?: UserInterface;
     org?: OrganizationInterface;
     orgUser?: OrgUserInterface;

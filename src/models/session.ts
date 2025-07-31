@@ -1,13 +1,18 @@
 import {
-    MosaiaConfig,
-    SelfInterface,
-    UserInterface
+    SessionInterface,
+    UserInterface,
+    OrganizationInterface,
+    OrgUserInterface,
+    ClientInterface
 } from '../types';
 import { BaseModel } from './base';
 import User from './user';
+import Organization from './organization';
+import OrgUser from './org-user';
+import Client from './client';
 
 /**
- * Self class for managing current user/entity information in the Mosaia SDK
+ * session class for managing current user/entity information in the Mosaia SDK
  * 
  * Represents the current authenticated entity's information, including user data,
  * organization relationships, and client information. This class provides access
@@ -17,14 +22,14 @@ import User from './user';
  * - Current user data management and access
  * - User profile information retrieval
  * - Organization and client relationship access (commented out for future implementation)
- * - Integration with the Mosaia API for self operations
+ * - Integration with the Mosaia API for session operations
  * 
  * @example
  * ```typescript
- * import { Self } from 'mosaia-node-sdk';
+ * import { session } from 'mosaia-node-sdk';
  * 
- * // Create a self instance with current user data
- * const self = new Self({
+ * // Create a session instance with current user data
+ * const session = new session({
  *   user: {
  *     id: 'current-user-id',
  *     name: 'John Doe',
@@ -33,34 +38,34 @@ import User from './user';
  * });
  * 
  * // Access current user information
- * const currentUser = self.user;
+ * const currentUser = session.user;
  * if (currentUser) {
  *   console.log('Current user:', currentUser.name);
  *   console.log('User email:', currentUser.email);
  * }
  * 
  * // Update user information
- * self.user = {
+ * session.user = {
  *   id: 'current-user-id',
  *   name: 'John Doe Updated',
  *   email: 'john.updated@example.com'
  * };
  * ```
  * 
- * @extends BaseModel<SelfInterface>
+ * @extends BaseModel<SessionInterface>
  */
-export default class Self extends BaseModel<SelfInterface> {
+export default class Session extends BaseModel<SessionInterface> {
     /**
-     * Creates a new Self instance
+     * Creates a new Session instance
      * 
-     * Initializes a self instance with the provided data representing the current
+     * Initializes a session instance with the provided data representing the current
      * authenticated entity's information.
      * 
-     * @param data - Self interface data containing current user/entity information
+     * @param data - Session interface data containing current user/entity information
      * 
      * @example
      * ```typescript
-     * const self = new Self({
+     * const session = new Session({
      *   user: {
      *     id: 'user-123',
      *     name: 'Jane Doe',
@@ -69,7 +74,7 @@ export default class Self extends BaseModel<SelfInterface> {
      * });
      * ```
      */
-    constructor(data: Partial<SelfInterface>) {
+        constructor(data: Partial<SessionInterface>) {
         super(data);
     }
 
@@ -83,7 +88,7 @@ export default class Self extends BaseModel<SelfInterface> {
      * 
      * @example
      * ```typescript
-     * const currentUser = self.user;
+     * const currentUser = session.user;
      * if (currentUser) {
      *   console.log('Logged in as:', currentUser.name);
      *   console.log('User ID:', currentUser.id);
@@ -102,13 +107,13 @@ export default class Self extends BaseModel<SelfInterface> {
     /**
      * Set the current user information
      * 
-     * Updates the current user data in the self instance.
+     * Updates the current user data in the session instance.
      * 
      * @param user - User interface data to set as the current user
      * 
      * @example
      * ```typescript
-     * self.user = {
+     * session.user = {
      *   id: 'new-user-id',
      *   name: 'Updated Name',
      *   email: 'updated@example.com'
@@ -129,18 +134,29 @@ export default class Self extends BaseModel<SelfInterface> {
      * 
      * @example
      * ```typescript
-     * const currentOrg = self.org;
+     * const currentOrg = session.org;
      * if (currentOrg) {
      *   console.log('Current organization:', currentOrg.name);
      * }
      * ```
      */
-    // get org(): Organization | null {
-    //     if (this.data.org) {
-    //         return new Organization(this.data.org, this.config);
-    //     }
-    //     return null;
-    // }
+    get org(): Organization | null {
+        if (this.data.org) {
+            return new Organization(this.data.org);
+        }
+        return null;
+    }
+
+    /**
+     * Set the current organization information
+     * 
+     * Updates the current organization data in the session instance.
+     * 
+     * @param org - Organization interface data to set as the current organization
+     */
+    set org(org: OrganizationInterface) {
+        this.data.org = org;
+    }
 
     /**
      * Get the current organization user relationship
@@ -152,18 +168,29 @@ export default class Self extends BaseModel<SelfInterface> {
      * 
      * @example
      * ```typescript
-     * const orgUser = self.orgUser;
+     * const orgUser = session.orgUser;
      * if (orgUser) {
      *   console.log('Organization role:', orgUser.permission);
      * }
      * ```
      */
-    // get orgUser(): OrgUser | null {
-    //     if (this.data.orgUser) {
-    //         return new OrgUser(this.data.orgUser, this.config);
-    //     }
-    //     return null;
-    // }
+    get orgUser(): OrgUser | null {
+        if (this.data.orgUser) {
+            return new OrgUser(this.data.orgUser);
+        }
+        return null;
+    }
+
+    /**
+     * Set the current organization user relationship
+     * 
+     * Updates the current organization user relationship data in the session instance.
+     * 
+     * @param orgUser - OrgUser interface data to set as the current organization user relationship
+     */
+    set orgUser(orgUser: OrgUserInterface) {
+        this.data.orgUser = orgUser;
+    }
 
     /**
      * Get the current client information
@@ -175,17 +202,28 @@ export default class Self extends BaseModel<SelfInterface> {
      * 
      * @example
      * ```typescript
-     * const currentClient = self.client;
+     * const currentClient = session.client;
      * if (currentClient) {
      *   console.log('Client name:', currentClient.name);
      *   console.log('Client ID:', currentClient.client_id);
      * }
      * ```
      */
-    // get client(): Client | null {
-    //     if (this.data.client) {
-    //         return new Client(this.data.client, this.config);
-    //     }
-    //     return null;
-    // }
+    get client(): Client | null {
+        if (this.data.client) {
+            return new Client(this.data.client);
+        }
+        return null;
+    }
+
+    /**
+     * Set the current client information
+     * 
+     * Updates the current client data in the session instance.
+     * 
+     * @param client - Client interface data to set as the current client
+     */
+    set client(client: ClientInterface) {
+        this.data.client = client;
+    }
 }

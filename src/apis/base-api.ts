@@ -28,7 +28,7 @@ export abstract class BaseAPI<
     GetPayload = any,
     CreatePayload = any
 > {
-    protected client: APIClient;
+    protected apiClient: APIClient;
     protected configManager: ConfigurationManager;
     protected uri: string;
     protected ModelClass: new (data: Partial<T>, uri?: string) => M;
@@ -41,7 +41,7 @@ export abstract class BaseAPI<
      */
     constructor(uri: string, ModelClass: new (data: Partial<T>) => M) {
         this.configManager = ConfigurationManager.getInstance();
-        this.client = new APIClient();
+        this.apiClient = new APIClient();
         this.uri = uri;
         this.ModelClass = ModelClass;
     }
@@ -65,14 +65,18 @@ export abstract class BaseAPI<
             let uri = this.uri;
             if (id) uri = `${uri}/${id}`;
             
-            const response = await this.client.GET<GetPayload>(uri, params);
+            const response = await this.apiClient.GET<GetPayload>(uri, params);
 
             // Handle the case where response might be undefined or null
             if (!response || !response.data) {
                 throw new Error('Invalid response from API');
             }
 
-            const { data, error } = response;
+            const {
+                data,
+                error,
+                paging
+            } = response;
 
             if (error) {
                 throw new Error(String(error.message || 'Unknown error'));
@@ -97,8 +101,6 @@ export abstract class BaseAPI<
         }
     }
 
-
-
     /**
      * Create a new entity
      * 
@@ -107,7 +109,7 @@ export abstract class BaseAPI<
      */
     async create(entity: Omit<T, 'id'>): Promise<M> {
         try {
-            const response = await this.client.POST<CreatePayload>(this.uri, entity);
+            const response = await this.apiClient.POST<CreatePayload>(this.uri, entity);
 
             // Handle the case where response might be undefined or null
             if (!response || !response.data) {
