@@ -3,7 +3,8 @@ import {
     UserInterface,
     OrganizationInterface,
     OrgUserInterface,
-    ClientInterface
+    ClientInterface,
+    SessionPermissionsInterface
 } from '../types';
 import { BaseModel } from './base';
 import User from './user';
@@ -175,8 +176,8 @@ export default class Session extends BaseModel<SessionInterface> {
      * ```
      */
     get orgUser(): OrgUser | null {
-        if (this.data.orgUser) {
-            return new OrgUser(this.data.orgUser);
+        if (this.data.org_user) {
+            return new OrgUser(this.data.org_user);
         }
         return null;
     }
@@ -189,7 +190,7 @@ export default class Session extends BaseModel<SessionInterface> {
      * @param orgUser - OrgUser interface data to set as the current organization user relationship
      */
     set orgUser(orgUser: OrgUserInterface) {
-        this.data.orgUser = orgUser;
+        this.data.org_user = orgUser;
     }
 
     /**
@@ -225,5 +226,19 @@ export default class Session extends BaseModel<SessionInterface> {
      */
     set client(client: ClientInterface) {
         this.data.client = client;
+    }
+
+    /**
+     * Get the current permission information
+     * 
+     * Returns the current permission data in the session instance.
+     * 
+     * @returns Permission data for the current session
+     */
+    get permissions(): SessionPermissionsInterface | null {
+        if (!this.data.permissions) {
+            return null;
+        }
+        return this.data.permissions;
     }
 }

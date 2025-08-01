@@ -191,7 +191,7 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
             const config = {
                 ...this.config,
                 apiKey: data.access_token,
-                refreshToken: data.refresh_token
+                session: data
             }
             return Promise.resolve(new Mosaia(config));
         } catch (error) {

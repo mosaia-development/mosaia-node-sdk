@@ -294,8 +294,29 @@ export interface OrganizationInterface extends BaseEntity {
 export interface SessionInterface extends BaseEntity {
     user?: UserInterface;
     org?: OrganizationInterface;
-    orgUser?: OrgUserInterface;
+    org_user?: OrgUserInterface;
     client?: ClientInterface;
+    permissions?: SessionPermissionsInterface;
+}
+
+/**
+ * Session permissions interface
+ * 
+ * Used to define the permissions for a session.
+ */
+export interface SessionPermissionsInterface {
+    allow: PermissionParamsInterface;
+    deny: PermissionParamsInterface;
+}
+
+/**
+ * Permission parameters interface
+ * 
+ * Used to define the parameters for a permission.
+ */
+export interface PermissionParamsInterface {
+    action: string[] | string;
+    resource: string[] | string;
 }
 
 /**

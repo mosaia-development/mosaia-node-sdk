@@ -5,7 +5,6 @@ dotenv.config();
 
 const {
     API_URL,
-    APP_URL,
     CLIENT_ID,
     USER_EMAIL,
     USER_PASSWORD
@@ -88,15 +87,19 @@ async function testSDK() {
     const { user } = await mosaia.session();
     console.log('user:', user);
     console.log('agents api:', user?.agents);
-
-
     
-    // const orgUser = await user?.orgs.get({}, "65a9a716660e8cf0600b5095");
-    // console.log('orgUser:', orgUser);
-    // if (orgUser && !Array.isArray(orgUser)) {
-    //     const mosaia2 = await orgUser.session();
-    //     console.log('mosaia2:', mosaia2);
-    // }
+    const orgUser = await user?.orgs.get({}, "65a9a716660e8cf0600b5095");
+    console.log('orgUser:', orgUser);
+    if (orgUser && !Array.isArray(orgUser)) {
+        const mosaia2 = await orgUser.session();
+        console.log('mosaia2:', mosaia2);
+        const session = await mosaia2.session();
+        console.log('session:', session);
+        console.log('session user:', session.user);
+        console.log('session org:', session.org);
+        console.log('session orgUser:', session.orgUser);
+        console.log('session permission:', session.permissions);
+    }
 }
 
 testSDK();
