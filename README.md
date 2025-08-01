@@ -61,16 +61,13 @@ const Mosaia = require('@mosaia/mosaia-node-sdk');
 ##### Create a Mosaia instance
 ```typescript
 const {
-    API_URL,
-    CLIENT_ID,
+    API_KEY,
     USER_EMAIL,
     USER_PASSWORD
 } = process.env;
 
 const mosaia = new Mosaia({
-    apiURL: API_URL,           // Optional (Defaults to https://api.mosaia.ai)
-    clientId: CLIENT_ID,       // Required for OAuth flows
-    version: '1'               // Optional (Defaults to '1')
+    apiKey: API_KEY       // Required for API authentication
 });
 ```
 
@@ -82,25 +79,13 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const {
-    API_URL,
-    CLIENT_ID,
-    USER_EMAIL,
-    USER_PASSWORD
-} = process.env;
+const { API_KEY } = process.env;
 
 async function main() {
     // Initialize SDK
     const mosaia = new Mosaia({
-        apiURL: API_URL,
-        clientId: CLIENT_ID
+        apiKey: API_KEY
     });
-
-    // Authenticate with password
-    mosaia.config = await mosaia.auth.signInWithPassword(
-        USER_EMAIL!,
-        USER_PASSWORD!
-    );
 
     // Get current user info
     const session = await mosaia.session();
@@ -140,9 +125,6 @@ interface SessionCredentials {
 
 interface MosaiaConfig {
     apiKey?: string;           // API key for authentication (optional)
-    version?: string;          // API version (defaults to '1')
-    apiURL?: string;          // API base URL (defaults to https://api.mosaia.ai)
-    clientId?: string;        // Client ID for OAuth flows (required for OAuth)
     clientSecret?: string;    // Client secret for client credentials flow (optional)
     verbose?: boolean;        // Enable verbose logging (defaults to false)
     session?: SessionCredentials; // Session credentials for OAuth and token-based auth
@@ -157,19 +139,14 @@ The OAuth configuration interface allows you to specify OAuth-specific parameter
 interface OAuthConfig {
     redirectUri: string;       // Redirect URI for the OAuth flow (required)
     scopes: string[];         // Array of scopes to request (required)
-    appURL?: string;          // App URL for authorization endpoints (optional, defaults to https://mosaia.ai)
-    clientId?: string;        // OAuth client ID (optional, merged from SDK config if not provided)
-    apiURL?: string;          // API URL for token endpoints (optional, merged from SDK config if not provided)
-    apiVersion?: string;      // API version (optional, merged from SDK config if not provided)
+    apiKey?: string;          // API key (optional, merged from SDK config if not provided)
     state?: string;           // State parameter for CSRF protection (optional)
 }
 ```
 
 **Configuration Merging:**
 - The OAuth constructor automatically merges missing configuration values from the SDK's default configuration
-- If `clientId`, `apiURL`, or `apiVersion` are not provided in the OAuth config, they will be taken from the SDK configuration
-- If `appURL` is not provided in the OAuth config, it defaults to `https://mosaia.ai`
-- **Required after merging**: `clientId`, `apiURL`, `apiVersion`, `appURL`, and `scopes` must be available after merging (either from OAuth config or SDK config)
+- If `apiKey` is not provided in the OAuth config, it will be taken from the SDK configuration
 - This allows for flexible configuration where you can provide only the OAuth-specific parameters
 
 **Configuration Management:**
@@ -236,14 +213,8 @@ The SDK allows updating configuration at runtime:
 // Update API key
 mosaia.apiKey = 'new-api-key-123';
 
-// Update API version
-mosaia.version = '2';
-
-// Update API base URL
-mosaia.apiURL = 'https://api-staging.mosaia.ai';
-
-// Update OAuth client ID
-mosaia.clientId = 'new-client-id-123';
+// Update API key
+mosaia.apiKey = 'new-api-key-123';
 
 // Update OAuth client secret
 mosaia.clientSecret = 'new-client-secret-456';
@@ -267,8 +238,7 @@ The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Ex
 // Initialize OAuth
 const oauth = mosaia.oauth({
     redirectUri: 'https://your-app.com/callback',
-    scopes: ['read', 'write'],  // Required: specify the scopes you need
-    appURL: 'https://mosaia.ai' // Required: specify the app URL for authorization
+    scopes: ['read', 'write']  // Required: specify the scopes you need
 });
 
 // Get authorization URL and code verifier
@@ -294,9 +264,8 @@ mosaia.config = newConfig;
 ```
 
 **Important Notes:**
-- `redirectUri`, `scopes`, and `appURL` are required parameters in the OAuth config
-- `clientId`, `apiURL`, and `apiVersion` can be provided in either the OAuth config or the SDK configuration
-- `appURL` can be provided in the OAuth config or defaults to `https://mosaia.ai`
+- `redirectUri` and `scopes` are required parameters in the OAuth config
+- `apiKey` can be provided in either the OAuth config or the SDK configuration
 - The OAuth constructor validates that all required values are available after merging configurations
 - The `codeVerifier` must be stored securely and used with the same authorization code
 - PKCE ensures security even for public clients
