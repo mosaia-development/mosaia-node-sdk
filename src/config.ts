@@ -73,13 +73,11 @@ export class ConfigurationManager {
     public initialize(userConfig: Partial<MosaiaConfig>): void {
         const apiURL = userConfig.apiURL || this.defaultConfig.API.BASE_URL;
         const version = userConfig.version || this.defaultConfig.API.VERSION;
-        const appURL = userConfig.appURL || this.defaultConfig.APP.URL;
 
         this.config = {
             ...userConfig,
             apiURL,
-            version,
-            appURL
+            version
         } as MosaiaConfig;
     }
 
@@ -135,16 +133,6 @@ export class ConfigurationManager {
     public getApiUrl(): string {
         const config = this.getConfig();
         return `${config.apiURL || this.defaultConfig.API.BASE_URL}/v${config.version || this.defaultConfig.API.VERSION}`;
-    }
-
-    /**
-     * Get the app URL
-     * 
-     * @returns The app URL
-     */
-    public getAppUrl(): string {
-        const config = this.getConfig();
-        return config.appURL || this.defaultConfig.APP.URL;
     }
 
     /**

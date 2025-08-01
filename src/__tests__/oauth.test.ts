@@ -1,5 +1,6 @@
 import { OAuth } from '../oauth';
 import { OAuthConfig, OAuthErrorResponse, MosaiaConfig } from '../types';
+import { ConfigurationManager } from '../config';
 
 // Mock fetch globally
 global.fetch = jest.fn();
@@ -28,21 +29,35 @@ describe('OAuth', () => {
   let mockFetch: jest.MockedFunction<typeof fetch>;
   let oauth: OAuth;
   let validConfig: OAuthConfig;
+  let configManager: ConfigurationManager;
 
   beforeEach(() => {
     mockFetch = fetch as jest.MockedFunction<typeof fetch>;
     mockFetch.mockClear();
+
+    // Initialize ConfigurationManager with default config
+    configManager = ConfigurationManager.getInstance();
+    configManager.initialize({
+      clientId: 'test-client-id',
+      apiURL: 'https://api.mosaia.ai',
+      version: '1'
+    });
 
     validConfig = {
       clientId: 'test-client-id',
       redirectUri: 'https://test-app.com/callback',
       appURL: 'https://mosaia.ai',
       apiURL: 'https://api.mosaia.ai',
+      apiVersion: '1',
       scopes: ['read', 'write'],
       state: 'test-state'
     };
 
     oauth = new OAuth(validConfig);
+  });
+
+  afterEach(() => {
+    configManager.reset();
   });
 
   describe('constructor', () => {
@@ -55,7 +70,9 @@ describe('OAuth', () => {
         clientId: 'test-client-id',
         redirectUri: 'https://test-app.com/callback',
         appURL: 'https://mosaia.ai',
-        apiURL: 'https://api.mosaia.ai'
+        apiURL: 'https://api.mosaia.ai',
+        apiVersion: '1',
+        scopes: ['read', 'write']
       };
 
       const oauthInstance = new OAuth(minimalConfig);
@@ -91,7 +108,9 @@ describe('OAuth', () => {
         clientId: 'test-client-id',
         redirectUri: 'https://test-app.com/callback',
         appURL: 'https://mosaia.ai',
-        apiURL: 'https://api.mosaia.ai'
+        apiURL: 'https://api.mosaia.ai',
+        apiVersion: '1',
+        scopes: ['read', 'write']
       };
 
       const oauthInstance = new OAuth(minimalConfig);
@@ -100,7 +119,7 @@ describe('OAuth', () => {
       const url = new URL(result.url);
       const params = new URLSearchParams(url.search);
 
-      expect(params.get('scope')).toBeNull();
+      expect(params.get('scope')).toBe('read,write');
       expect(params.get('state')).toBeNull();
       expect(params.get('client_id')).toBe('test-client-id');
       expect(params.get('redirect_uri')).toBe('https://test-app.com/callback');
@@ -159,7 +178,7 @@ describe('OAuth', () => {
       const result = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
       expect(mockFetch).toHaveBeenCalledWith(
-        'https://api.mosaia.ai/auth/token',
+        'https://api.mosaia.ai/v1/auth/token',
         {
           method: 'POST',
           headers: {
@@ -172,12 +191,14 @@ describe('OAuth', () => {
       expect(result).toEqual({
         ...validConfig,
         apiKey: 'mock-access-token',
-        refreshToken: 'mock-refresh-token',
-        expiresIn: 3600,
-        sub: 'user-123',
-        iat: '1640995200',
-        exp: '1640998800',
-        authType: 'oauth'
+        session: {
+          accessToken: 'mock-access-token',
+          refreshToken: 'mock-refresh-token',
+          authType: 'oauth',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
+        }
       });
     });
 
@@ -257,7 +278,7 @@ describe('OAuth', () => {
 
       const result = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
-      expect(result.refreshToken).toBeUndefined();
+      expect(result.session?.refreshToken).toBeUndefined();
       expect(result.apiKey).toBe('mock-access-token');
     });
 
@@ -279,11 +300,10 @@ describe('OAuth', () => {
 
       const result = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
-      expect(result.refreshToken).toBeNull();
-      expect(result.expiresIn).toBeNull();
-      expect(result.sub).toBe('');
-      expect(result.iat).toBeNull();
-      expect(result.exp).toBeNull();
+      expect(result.session?.refreshToken).toBeNull();
+      expect(result.session?.sub).toBe('');
+      expect(result.session?.iat).toBeNull();
+      expect(result.session?.exp).toBeNull();
     });
   });
 
@@ -373,8 +393,8 @@ describe('OAuth', () => {
       );
 
       expect(tokenResult.apiKey).toBe('final-access-token');
-      expect(tokenResult.refreshToken).toBe('final-refresh-token');
-      expect(tokenResult.authType).toBe('oauth');
+      expect(tokenResult.session?.refreshToken).toBe('final-refresh-token');
+      expect(tokenResult.session?.authType).toBe('oauth');
     });
 
     it('should handle OAuth flow with different scopes', () => {

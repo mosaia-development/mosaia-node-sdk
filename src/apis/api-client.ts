@@ -1,4 +1,3 @@
-import axios, { AxiosInstance, AxiosError } from 'axios';
 import MosaiaAuth from './auth';
 import {
     MosaiaConfig,
@@ -22,7 +21,8 @@ import { isTimestampExpired } from '../utils';
  * ```
  */
 export default class APIClient {
-    private apiClient!: AxiosInstance;
+    private baseURL: string = '';
+    private headers: Record<string, string> = {};
     private configManager: ConfigurationManager;
     private config?: MosaiaConfig;
 
@@ -39,7 +39,7 @@ export default class APIClient {
     }
 
     /**
-     * Initialize the Axios client with current configuration
+     * Initialize the client with current configuration
      * 
      * @private
      */
@@ -49,7 +49,7 @@ export default class APIClient {
 
             if (!this.config) config = this.configManager.getConfig();        
             // Parse and validate expiration timestamp if it exists
-            if (config?.exp && isTimestampExpired(config.exp)) {
+            if (config?.session?.exp && isTimestampExpired(config.session.exp)) {
                 const auth = new MosaiaAuth();
 
                 const refreshedConfig = await auth.refreshToken();
@@ -59,58 +59,11 @@ export default class APIClient {
 
             if (!config) throw new Error('No valid config found');
 
-            this.apiClient = axios.create({
-                baseURL: `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`,
-                headers: {
-                    'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
-                    'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
-                },
-            });
-
-            // Add request interceptor for logging (only if enabled)
-            if (config.verbose) {
-                this.apiClient.interceptors.request.use(
-                    (config) => {
-                        console.log(`🚀 HTTP Request: ${config.method?.toUpperCase()} ${config.baseURL}${config.url}`);
-                        if (config.params) {
-                            console.log('📋 Query Params:', config.params);
-                        }
-                        if (config.data) {
-                            console.log('📦 Request Body:', config.data);
-                        }
-                        return config;
-                    },
-                    (error) => {
-                        console.error('❌ Request Error:', error);
-                        return Promise.reject(error);
-                    }
-                );
-
-                // Add response interceptor for logging and error handling
-                this.apiClient.interceptors.response.use(
-                    (response) => {
-                        console.log(`✅ HTTP Response: ${response.status} ${response.config.method?.toUpperCase()} ${response.config.url}`);
-                        console.log('📄 Response Data:', response.data);
-                        return response;
-                    },
-                    (error: AxiosError) => {
-                        console.error(`❌ HTTP Error: ${error.response?.status || 'NO_STATUS'} ${error.config?.method?.toUpperCase()} ${error.config?.url}`);
-                        console.error('🚨 Error Details:', {
-                            message: error.message,
-                            status: error.response?.status,
-                            statusText: error.response?.statusText,
-                            data: error.response?.data
-                        });
-                        return this.handleError(error);
-                    }
-                );
-            } else {
-                // Add response interceptor for error handling only (no logging)
-                this.apiClient.interceptors.response.use(
-                    (response) => response,
-                    (error: AxiosError) => this.handleError(error)
-                );
-            }
+            this.baseURL = `${config.apiURL || DEFAULT_CONFIG.API.BASE_URL}/v${config.version || DEFAULT_CONFIG.API.VERSION}`;
+            this.headers = {
+                'Authorization': `${DEFAULT_CONFIG.AUTH.TOKEN_PREFIX} ${config.apiKey || ''}`,
+                'Content-Type': DEFAULT_CONFIG.API.CONTENT_TYPE,
+            };
         } catch (error) {
             throw error;
         }
@@ -119,14 +72,14 @@ export default class APIClient {
     /**
      * Update the client configuration
      * 
-     * Reinitializes the Axios client with updated configuration.
+     * Reinitializes the client with updated configuration.
      * This is useful when configuration changes at runtime.
      * 
      * @private
      */
     private async updateClientConfig(): Promise<void> {
         try {
-            this.initializeClient();
+            await this.initializeClient();
         } catch (error) {
             throw error;
         }
@@ -135,17 +88,159 @@ export default class APIClient {
     /**
      * Handles HTTP errors and converts them to standardized error responses
      * 
-     * @param error - Axios error object
+     * @param error - Error object
+     * @param status - HTTP status code
      * @returns Promise that rejects with a standardized error response
      * @private
      */
-    private handleError(error: AxiosError): Promise<never> {
+    private handleError(error: Error, status?: number): Promise<never> {
         const errorResponse: ErrorResponse = {
             message: error.message || DEFAULT_CONFIG.ERRORS.UNKNOWN_ERROR,
-            code: error.code || 'UNKNOWN_ERROR',
-            status: error.response?.status || DEFAULT_CONFIG.ERRORS.DEFAULT_STATUS_CODE,
+            code: 'UNKNOWN_ERROR',
+            status: status || DEFAULT_CONFIG.ERRORS.DEFAULT_STATUS_CODE,
         };
         return Promise.reject(errorResponse);
+    }
+
+    /**
+     * Builds query string from parameters object
+     * 
+     * @param params - Query parameters object
+     * @returns URLSearchParams string
+     * @private
+     */
+    private buildQueryString(params?: object): string {
+        if (!params) return '';
+        const searchParams = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null) {
+                searchParams.append(key, String(value));
+            }
+        });
+        return searchParams.toString();
+    }
+
+    /**
+     * Makes an HTTP request using fetch API
+     * 
+     * @param method - HTTP method
+     * @param path - API endpoint path
+     * @param data - Request body data
+     * @param params - Query parameters
+     * @returns Promise that resolves to the API response data
+     * @private
+     */
+    private async makeRequest<T>(
+        method: string, 
+        path: string, 
+        data?: object, 
+        params?: object
+    ): Promise<APIResponse<T> | any> {
+        // Update client config in case it changed
+        await this.updateClientConfig();
+        const url = new URL(this.baseURL + path);
+        
+        if (params) {
+            const queryString = this.buildQueryString(params);
+            if (queryString) {
+                url.search = queryString;
+            }
+        }
+
+        const requestOptions: RequestInit = {
+            method: method.toUpperCase(),
+            headers: this.headers,
+        };
+
+        if (data && method !== 'GET') {
+            requestOptions.body = JSON.stringify(data);
+        }
+
+        // Log request if verbose mode is enabled
+        if (this.config?.verbose) {
+            console.log(`🚀 HTTP Request: ${method.toUpperCase()} ${url.toString()}`);
+            console.log('🔑 Headers:', this.headers);
+    
+            if (params) {
+                console.log('📋 Query Params:', params);
+            }
+            if (data) {
+                console.log('📦 Request Body:', data);
+            }
+        }
+
+        try {
+            const response = await fetch(url.toString(), requestOptions);
+
+            // Log response if verbose mode is enabled
+            if (this.config?.verbose) {
+                console.log(`✅ HTTP Response: ${response.status} ${method.toUpperCase()} ${path}`);
+            }
+
+            // Handle 204 No Content responses
+            if (response.status === 204) {
+                if (this.config?.verbose) {
+                    console.log('📄 Response Data: No Content (204)');
+                }
+                return {
+                    meta: {
+                        status: 204,
+                        message: 'Success'
+                    },
+                    data: undefined as T,
+                    error: {
+                        message: '',
+                        code: '',
+                        status: 204
+                    }
+                };
+            }
+
+            // Check if response is ok (status in 200-299 range)
+            if (!response.ok) {
+                let errorData;
+                try {
+                    errorData = await response.json();
+                } catch {
+                    errorData = { message: response.statusText };
+                }
+
+                if (this.config?.verbose) {
+                    console.error(`❌ HTTP Error: ${response.status} ${method.toUpperCase()} ${path}`);
+                    console.error('🚨 Error Details:', {
+                        message: errorData.message || response.statusText,
+                        status: response.status,
+                        statusText: response.statusText,
+                        data: errorData
+                    });
+                }
+
+                return this.handleError(
+                    new Error(errorData.message || response.statusText), 
+                    response.status
+                );
+            }
+
+            // Parse response data
+            let responseData;
+            const contentType = response.headers.get('content-type');
+            if (contentType && contentType.includes('application/json')) {
+                responseData = await response.json();
+            } else {
+                responseData = await response.text();
+            }
+
+            if (this.config?.verbose) {
+                console.log('📄 Response Data:', responseData);
+            }
+
+            return responseData;
+        } catch (error) {
+            if (this.config?.verbose) {
+                console.error(`❌ Request Error: ${method.toUpperCase()} ${path}`, error);
+            }
+            throw error;
+        }
     }
 
     /**
@@ -163,12 +258,7 @@ export default class APIClient {
      * ```
      */
     async GET<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
-        // Update client config in case it changed
-        await this.updateClientConfig();
-        
-        const res = await this.apiClient.get(path, { params });
-
-        return Promise.resolve(res.data);
+        return this.makeRequest<T>('GET', path, undefined, params);
     }
 
     /**
@@ -188,12 +278,7 @@ export default class APIClient {
      * ```
      */
     async POST<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        // Update client config in case it changed
-        await this.updateClientConfig();
-        
-        const res = await this.apiClient.post(path, data);
-
-        return Promise.resolve(res.data);
+        return this.makeRequest<T>('POST', path, data);
     }
     
     /**
@@ -211,12 +296,7 @@ export default class APIClient {
      * ```
      */
     async PUT<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        // Update client config in case it changed
-        await this.updateClientConfig();
-        
-        const res = await this.apiClient.put(path, data);
-
-        return Promise.resolve(res.data);
+        return this.makeRequest<T>('PUT', path, data);
     }
 
     /**
@@ -233,27 +313,6 @@ export default class APIClient {
      * ```
      */
     async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
-        // Update client config in case it changed
-        await this.updateClientConfig();
-        
-        const res = await this.apiClient.delete(path, { params });
-
-        // Handle 204 No Content responses
-        if (res.status === 204) {
-            return Promise.resolve({
-                meta: {
-                    status: 204,
-                    message: 'Success'
-                },
-                data: undefined as T,
-                error: {
-                    message: '',
-                    code: '',
-                    status: 204
-                }
-            });
-        }
-
-        return Promise.resolve(res.data);
+        return this.makeRequest<T>('DELETE', path, undefined, params);
     }
 }

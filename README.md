@@ -18,7 +18,9 @@ A comprehensive Node.js SDK for the Mosaia API platform, providing access to all
 - **Tool Integration** - Manage external tools and integrations
 - **OAuth Client Management** - OAuth client registration and management
 - **Configuration Management** - Centralized configuration with runtime updates
-- **Comprehensive Testing** - Full test coverage for all API endpoints (503 tests)
+- **Comprehensive Testing** - Full test coverage for all API endpoints (499 tests)
+- **Zero Dependencies** - Lightweight SDK with no production dependencies
+- **Native Fetch API** - Modern HTTP client using native fetch instead of axios
 
 > **Note**: Some API endpoints may not be fully implemented on all server instances. The SDK includes comprehensive error handling and will gracefully handle 404 responses for unimplemented endpoints.
 
@@ -101,8 +103,7 @@ async function main() {
     // Authenticate with password
     mosaia.config = await mosaia.auth.signInWithPassword(
         USER_EMAIL!,
-        USER_PASSWORD!,
-        CLIENT_ID!
+        USER_PASSWORD!
     );
 
     // Get current user info
@@ -131,27 +132,76 @@ main().catch(console.error);
 ## Configuration
 
 ```typescript
-interface MosaiaConfig {
-    apiKey?: string;           // API key for authentication (optional)
-    refreshToken?: string;     // Refresh token for token refresh (optional)
-    version?: string;          // API version (defaults to '1')
-    apiURL?: string;          // API base URL (defaults to https://api.mosaia.ai)
-    appURL?: string;          // App URL for OAuth flows (defaults to https://mosaia.ai)
-    clientId?: string;        // Client ID for OAuth flows (required for OAuth)
-    clientSecret?: string;    // Client secret for client credentials flow (optional)
-    verbose?: boolean;        // Enable verbose logging (defaults to false)
+interface SessionCredentials {
+    accessToken: string;       // Access token for authentication
+    refreshToken: string;      // Refresh token for token refresh operations
     authType?: 'password' | 'client' | 'refresh' | 'oauth'; // Authentication type
-    expiresIn?: number;       // Token expiration time
-    sub?: string;             // Subject identifier
+    sub?: string;             // Subject identifier (user ID)
     iat?: string;             // Token issued at timestamp
     exp?: string;             // Token expiration timestamp
 }
 ```
 
+interface MosaiaConfig {
+    apiKey?: string;           // API key for authentication (optional)
+    version?: string;          // API version (defaults to '1')
+    apiURL?: string;          // API base URL (defaults to https://api.mosaia.ai)
+    clientId?: string;        // Client ID for OAuth flows (required for OAuth)
+    clientSecret?: string;    // Client secret for client credentials flow (optional)
+    verbose?: boolean;        // Enable verbose logging (defaults to false)
+    session?: SessionCredentials; // Session credentials for OAuth and token-based auth
+}
+```
+
+### OAuth Configuration
+
+The OAuth configuration interface allows you to specify OAuth-specific parameters:
+
+```typescript
+interface OAuthConfig {
+    redirectUri: string;       // Redirect URI for the OAuth flow (required)
+    scopes: string[];         // Array of scopes to request (required)
+    appURL?: string;          // App URL for authorization endpoints (optional, defaults to https://mosaia.ai)
+    clientId?: string;        // OAuth client ID (optional, merged from SDK config if not provided)
+    apiURL?: string;          // API URL for token endpoints (optional, merged from SDK config if not provided)
+    apiVersion?: string;      // API version (optional, merged from SDK config if not provided)
+    state?: string;           // State parameter for CSRF protection (optional)
+}
+```
+
+**Configuration Merging:**
+- The OAuth constructor automatically merges missing configuration values from the SDK's default configuration
+- If `clientId`, `apiURL`, or `apiVersion` are not provided in the OAuth config, they will be taken from the SDK configuration
+- If `appURL` is not provided in the OAuth config, it defaults to `https://mosaia.ai`
+- **Required after merging**: `clientId`, `apiURL`, `apiVersion`, `appURL`, and `scopes` must be available after merging (either from OAuth config or SDK config)
+- This allows for flexible configuration where you can provide only the OAuth-specific parameters
+
 **Configuration Management:**
 - The SDK uses a centralized `ConfigurationManager` for consistent configuration across all components
 - Configuration can be updated at runtime using setter methods
 - All configuration changes are immediately reflected across the SDK
+
+### PKCE Implementation
+
+The SDK implements PKCE (Proof Key for Code Exchange) according to RFC 7636:
+
+**Code Verifier Generation:**
+- Generates cryptographically secure random code verifiers using `crypto.randomBytes(96)`
+- Uses base64url encoding (RFC 4648) for URL-safe representation
+- Produces 128-character code verifiers (RFC 7636 compliant)
+- Ensures sufficient entropy for security
+
+**Code Challenge Generation:**
+- Creates SHA256 hash of the code verifier
+- Uses base64url encoding for the challenge
+- Implements the `S256` challenge method as specified in RFC 7636
+- No padding characters, no special characters that need URL encoding
+
+**Security Features:**
+- RFC 7636 compliant implementation
+- Cryptographically secure random generation
+- Proper base64url encoding throughout
+- Automatic validation of required parameters
 
 ## API Reference
 
@@ -160,11 +210,10 @@ interface MosaiaConfig {
 The SDK provides multiple authentication methods through the `auth` property:
 
 ```typescript
-// Sign in with email and password
+// Sign in with email and password (clientId from config)
 const authConfig = await mosaia.auth.signInWithPassword(
     'user@example.com', 
-    'password', 
-    'client-id'
+    'password'
 );
 mosaia.config = authConfig;
 
@@ -197,25 +246,32 @@ mosaia.version = '2';
 // Update API base URL
 mosaia.apiURL = 'https://api-staging.mosaia.ai';
 
-// Update OAuth app URL
-mosaia.appURL = 'https://app-staging.mosaia.ai';
-
 // Update OAuth client ID
 mosaia.clientId = 'new-client-id-123';
 
 // Update OAuth client secret
 mosaia.clientSecret = 'new-client-secret-456';
+
+// Update session credentials
+mosaia.session = {
+    accessToken: 'new-access-token',
+    refreshToken: 'new-refresh-token',
+    authType: 'oauth',
+    sub: 'user-123',
+    iat: '1640995200',
+    exp: '1640998800'
+};
 ```
 
 ### OAuth
 
-The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Exchange) for secure authentication.
+The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Exchange) for secure authentication. The OAuth implementation is fully RFC 7636 compliant.
 
 ```typescript
 // Initialize OAuth
 const oauth = mosaia.oauth({
     redirectUri: 'https://your-app.com/callback',
-    scopes: ['read', 'write']
+    scopes: ['read', 'write']  // Required: specify the scopes you need
 });
 
 // Get authorization URL and code verifier
@@ -241,10 +297,13 @@ mosaia.config = newConfig;
 ```
 
 **Important Notes:**
-- `clientId` must be provided in the SDK configuration
-- `appURL` must be provided in the SDK configuration for OAuth authorization URLs
+- `redirectUri` and `scopes` are required parameters in the OAuth config
+- `clientId`, `apiURL`, and `apiVersion` can be provided in either the OAuth config or the SDK configuration
+- `appURL` can be provided in the OAuth config or defaults to `https://mosaia.ai`
+- The OAuth constructor validates that all required values are available after merging configurations
 - The `codeVerifier` must be stored securely and used with the same authorization code
 - PKCE ensures security even for public clients
+- Code verifiers are now RFC 7636 compliant (128 characters, base64url encoded)
 
 ### Session Information
 
@@ -436,6 +495,32 @@ npm test -- --testPathPattern="models.test.ts"
 
 ## What's New
 
+### Version 0.0.14
+- 🚀 **Zero Dependencies**: Removed all production dependencies (axios, openai) for a lightweight SDK
+- 🔧 **Native Fetch API**: Replaced axios with native fetch API for better performance and smaller bundle size
+- 🔧 **Dependency Audit**: Comprehensive audit and removal of unused dependencies
+- 🔧 **Enhanced Error Handling**: Improved error handling with native fetch API
+- 🔧 **Verbose Logging**: Enhanced logging capabilities for debugging HTTP requests
+- 🔧 **Test Updates**: Updated all tests to work with fetch API instead of axios
+- 🧪 **Test Reliability**: Improved test coverage and reliability
+- ✅ **All Tests Passing**: 499 tests now pass consistently
+- ✅ **Smaller Bundle Size**: Significantly reduced package size due to dependency removal
+- ✅ **Better Performance**: Native fetch API provides better performance than axios
+- ✅ **Security Improvements**: Fewer dependencies mean fewer potential security vulnerabilities
+- 🔧 **Session Credentials Interface**: Created SessionCredentials interface for better token management
+- 🔧 **MosaiaConfig Restructuring**: Moved accessToken and refreshToken to SessionCredentials interface
+- 🔧 **OAuth PKCE Implementation**: Fixed PKCE code verifier generation to be RFC 7636 compliant
+- 🔧 **OAuth Constructor Simplification**: Simplified OAuth constructor to handle configuration merging internally
+- 🔧 **OAuth Configuration**: Made scopes required in OAuthConfig interface
+- 🔧 **MosaiaConfig Cleanup**: Removed appURL from MosaiaConfig interface (now only in OAuthConfig)
+- 🔧 **Configuration Management**: OAuth now properly merges SDK configuration with provided OAuth config
+- 🔧 **Code Verifier Length**: Fixed code verifier to generate 128 characters (was 42, now RFC 7636 compliant)
+- 🔧 **Base64URL Encoding**: Updated to use proper base64url encoding instead of base64 with character filtering
+- 🔧 **Cryptographic Security**: Improved entropy by using 96 bytes for code verifier generation
+- 🧪 **Test Updates**: Updated OAuth tests to reflect simplified constructor approach
+- ✅ **RFC 7636 Compliance**: PKCE implementation now fully compliant with OAuth 2.0 PKCE specification
+- ✅ **All Tests Passing**: 503 tests now pass consistently with improved OAuth implementation
+
 ### Version 0.0.13
 - 🔧 **Class Name Consistency**: Fixed all references to use correct `MosaiaAuth` class name instead of `Auth`
 - 🔧 **Test Suite Fixes**: Resolved failing authentication tests by fixing configuration timing issues
@@ -498,9 +583,11 @@ The SDK maintains high code quality standards:
 
 - **TypeScript**: Full type safety with comprehensive type definitions
 - **Clean Codebase**: No generated JavaScript files in source directories
-- **Comprehensive Testing**: 503 tests with full coverage for all API endpoints
+- **Comprehensive Testing**: 499 tests with full coverage for all API endpoints
 - **Linting**: ESLint configuration for code consistency
 - **Documentation**: JSDoc comments for all public APIs
+- **Zero Dependencies**: Lightweight SDK with no production dependencies
+- **Modern HTTP Client**: Uses native fetch API for better performance
 
 ### Build Process
 

@@ -11,6 +11,7 @@ jest.mock('../../config', () => ({
         apiKey: 'test-api-key',
         apiURL: 'https://api.test.com',
         version: '1',
+        clientId: 'test-client-id'
       })
     })
   }
@@ -58,6 +59,7 @@ describe('MosaiaAuth', () => {
       apiKey: 'test-api-key',
       apiURL: 'https://api.test.com',
       version: '1',
+      clientId: 'test-client-id'
     });
 
     auth = new MosaiaAuth();
@@ -69,6 +71,19 @@ describe('MosaiaAuth', () => {
       expect(APIClient).toHaveBeenCalled();
       expect(ConfigurationManager.getInstance).toHaveBeenCalled();
     });
+
+    it('should create MosaiaAuth instance with provided config', () => {
+      const config = {
+        apiKey: 'provided-api-key',
+        apiURL: 'https://provided-api.test.com',
+        version: '2',
+        clientId: 'provided-client-id'
+      };
+
+      const authWithConfig = new MosaiaAuth(config);
+      expect(authWithConfig).toBeInstanceOf(MosaiaAuth);
+      expect(APIClient).toHaveBeenCalledWith(config);
+    });
   });
 
   describe('signInWithPassword', () => {
@@ -77,33 +92,37 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'test-access-token',
           refresh_token: 'test-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await auth.signInWithPassword('user@test.com', 'password123', 'client-id');
+      const result = await auth.signInWithPassword('user@test.com', 'password123');
 
       expect(mockAPIClient.POST).toHaveBeenCalledWith('/auth/signin', {
         grant_type: 'password',
         email: 'user@test.com',
         password: 'password123',
-        client_id: 'client-id'
+        client_id: 'test-client-id'
       });
 
       expect(result).toEqual({
         apiKey: 'test-access-token',
-        refreshToken: 'test-refresh-token',
-        expiresIn: 3600,
-        authType: 'password',
+        session: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800',
+          authType: 'password'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
-        exp: undefined,
-        iat: undefined,
-        sub: undefined
+        clientId: 'test-client-id'
       });
     });
 
@@ -120,7 +139,7 @@ describe('MosaiaAuth', () => {
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
       await expect(
-        auth.signInWithPassword('user@test.com', 'wrongpassword', 'client-id')
+        auth.signInWithPassword('user@test.com', 'wrongpassword')
       ).rejects.toThrow('Invalid credentials');
     });
 
@@ -129,8 +148,33 @@ describe('MosaiaAuth', () => {
       mockAPIClient.POST.mockRejectedValue(networkError);
 
       await expect(
-        auth.signInWithPassword('user@test.com', 'password123', 'client-id')
+        auth.signInWithPassword('user@test.com', 'password123')
       ).rejects.toThrow('Network error');
+    });
+
+    it('should handle missing clientId in config', async () => {
+      mockConfigManager.getConfig.mockReturnValue({
+        apiKey: 'test-api-key',
+        apiURL: 'https://api.test.com',
+        version: '1'
+        // No clientId
+      });
+
+      const authWithoutClientId = new MosaiaAuth();
+
+      await expect(
+        authWithoutClientId.signInWithPassword('user@test.com', 'password123')
+      ).rejects.toThrow('clientId is required and not found in config');
+    });
+
+    it('should handle missing config', async () => {
+      mockConfigManager.getConfig.mockReturnValue(undefined as any);
+
+      const authWithoutConfig = new MosaiaAuth();
+
+      await expect(
+        authWithoutConfig.signInWithPassword('user@test.com', 'password123')
+      ).rejects.toThrow('No config found');
     });
 
     it('should handle empty email and password', async () => {
@@ -138,21 +182,22 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'test-access-token',
           refresh_token: 'test-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await auth.signInWithPassword('', '', 'client-id');
+      const result = await auth.signInWithPassword('', '');
 
       expect(mockAPIClient.POST).toHaveBeenCalledWith('/auth/signin', {
         grant_type: 'password',
         email: '',
         password: '',
-        client_id: 'client-id'
+        client_id: 'test-client-id'
       });
 
       expect(result).toBeDefined();
@@ -165,8 +210,9 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'client-access-token',
           refresh_token: 'client-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 7200
+          sub: 'client-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
@@ -183,14 +229,17 @@ describe('MosaiaAuth', () => {
 
       expect(result).toEqual({
         apiKey: 'client-access-token',
-        refreshToken: 'client-refresh-token',
-        expiresIn: 7200,
-        authType: 'client',
+        session: {
+          accessToken: 'client-access-token',
+          refreshToken: 'client-refresh-token',
+          sub: 'client-123',
+          iat: '1640995200',
+          exp: '1640998800',
+          authType: 'client'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
-        exp: undefined,
-        iat: undefined,
-        sub: undefined
+        clientId: 'test-client-id'
       });
     });
 
@@ -227,8 +276,9 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'new-access-token',
           refresh_token: 'new-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
@@ -244,23 +294,30 @@ describe('MosaiaAuth', () => {
 
       expect(result).toEqual({
         apiKey: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
-        authType: 'refresh',
+        session: {
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800',
+          authType: 'refresh'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
-        exp: undefined,
-        iat: undefined,
-        sub: undefined
+        clientId: 'test-client-id'
       });
     });
 
     it('should use current refresh token when no token provided', async () => {
       mockConfigManager.getConfig.mockReturnValue({
         apiKey: 'test-api-key',
-        refreshToken: 'current-refresh-token',
+        session: {
+          accessToken: 'test-api-key',
+          refreshToken: 'current-refresh-token'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
+        clientId: 'test-client-id'
       });
 
       // Recreate auth instance to pick up the new config
@@ -270,8 +327,9 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'new-access-token',
           refresh_token: 'new-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
@@ -313,6 +371,12 @@ describe('MosaiaAuth', () => {
         auth.refreshToken('refresh-token')
       ).rejects.toThrow('Network error');
     });
+
+    it('should handle missing refresh token', async () => {
+      await expect(
+        auth.refreshToken()
+      ).rejects.toThrow('Refresh token is required and not found in config');
+    });
   });
 
   describe('refreshOAuthToken', () => {
@@ -343,14 +407,17 @@ describe('MosaiaAuth', () => {
 
       expect(result).toEqual({
         apiKey: 'new-oauth-token',
-        refreshToken: 'new-oauth-refresh-token',
-        expiresIn: 3600,
-        sub: 'user-123',
-        iat: '1640995200',
-        exp: '1640998800',
-        authType: 'oauth',
+        session: {
+          accessToken: 'new-oauth-token',
+          refreshToken: 'new-oauth-refresh-token',
+          authType: 'oauth',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
+        },
         apiURL: 'https://api.test.com',
-        version: '1'
+        version: '1',
+        clientId: 'test-client-id'
       });
     });
 
@@ -369,14 +436,17 @@ describe('MosaiaAuth', () => {
       // The implementation doesn't throw errors, it just returns the response
       expect(result).toEqual({
         apiKey: undefined,
-        refreshToken: undefined,
-        expiresIn: undefined,
-        sub: undefined,
-        iat: undefined,
-        exp: undefined,
-        authType: 'oauth',
+        session: {
+          accessToken: undefined,
+          refreshToken: undefined,
+          authType: 'oauth',
+          sub: undefined,
+          iat: undefined,
+          exp: undefined
+        },
         apiURL: 'https://api.test.com',
-        version: '1'
+        version: '1',
+        clientId: 'test-client-id'
       });
     });
 
@@ -396,14 +466,17 @@ describe('MosaiaAuth', () => {
       // The implementation doesn't throw errors, it just returns the response
       expect(result).toEqual({
         apiKey: undefined,
-        refreshToken: undefined,
-        expiresIn: undefined,
-        sub: undefined,
-        iat: undefined,
-        exp: undefined,
-        authType: 'oauth',
+        session: {
+          accessToken: undefined,
+          refreshToken: undefined,
+          authType: 'oauth',
+          sub: undefined,
+          iat: undefined,
+          exp: undefined
+        },
         apiURL: 'https://api.test.com',
-        version: '1'
+        version: '1',
+        clientId: 'test-client-id'
       });
     });
 
@@ -438,6 +511,7 @@ describe('MosaiaAuth', () => {
         apiKey: 'current-api-key',
         apiURL: 'https://api.test.com',
         version: '1',
+        clientId: 'test-client-id'
       });
 
       // Recreate auth instance to pick up the new config
@@ -486,16 +560,35 @@ describe('MosaiaAuth', () => {
         auth.signOut('api-key')
       ).rejects.toThrow('Network error');
     });
+
+    it('should handle missing API key', async () => {
+      mockConfigManager.getConfig.mockReturnValue({
+        apiURL: 'https://api.test.com',
+        version: '1',
+        clientId: 'test-client-id'
+        // No apiKey
+      });
+
+      const authWithoutApiKey = new MosaiaAuth();
+
+      await expect(
+        authWithoutApiKey.signOut()
+      ).rejects.toThrow('apiKey is required and not found in config');
+    });
   });
 
   describe('refresh', () => {
-    it('should refresh using current configuration', async () => {
+    it('should refresh using current configuration with password auth', async () => {
       mockConfigManager.getConfig.mockReturnValue({
         apiKey: 'current-api-key',
-        refreshToken: 'current-refresh-token',
-        authType: 'password',
+        session: {
+          accessToken: 'current-api-key',
+          refreshToken: 'current-refresh-token',
+          authType: 'password'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
+        clientId: 'test-client-id'
       });
 
       // Recreate auth instance to pick up the new config
@@ -505,8 +598,9 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'new-access-token',
           refresh_token: 'new-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
@@ -522,25 +616,110 @@ describe('MosaiaAuth', () => {
 
       expect(result).toEqual({
         apiKey: 'new-access-token',
-        refreshToken: 'new-refresh-token',
-        expiresIn: 3600,
-        authType: 'refresh',
+        session: {
+          accessToken: 'new-access-token',
+          refreshToken: 'new-refresh-token',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800',
+          authType: 'refresh'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
-        exp: undefined,
-        iat: undefined,
-        sub: undefined
+        clientId: 'test-client-id'
       });
+    });
+
+    it('should refresh using OAuth when authType is oauth', async () => {
+      mockConfigManager.getConfig.mockReturnValue({
+        apiKey: 'current-api-key',
+        session: {
+          accessToken: 'current-api-key',
+          refreshToken: 'current-refresh-token',
+          authType: 'oauth'
+        },
+        apiURL: 'https://api.test.com',
+        version: '1',
+        clientId: 'test-client-id'
+      });
+
+      // Recreate auth instance to pick up the new config
+      auth = new MosaiaAuth();
+
+      const mockResponse = {
+        access_token: 'new-oauth-token',
+        refresh_token: 'new-oauth-refresh-token',
+        sub: 'user-123',
+        iat: '1640995200',
+        exp: '1640998800'
+      };
+
+      (global.fetch as jest.Mock).mockResolvedValueOnce({
+        json: jest.fn().mockResolvedValueOnce(mockResponse)
+      });
+
+      const result = await auth.refresh();
+
+      expect(global.fetch).toHaveBeenCalledWith('https://api.test.com/auth/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: 'refresh_token=current-refresh-token&grant_type=refresh_token'
+      });
+
+      expect(result).toEqual({
+        apiKey: 'new-oauth-token',
+        session: {
+          accessToken: 'new-oauth-token',
+          refreshToken: 'new-oauth-refresh-token',
+          authType: 'oauth',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
+        },
+        apiURL: 'https://api.test.com',
+        version: '1',
+        clientId: 'test-client-id'
+      });
+    });
+
+    it('should handle refresh without session', async () => {
+      mockConfigManager.getConfig.mockReturnValue({
+        apiKey: 'current-api-key',
+        apiURL: 'https://api.test.com',
+        version: '1',
+        clientId: 'test-client-id'
+        // No session
+      });
+
+      await expect(auth.refresh()).rejects.toThrow('No session found in config');
     });
 
     it('should handle refresh without refresh token', async () => {
       mockConfigManager.getConfig.mockReturnValue({
         apiKey: 'current-api-key',
+        session: {
+          accessToken: 'current-api-key',
+          refreshToken: '' // Empty refresh token - this should trigger "No refresh token found in config"
+        },
         apiURL: 'https://api.test.com',
         version: '1',
+        clientId: 'test-client-id'
       });
 
+      // Recreate auth instance to pick up the new config
+      auth = new MosaiaAuth();
+
       await expect(auth.refresh()).rejects.toThrow('No refresh token found in config');
+    });
+
+    it('should handle missing config', async () => {
+      mockConfigManager.getConfig.mockReturnValue(undefined as any);
+
+      const authWithoutConfig = new MosaiaAuth();
+
+      await expect(authWithoutConfig.refresh()).rejects.toThrow('No valid config found');
     });
   });
 
@@ -554,7 +733,7 @@ describe('MosaiaAuth', () => {
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
       await expect(
-        auth.signInWithPassword('user@test.com', 'password123', 'client-id')
+        auth.signInWithPassword('user@test.com', 'password123')
       ).rejects.toThrow('Cannot read properties of null (reading \'access_token\')');
     });
 
@@ -562,27 +741,31 @@ describe('MosaiaAuth', () => {
       const mockResponse = {
         data: {
           refresh_token: 'test-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await auth.signInWithPassword('user@test.com', 'password123', 'client-id');
+      const result = await auth.signInWithPassword('user@test.com', 'password123');
 
       // The implementation doesn't validate access_token, it just returns undefined
       expect(result).toEqual({
         apiKey: undefined,
-        refreshToken: 'test-refresh-token',
-        expiresIn: 3600,
-        authType: 'password',
+        session: {
+          accessToken: undefined,
+          refreshToken: 'test-refresh-token',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800',
+          authType: 'password'
+        },
         apiURL: 'https://api.test.com',
         version: '1',
-        exp: undefined,
-        iat: undefined,
-        sub: undefined
+        clientId: 'test-client-id'
       });
     });
 
@@ -591,21 +774,22 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: 'test-access-token',
           refresh_token: 'test-refresh-token',
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      await auth.signInWithPassword('user+test@example.com', 'password@123!', 'client-id-with-special-chars');
+      await auth.signInWithPassword('user+test@example.com', 'password@123!');
 
       expect(mockAPIClient.POST).toHaveBeenCalledWith('/auth/signin', {
         grant_type: 'password',
         email: 'user+test@example.com',
         password: 'password@123!',
-        client_id: 'client-id-with-special-chars'
+        client_id: 'test-client-id'
       });
     });
 
@@ -615,18 +799,19 @@ describe('MosaiaAuth', () => {
         data: {
           access_token: longToken,
           refresh_token: longToken,
-          token_type: 'Bearer',
-          expires_in: 3600
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
         },
         error: null
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await auth.signInWithPassword('user@test.com', 'password123', 'client-id');
+      const result = await auth.signInWithPassword('user@test.com', 'password123');
 
       expect(result.apiKey).toBe(longToken);
-      expect(result.refreshToken).toBe(longToken);
+      expect(result.session?.refreshToken).toBe(longToken);
     });
   });
 
@@ -644,7 +829,7 @@ describe('MosaiaAuth', () => {
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
       await expect(
-        auth.signInWithPassword('user@test.com', 'password123', 'client-id')
+        auth.signInWithPassword('user@test.com', 'password123')
       ).rejects.toThrow('Unknown error occurred');
     });
 
@@ -660,8 +845,25 @@ describe('MosaiaAuth', () => {
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
       await expect(
-        auth.signInWithPassword('user@test.com', 'password123', 'client-id')
-      ).rejects.toThrow('Unknown error');
+        auth.signInWithPassword('user@test.com', 'password123')
+      ).rejects.toThrow('Unknown error occurred');
+    });
+
+    it('should handle error with non-string message', async () => {
+      const mockResponse = {
+        data: null,
+        error: {
+          message: 123,
+          code: 'ERROR_WITH_NUMBER_MESSAGE',
+          status: 400
+        }
+      };
+
+      mockAPIClient.POST.mockResolvedValue(mockResponse);
+
+      await expect(
+        auth.signInWithPassword('user@test.com', 'password123')
+      ).rejects.toThrow('123'); // The implementation throws the actual message value
     });
   });
 }); 

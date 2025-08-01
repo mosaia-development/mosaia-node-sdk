@@ -20,7 +20,6 @@ afterAll(() => {
   createMockConfig: (overrides = {}) => ({
     apiKey: 'test-api-key',
     apiURL: 'https://api.mosaia.ai',
-    appURL: 'https://mosaia.ai',
     version: '1',
     clientId: 'test-client-id',
     ...overrides

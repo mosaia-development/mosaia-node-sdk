@@ -50,22 +50,23 @@ describe('MosaiaConfig', () => {
   it('should allow all optional properties', () => {
     const config: MosaiaConfig = {
       apiKey: 'test-key',
-      refreshToken: 'refresh-token',
       version: '1',
       apiURL: 'https://api.mosaia.ai',
-      appURL: 'https://mosaia.ai',
       clientId: 'client-id',
       clientSecret: 'client-secret',
       verbose: true,
-      authType: 'oauth',
-      expiresIn: 3600,
-      sub: 'user-123',
-      iat: '1640995200',
-      exp: '1640998800'
+      session: {
+        accessToken: 'test-key',
+        refreshToken: 'refresh-token',
+        authType: 'oauth',
+        sub: 'user-123',
+        iat: '1640995200',
+        exp: '1640998800'
+      }
     };
 
     expect(config.apiKey).toBe('test-key');
-    expect(config.authType).toBe('oauth');
+    expect(config.session?.authType).toBe('oauth');
   });
 
   it('should allow partial configuration', () => {

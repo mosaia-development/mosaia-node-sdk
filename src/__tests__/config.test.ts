@@ -55,7 +55,6 @@ describe('ConfigurationManager', () => {
       
       expect(config.apiURL).toBe('https://api.mosaia.ai');
       expect(config.version).toBe('1');
-      expect(config.appURL).toBe('https://mosaia.ai');
     });
 
     it('should initialize with custom values', () => {
@@ -63,15 +62,17 @@ describe('ConfigurationManager', () => {
         apiKey: 'test-api-key',
         apiURL: 'https://custom-api.mosaia.ai',
         version: '2',
-        appURL: 'https://custom-app.mosaia.ai',
         clientId: 'test-client-id',
         clientSecret: 'test-client-secret',
         verbose: true,
-        authType: 'oauth',
-        expiresIn: 3600,
-        sub: 'test-sub',
-        iat: '1640995200',
-        exp: '1640998800'
+        session: {
+          accessToken: 'test-access-token',
+          refreshToken: 'test-refresh-token',
+          authType: 'oauth',
+          sub: 'test-sub',
+          iat: '1640995200',
+          exp: '1640998800'
+        }
       };
 
       configManager.initialize(customConfig);
@@ -80,8 +81,7 @@ describe('ConfigurationManager', () => {
       expect(config).toEqual({
         ...customConfig,
         apiURL: 'https://custom-api.mosaia.ai',
-        version: '2',
-        appURL: 'https://custom-app.mosaia.ai'
+        version: '2'
       });
     });
 
@@ -97,8 +97,8 @@ describe('ConfigurationManager', () => {
       expect(config.apiKey).toBe('test-api-key');
       expect(config.clientId).toBe('test-client-id');
       expect(config.apiURL).toBe('https://api.mosaia.ai');
+
       expect(config.version).toBe('1');
-      expect(config.appURL).toBe('https://mosaia.ai');
     });
   });
 
@@ -206,21 +206,6 @@ describe('ConfigurationManager', () => {
     });
   });
 
-  describe('getAppUrl', () => {
-    it('should return default app URL when not initialized', () => {
-      // getAppUrl calls getConfig which requires initialization
-      expect(() => configManager.getAppUrl()).toThrow('Configuration not initialized. Call initialize() first.');
-    });
-
-    it('should return custom app URL when initialized', () => {
-      configManager.initialize({
-        appURL: 'https://custom-app.mosaia.ai'
-      });
-      
-      expect(configManager.getAppUrl()).toBe('https://custom-app.mosaia.ai');
-    });
-  });
-
   describe('getApiKey', () => {
     it('should return undefined when not initialized', () => {
       // This should throw an error since getApiKey calls getConfig which requires initialization
@@ -264,14 +249,12 @@ describe('ConfigurationManager', () => {
     it('should handle empty string values', () => {
       configManager.initialize({
         apiURL: '',
-        appURL: '',
         version: ''
       });
       
       const config = configManager.getConfig();
       // Empty strings are falsy, so they get replaced with defaults
       expect(config.apiURL).toBe('https://api.mosaia.ai');
-      expect(config.appURL).toBe('https://mosaia.ai');
       expect(config.version).toBe('1');
     });
 
@@ -288,13 +271,11 @@ describe('ConfigurationManager', () => {
 
     it('should handle special characters in URLs', () => {
       configManager.initialize({
-        apiURL: 'https://api.mosaia.ai/path/with/special/chars',
-        appURL: 'https://app.mosaia.ai/path/with/special/chars'
+        apiURL: 'https://api.mosaia.ai/path/with/special/chars'
       });
       
       const config = configManager.getConfig();
       expect(config.apiURL).toBe('https://api.mosaia.ai/path/with/special/chars');
-      expect(config.appURL).toBe('https://app.mosaia.ai/path/with/special/chars');
     });
   });
 }); 

@@ -4,6 +4,10 @@ import {
     OAuthErrorResponse,
     MosaiaConfig
 } from '../types';
+import {
+    ConfigurationManager,
+    DEFAULT_CONFIG
+} from '../config';
 
 /**
  * OAuth client for handling OAuth2 Authorization Code flow with PKCE
@@ -27,7 +31,12 @@ import {
  * ```
  */
 export class OAuth {
-    private config: OAuthConfig;
+    /**
+     * OAuth configuration object
+     * 
+     * @type {OAuthConfig}
+     */
+    public config: OAuthConfig;
 
     /**
      * Creates a new OAuth instance
@@ -40,6 +49,27 @@ export class OAuth {
      * @param config.state - Optional state parameter for CSRF protection
      */
     constructor(config: OAuthConfig) {
+        const configManager = ConfigurationManager.getInstance();
+        const defaultConfig = configManager.getConfig();
+
+        if (!config.appURL) config.appURL = DEFAULT_CONFIG.APP.URL;
+        if (defaultConfig) {
+            if (!config.clientId) config.clientId = defaultConfig.clientId;
+            if (!config.apiURL) config.apiURL = defaultConfig.apiURL;
+            if (!config.apiVersion) config.apiVersion = defaultConfig.version;
+        }
+        if (!config.clientId) {
+            throw new Error('clientId is required in OAuth config');
+        }
+        if (!config.apiURL) {
+            throw new Error('apiURL is required in OAuth config');
+        }
+        if (!config.apiVersion) {
+            throw new Error('apiVersion is required in OAuth config');
+        }
+        if (!config.scopes || config.scopes.length === 0) {
+            throw new Error('scopes are required in OAuth config');
+        }
         this.config = config;
     }
 
@@ -55,20 +85,16 @@ export class OAuth {
      * @private
      */
     private generatePKCE(): { code_verifier: string; code_challenge: string } {
-        // Generate code verifier
-        const codeVerifier = crypto.randomBytes(32)
-            .toString('base64')
-            .replace(/[^a-zA-Z0-9]/g, '')
-            .substring(0, 128);
+        // Generate code verifier using base64url encoding (RFC 7636 compliant)
+        // Use 96 bytes to ensure we get 128 characters after base64url encoding
+        const codeVerifier = crypto.randomBytes(96)
+            .toString('base64url');
 
-        // Generate code challenge
+        // Generate code challenge using SHA256 hash and base64url encoding
         const codeChallenge = crypto
             .createHash('sha256')
             .update(codeVerifier)
-            .digest('base64')
-            .replace(/\+/g, '-')
-            .replace(/\//g, '_')
-            .replace(/=/g, '');
+            .digest('base64url');
 
         return {
             code_verifier: codeVerifier,
@@ -100,19 +126,18 @@ export class OAuth {
      */
     getAuthorizationUrlAndCodeVerifier(): { url: string; codeVerifier: string } {
         const { code_verifier, code_challenge } = this.generatePKCE();
-        
         const params = new URLSearchParams({
-            client_id: this.config.clientId,
+            client_id: this.config.clientId!,
             redirect_uri: this.config.redirectUri,
             response_type: 'code',
             code_challenge: code_challenge,
             code_challenge_method: 'S256',
-            ...(this.config.scopes && { scope: this.config.scopes.join(',') }),
+            ...(this.config.scopes && this.config.scopes.length > 0 && { scope: this.config.scopes.join(',') }),
             ...(this.config.state && { state: this.config.state })
         });
 
         return {
-            url: `${this.config.appURL}/oauth?${params.toString()}`,
+            url: `${this.config.appURL!}/oauth?${params.toString()}`,
             codeVerifier: code_verifier
         };
     }
@@ -144,7 +169,7 @@ export class OAuth {
      */
     async authenticateWithCodeAndVerifier(code: string, codeVerifier: string): Promise<MosaiaConfig> {
         const params = new URLSearchParams({
-            client_id: this.config.clientId,
+            client_id: this.config.clientId!,
             redirect_uri: this.config.redirectUri,
             code: code,
             code_verifier: codeVerifier,
@@ -152,7 +177,11 @@ export class OAuth {
         });
 
         try {
-            const response = await fetch(`${this.config.apiURL}/auth/token`, {
+            const {
+                apiURL,
+                apiVersion
+            } = this.config;
+            const response = await fetch(`${apiURL}/v${apiVersion}/auth/token`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/x-www-form-urlencoded',
@@ -166,15 +195,19 @@ export class OAuth {
                 throw data as OAuthErrorResponse;
             }
 
-            return Promise.resolve({
-                ...this.config,
-                apiKey: data.access_token,
+            const sesson = {
+                accessToken: data.access_token,
                 refreshToken: data.refresh_token,
-                expiresIn: data.expires_in,
                 sub: data.sub,
                 iat: data.iat,
                 exp: data.exp,
                 authType: 'oauth' as const
+            };
+
+            return Promise.resolve({
+                ...this.config,
+                apiKey: sesson.accessToken,
+                session: sesson
             });
         } catch (error) {
             throw error as OAuthErrorResponse;

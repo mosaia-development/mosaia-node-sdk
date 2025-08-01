@@ -77,7 +77,18 @@ export default class MosaiaAuth {
      * }
      * ```
      */
-    async signInWithPassword(email: string, password: string, clientId: string): Promise<MosaiaConfig> {
+    async signInWithPassword(email: string, password: string): Promise<MosaiaConfig> {
+        const config = this.config;
+
+        if (!config) {
+            throw new Error('No config found');
+        }
+        const clientId = config.clientId;
+
+        if (!clientId) {
+            throw new Error('clientId is required and not found in config');
+        }
+
         const request: AuthRequest = {
             grant_type: 'password',
             email,
@@ -95,15 +106,19 @@ export default class MosaiaAuth {
                 throw new Error(error.message);
             }
 
-            return Promise.resolve({
-                ...this.config,
-                apiKey: data.access_token,
+            const sesson = {
+                accessToken: data.access_token,
                 refreshToken: data.refresh_token,
-                expiresIn: data.expires_in,
                 sub: data.sub,
                 iat: data.iat,
                 exp: data.exp,
                 authType: 'password' as const
+            };
+
+            return Promise.resolve({
+                ...this.config,
+                apiKey: sesson.accessToken,
+                session: sesson
             });
         } catch (error) {
             if ((error as any).message) {
@@ -154,15 +169,19 @@ export default class MosaiaAuth {
                 throw new Error(error.message);
             }
             
-            return Promise.resolve({
-                ...this.config,
-                apiKey: data.access_token,
+            const sesson = {
+                accessToken: data.access_token,
                 refreshToken: data.refresh_token,
-                expiresIn: data.expires_in,
                 sub: data.sub,
                 iat: data.iat,
                 exp: data.exp,
                 authType: 'client' as const
+            };
+
+            return Promise.resolve({
+                ...this.config,
+                apiKey: data.access_token,
+                session: sesson
             });
         } catch (error) {
             if ((error as any).message) {
@@ -200,7 +219,7 @@ export default class MosaiaAuth {
      * ```
      */
     async refreshToken(token?: string): Promise<MosaiaConfig> {
-        const refreshToken = token || this.config?.refreshToken;
+        const refreshToken = token || this.config?.session?.refreshToken;
 
         if (!refreshToken) {
             throw new Error('Refresh token is required and not found in config');
@@ -221,15 +240,19 @@ export default class MosaiaAuth {
                 throw new Error(error.message);
             }
 
-            return Promise.resolve({
-                ...this.config,
-                apiKey: data.access_token,
+            const sesson = {
+                accessToken: data.access_token,
                 refreshToken: data.refresh_token,
-                expiresIn: data.expires_in,
                 sub: data.sub,
                 iat: data.iat,
                 exp: data.exp,
                 authType: 'refresh' as const
+            };
+
+            return Promise.resolve({
+                ...this.config,
+                apiKey: sesson.accessToken,
+                session: sesson
             });
         } catch (error) {
             if ((error as any).message) {
@@ -280,15 +303,19 @@ export default class MosaiaAuth {
             });
             const data = await response.json();
 
-            return Promise.resolve({
-                ...this.config,
-                apiKey: data.access_token,
+            const sesson = {
+                accessToken: data.access_token,
                 refreshToken: data.refresh_token,
-                expiresIn: data.expires_in,
                 sub: data.sub,
                 iat: data.iat,
                 exp: data.exp,
                 authType: 'oauth' as const
+            };
+
+            return Promise.resolve({
+                ...this.config,
+                apiKey: sesson.accessToken,
+                session: sesson
             });
         } catch (error) {
             throw error as OAuthErrorResponse;
@@ -347,15 +374,20 @@ export default class MosaiaAuth {
         if (!config) {
             throw new Error('No valid config found');
         }
+        const session = config.session;
 
-        if (!config.refreshToken) {
+        if (!session) {
+            throw new Error('No session found in config');
+        }
+
+        if (!session.refreshToken) {
             throw new Error('No refresh token found in config');
         }
 
-        if (config.authType === 'oauth') {
-            return this.refreshToken(config.refreshToken);
+        if (session.authType === 'oauth') {
+            return this.refreshOAuthToken(session.refreshToken);
         }
 
-        return this.refreshToken(config.refreshToken);
+        return this.refreshToken(session.refreshToken);
     }
 } 

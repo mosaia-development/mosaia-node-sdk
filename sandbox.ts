@@ -14,10 +14,9 @@ const {
 const authentication = async () => {
     try {
         // Validate environment variables
-        if (!API_URL || !APP_URL || !CLIENT_ID || !USER_EMAIL || !USER_PASSWORD) {
+        if (!API_URL || !CLIENT_ID || !USER_EMAIL || !USER_PASSWORD) {
             console.error('❌ Missing required environment variables:');
             console.log('API_URL:', API_URL);
-            console.log('APP_URL:', APP_URL);
             console.log('CLIENT_ID:', CLIENT_ID);
             console.log('USER_EMAIL:', USER_EMAIL);
             console.log('USER_PASSWORD:', USER_PASSWORD ? '[SET]' : '[MISSING]');
@@ -27,15 +26,14 @@ const authentication = async () => {
         console.log('🚀 Initializing Mosaia SDK...');
         let mosaia = new Mosaia({
             apiURL: API_URL,
-            appURL: APP_URL,
-            // verbose: true
+            verbose: true,
+            clientId: CLIENT_ID as string
         });
 
         console.log(' Attempting to sign in...');
         const authConfig = await mosaia.auth.signInWithPassword(
             USER_EMAIL as string, 
-            USER_PASSWORD as string, 
-            CLIENT_ID as string
+            USER_PASSWORD as string
         );
 
         console.log('authConfig:', authConfig);

@@ -15,6 +15,7 @@ import { Session } from './models';
 import APIClient from './apis/api-client';
 import {
     MosaiaConfig,
+    OAuthConfig,
     UserInterface
 } from './types';
 import { ConfigurationManager } from './config';
@@ -58,7 +59,6 @@ class Mosaia {
      * @param config - Configuration object for the SDK
      * @param config.apiKey - API key for authentication (optional)
      * @param config.apiURL - Base URL for API requests (defaults to https://api.mosaia.ai)
-     * @param config.appURL - App URL for OAuth flows (defaults to https://mosaia.ai)
      * @param config.version - API version (defaults to '1')
      * @param config.clientId - Client ID for OAuth flows (required for OAuth)
      * @param config.clientSecret - Client secret for client credentials flow (optional)
@@ -166,35 +166,6 @@ class Mosaia {
      */
     set apiURL(apiURL: string) {
         this.configManager.updateConfig('apiURL', apiURL);
-    }
-
-    /**
-     * Set the app URL for OAuth flows
-     * 
-     * Updates the app URL used for OAuth authorization flows. This affects
-     * the authorization URL generated for OAuth authentication.
-     * 
-     * @param appURL - The new app URL for OAuth flows
-     * 
-     * @example
-     * ```typescript
-     * const mosaia = new Mosaia(config);
-     * 
-     * // Update OAuth app URL
-     * mosaia.appURL = 'https://app-staging.mosaia.ai';
-     * 
-     * // Generate OAuth authorization URL with new app URL
-     * const oauth = mosaia.oauth({
-     *   redirectUri: 'https://myapp.com/callback',
-     *   scopes: ['read', 'write']
-     * });
-     * 
-     * const { url } = oauth.getAuthorizationUrlAndCodeVerifier();
-     * console.log('Authorization URL:', url);
-     * ```
-     */
-    set appURL(appURL: string) {
-        this.configManager.updateConfig('appURL', appURL);
     }
 
     /**
@@ -506,7 +477,7 @@ class Mosaia {
      * @returns {OAuth} OAuth instance for handling the authentication flow
      * 
      * @throws {Error} When clientId is not provided in SDK configuration
-     * @throws {Error} When appURL is not provided in SDK configuration
+
      * 
      * @example
      * ```typescript
@@ -529,32 +500,8 @@ class Mosaia {
      * const newMosaiaInstance = new Mosaia(newConfig);
      * ```
      */
-    oauth({
-        redirectUri,
-        scopes
-    }: {
-        redirectUri: string,
-        scopes?: string[]
-    }): OAuth {
-        if (!this.config.clientId) {
-            throw new Error('Client ID is required to initialize OAuth');
-        }
-
-        if (!this.config.appURL) {
-            throw new Error('appURL is required to initialize OAuth');
-        }
-
-        if (!this.config.apiURL) {
-            throw new Error('apiURL is required to initialize OAuth');
-        }
-
-        return new OAuth({
-            clientId: this.config.clientId,
-            redirectUri,
-            appURL: this.config.appURL,
-            apiURL: this.config.apiURL,
-            scopes
-        });
+    oauth(oauthConfig: OAuthConfig): OAuth {
+        return new OAuth(oauthConfig);
     }
 }
 

@@ -21,7 +21,7 @@ describe('Mosaia', () => {
   const defaultConfig: MosaiaConfig = {
     apiKey: 'test-api-key',
     apiURL: 'https://api.mosaia.ai',
-    appURL: 'https://mosaia.ai',
+
     version: '1',
     clientId: 'test-client-id'
   };
@@ -73,18 +73,19 @@ describe('Mosaia', () => {
     it('should initialize with full configuration', () => {
       const fullConfig: MosaiaConfig = {
         apiKey: 'full-key',
-        refreshToken: 'refresh-token',
         version: '2',
         apiURL: 'https://custom-api.mosaia.ai',
-        appURL: 'https://custom-app.mosaia.ai',
         clientId: 'full-client-id',
         clientSecret: 'full-client-secret',
         verbose: true,
-        authType: 'oauth',
-        expiresIn: 3600,
-        sub: 'user-123',
-        iat: '1640995200',
-        exp: '1640998800'
+        session: {
+          accessToken: 'full-key',
+          refreshToken: 'refresh-token',
+          authType: 'oauth',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
+        }
       };
 
       new Mosaia(fullConfig);
@@ -128,13 +129,6 @@ describe('Mosaia', () => {
     it('should update API URL', () => {
       mosaia.apiURL = 'https://new-api.mosaia.ai';
       expect(mockConfigManager.updateConfig).toHaveBeenCalledWith('apiURL', 'https://new-api.mosaia.ai');
-    });
-  });
-
-  describe('appURL setter', () => {
-    it('should update app URL', () => {
-      mosaia.appURL = 'https://new-app.mosaia.ai';
-      expect(mockConfigManager.updateConfig).toHaveBeenCalledWith('appURL', 'https://new-app.mosaia.ai');
     });
   });
 
@@ -281,74 +275,37 @@ describe('Mosaia', () => {
     it('should create OAuth instance with valid configuration', () => {
       const oauthConfig = {
         redirectUri: 'https://myapp.com/callback',
+        appURL: 'https://custom-app.mosaia.ai',
         scopes: ['read', 'write']
       };
 
       const oauthInstance = mosaia.oauth(oauthConfig);
 
-      expect(MockOAuth).toHaveBeenCalledWith({
-        clientId: 'test-client-id',
-        redirectUri: 'https://myapp.com/callback',
-        appURL: 'https://mosaia.ai',
-        apiURL: 'https://api.mosaia.ai',
-        scopes: ['read', 'write']
-      });
+      expect(MockOAuth).toHaveBeenCalledWith(oauthConfig);
       expect(oauthInstance).toBeDefined();
     });
 
-    it('should create OAuth instance without scopes', () => {
+    it('should create OAuth instance with required scopes', () => {
       const oauthConfig = {
-        redirectUri: 'https://myapp.com/callback'
+        redirectUri: 'https://myapp.com/callback',
+        scopes: ['read', 'write'],
+        appURL: 'https://custom-app.mosaia.ai'
       };
 
       mosaia.oauth(oauthConfig);
 
-      expect(MockOAuth).toHaveBeenCalledWith({
-        clientId: 'test-client-id',
+      expect(MockOAuth).toHaveBeenCalledWith(oauthConfig);
+    });
+
+    it('should handle missing configuration values by using defaults', () => {
+      const oauthConfig = {
         redirectUri: 'https://myapp.com/callback',
-        appURL: 'https://mosaia.ai',
-        apiURL: 'https://api.mosaia.ai',
-        scopes: undefined
-      });
-    });
-
-    it('should throw error when clientId is not provided', () => {
-      mockConfigManager.getConfig.mockReturnValue({
-        ...defaultConfig,
-        clientId: undefined
-      });
-
-      const oauthConfig = {
-        redirectUri: 'https://myapp.com/callback'
+        scopes: ['read', 'write']
       };
 
-      expect(() => mosaia.oauth(oauthConfig)).toThrow('Client ID is required to initialize OAuth');
-    });
-
-    it('should throw error when appURL is not provided', () => {
-      mockConfigManager.getConfig.mockReturnValue({
-        ...defaultConfig,
-        appURL: undefined
-      });
-
-      const oauthConfig = {
-        redirectUri: 'https://myapp.com/callback'
-      };
-
-      expect(() => mosaia.oauth(oauthConfig)).toThrow('appURL is required to initialize OAuth');
-    });
-
-    it('should throw error when apiURL is not provided', () => {
-      mockConfigManager.getConfig.mockReturnValue({
-        ...defaultConfig,
-        apiURL: undefined
-      });
-
-      const oauthConfig = {
-        redirectUri: 'https://myapp.com/callback'
-      };
-
-      expect(() => mosaia.oauth(oauthConfig)).toThrow('apiURL is required to initialize OAuth');
+      const oauthInstance = mosaia.oauth(oauthConfig);
+      expect(oauthInstance).toBeDefined();
+      expect(MockOAuth).toHaveBeenCalledWith(oauthConfig);
     });
   });
 
@@ -370,18 +327,19 @@ describe('Mosaia', () => {
     it('should handle configuration with all optional fields', () => {
       const fullConfig: MosaiaConfig = {
         apiKey: 'full-key',
-        refreshToken: 'refresh-token',
         version: '2',
         apiURL: 'https://custom-api.mosaia.ai',
-        appURL: 'https://custom-app.mosaia.ai',
         clientId: 'full-client-id',
         clientSecret: 'full-client-secret',
         verbose: true,
-        authType: 'oauth',
-        expiresIn: 3600,
-        sub: 'user-123',
-        iat: '1640995200',
-        exp: '1640998800'
+        session: {
+          accessToken: 'full-key',
+          refreshToken: 'refresh-token',
+          authType: 'oauth',
+          sub: 'user-123',
+          iat: '1640995200',
+          exp: '1640998800'
+        }
       };
       new Mosaia(fullConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(fullConfig);

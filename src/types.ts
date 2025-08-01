@@ -12,7 +12,6 @@
  * const config: MosiaConfig = {
  *   apiKey: 'your-api-key',
  *   apiURL: 'https://api.mosaia.ai',
- *   appURL: 'https://mosaia.ai',
  *   clientId: 'your-client-id',
  *   user: 'user-id',
  *   org: 'org-id'
@@ -22,32 +21,36 @@
 export interface MosaiaConfig {
     /** API key for authentication (optional if using OAuth) */
     apiKey?: string;
-    /** Refresh token for token refresh operations (optional) */
-    refreshToken?: string;
     /** API version to use (defaults to '1') */
     version?: string;
     /** Base URL for API requests (defaults to https://api.mosaia.ai) */
     apiURL?: string;
-    /** App URL for OAuth flows (defaults to https://mosaia.ai) */
-    appURL?: string;
-    /** Client ID for OAuth flows (required for OAuth) */
+    /** Client ID for client credentials flows (Optional) */
     clientId?: string;
     /** Client secret for client credentials flow (optional) */
     clientSecret?: string;
     /** Enable verbose HTTP request/response logging (defaults to false) */
     verbose?: boolean;
-    /** Authentication type (defaults to 'password') */
-    authType?: 'password' | 'client' | 'refresh' | 'oauth';
-    /** Expires in (optional) */
-    expiresIn?: number;
-    /** Subject (optional) */
-    sub?: string;
-    /** Token issued at timestamp (optional) */
-    iat?: string;
-    /** Token expiration timestamp (optional) */
-    exp?: string;
+    /** Session credentials for OAuth and token-based authentication (optional) */
+    session?: SessionCredentials;
 }
 
+/**
+ * Authentication interface for the Mosaia SDK
+ * 
+ * This interface defines the authentication options available when initializing
+ * the Mosaia SDK client. It includes authentication settings, API endpoints,
+ * and optional context parameters.
+ * 
+ * @example
+ * ```typescript
+ * const auth: AuthInterface = {
+ *   grant_type: 'password',
+ *   email: 'john.doe@example.com',
+ *   password: 'password123'
+ * };
+ * ```
+ */
 export interface AuthInterface {
     grant_type: 'password' | 'client' | 'refresh';
     email?: string;
@@ -57,6 +60,36 @@ export interface AuthInterface {
     refresh_token?: string;
     code?: string;
     code_verifier?: string;
+}
+
+/**
+ * Session credentials for OAuth and token-based authentication
+ * 
+ * @example
+ * ```typescript
+ * const session: SessionCredentials = {
+ *   accessToken: 'your-access-token',
+ *   refreshToken: 'your-refresh-token',
+ *   authType: 'oauth',
+ *   sub: 'user-123',
+ *   iat: '1640995200',
+ *   exp: '1640998800'
+ * };
+ * ```
+ */
+export interface SessionCredentials {
+    /** Access token for authentication */
+    accessToken: string;
+    /** Refresh token for token refresh operations */
+    refreshToken: string;
+    /** Authentication type */
+    authType?: 'password' | 'client' | 'refresh' | 'oauth';
+    /** Subject identifier (user ID) */
+    sub?: string;
+    /** Token issued at timestamp */
+    iat?: string;
+    /** Token expiration timestamp */
+    exp?: string;
 }
 
 /**
@@ -1011,23 +1044,24 @@ export type GetApiRequestLogPayload = {
  * const oauthConfig: OAuthConfig = {
  *   clientId: 'your-client-id',
  *   redirectUri: 'https://your-app.com/callback',
- *   appURL: 'https://mosaia.ai',
  *   scopes: ['read', 'write'],
  *   state: 'random-state-string'
  * };
  * ```
  */
 export interface OAuthConfig {
-    /** OAuth client ID (required) */
-    clientId: string;
     /** Redirect URI for the OAuth flow (required) */
     redirectUri: string;
-    /** App URL for authorization endpoints (required) */
-    appURL: string;
-    /** API URL for API endpoints (required) */
-    apiURL: string;
-    /** Array of scopes to request (optional) */
-    scopes?: string[];
+    /** App URL for authorization endpoints (optional defaults to https://mosaia.ai) */
+    appURL?: string;
+    /** Array of scopes to request (required) */
+    scopes: string[];
+    /** OAuth client ID (required only if not using default) */
+    clientId?: string;
+    /** API URL for API endpoints (required only if not using default) */
+    apiURL?: string;
+    /** API version (required only if not using default) */
+    apiVersion?: string;
     /** State parameter for CSRF protection (optional) */
     state?: string;
 }
