@@ -62,7 +62,6 @@ const Mosaia = require('@mosaia/mosaia-node-sdk');
 ```typescript
 const {
     API_URL,
-    APP_URL,
     CLIENT_ID,
     USER_EMAIL,
     USER_PASSWORD
@@ -70,7 +69,6 @@ const {
 
 const mosaia = new Mosaia({
     apiURL: API_URL,           // Optional (Defaults to https://api.mosaia.ai)
-    appURL: APP_URL,           // Optional (Defaults to https://mosaia.ai)
     clientId: CLIENT_ID,       // Required for OAuth flows
     version: '1'               // Optional (Defaults to '1')
 });
@@ -86,7 +84,6 @@ dotenv.config();
 
 const {
     API_URL,
-    APP_URL,
     CLIENT_ID,
     USER_EMAIL,
     USER_PASSWORD
@@ -96,7 +93,6 @@ async function main() {
     // Initialize SDK
     const mosaia = new Mosaia({
         apiURL: API_URL,
-        appURL: APP_URL,
         clientId: CLIENT_ID
     });
 
@@ -271,7 +267,8 @@ The SDK supports OAuth2 Authorization Code flow with PKCE (Proof Key for Code Ex
 // Initialize OAuth
 const oauth = mosaia.oauth({
     redirectUri: 'https://your-app.com/callback',
-    scopes: ['read', 'write']  // Required: specify the scopes you need
+    scopes: ['read', 'write'],  // Required: specify the scopes you need
+    appURL: 'https://mosaia.ai' // Required: specify the app URL for authorization
 });
 
 // Get authorization URL and code verifier
@@ -297,7 +294,7 @@ mosaia.config = newConfig;
 ```
 
 **Important Notes:**
-- `redirectUri` and `scopes` are required parameters in the OAuth config
+- `redirectUri`, `scopes`, and `appURL` are required parameters in the OAuth config
 - `clientId`, `apiURL`, and `apiVersion` can be provided in either the OAuth config or the SDK configuration
 - `appURL` can be provided in the OAuth config or defaults to `https://mosaia.ai`
 - The OAuth constructor validates that all required values are available after merging configurations
