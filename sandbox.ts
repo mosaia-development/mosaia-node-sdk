@@ -1,4 +1,4 @@
-import Mosaia, { MosaiaAuth } from './src';
+import * as Mosaia from './src';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,7 +23,7 @@ const authentication = async () => {
         }
 
         console.log('🚀 Initializing Mosaia SDK...');
-        let mosaia = new Mosaia({
+        let mosaia = new Mosaia.MosaiaClient({
             apiURL: API_URL,
             verbose: true,
             clientId: CLIENT_ID as string
@@ -37,7 +37,7 @@ const authentication = async () => {
 
         console.log('authConfig:', authConfig);
         console.log(' Attempting to refresh...');
-        const auth = new MosaiaAuth(authConfig);
+        const auth = new Mosaia.MosaiaAuth(authConfig);
         const refreshConfig = await auth.refreshToken();
 
         console.log('refreshConfig:', refreshConfig);
@@ -91,8 +91,11 @@ async function testSDK() {
     const orgUser = await user?.orgs.get({}, "65a9a716660e8cf0600b5095");
     console.log('orgUser:', orgUser);
     if (orgUser && !Array.isArray(orgUser)) {
-        const mosaia2 = await orgUser.session();
-        console.log('mosaia2:', mosaia2);
+        const orgConfig = await orgUser.session();
+        console.log('orgConfig:', orgConfig);
+        
+        // Create new MosaiaClient instance with org config
+        const mosaia2 = new Mosaia.MosaiaClient(orgConfig);
         const session = await mosaia2.session();
         console.log('session:', session);
         console.log('session user:', session.user);

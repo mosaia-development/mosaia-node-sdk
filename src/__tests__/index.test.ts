@@ -1,9 +1,11 @@
-import Mosaia from '../index';
+import * as SDK from '../index';
 import { ConfigurationManager } from '../config';
 import { MosaiaConfig, UserInterface } from '../types';
 import APIClient from '../apis/api-client';
 import { Session } from '../models';
 import { OAuth } from '../oauth';
+
+const { MosaiaClient } = SDK;
 
 // Mock dependencies
 jest.mock('../apis/api-client');
@@ -14,8 +16,8 @@ const MockAPIClient = APIClient as jest.MockedClass<typeof APIClient>;
 const MockSession = Session as jest.MockedClass<typeof Session>;
 const MockOAuth = OAuth as jest.MockedClass<typeof OAuth>;
 
-describe('Mosaia', () => {
-  let mosaia: Mosaia;
+describe('MosaiaClient', () => {
+  let mosaia: InstanceType<typeof MosaiaClient>;
   let mockConfigManager: jest.Mocked<ConfigurationManager>;
 
   const defaultConfig: MosaiaConfig = {
@@ -48,7 +50,7 @@ describe('Mosaia', () => {
     // Reset mocks
     jest.clearAllMocks();
     
-    mosaia = new Mosaia(defaultConfig);
+    mosaia = new MosaiaClient(defaultConfig);
   });
 
   afterEach(() => {
@@ -66,7 +68,7 @@ describe('Mosaia', () => {
         apiKey: 'minimal-key'
       };
 
-      new Mosaia(minimalConfig);
+      new MosaiaClient(minimalConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(minimalConfig);
     });
 
@@ -88,7 +90,7 @@ describe('Mosaia', () => {
         }
       };
 
-      new Mosaia(fullConfig);
+      new MosaiaClient(fullConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(fullConfig);
     });
   });
@@ -312,7 +314,7 @@ describe('Mosaia', () => {
   describe('edge cases', () => {
     it('should handle empty configuration', () => {
       const emptyConfig: MosaiaConfig = {};
-      new Mosaia(emptyConfig);
+      new MosaiaClient(emptyConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(emptyConfig);
     });
 
@@ -320,7 +322,7 @@ describe('Mosaia', () => {
       const minimalConfig: MosaiaConfig = {
         apiKey: 'minimal-key'
       };
-      new Mosaia(minimalConfig);
+      new MosaiaClient(minimalConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(minimalConfig);
     });
 
@@ -341,7 +343,7 @@ describe('Mosaia', () => {
           exp: '1640998800'
         }
       };
-      new Mosaia(fullConfig);
+      new MosaiaClient(fullConfig);
       expect(mockConfigManager.initialize).toHaveBeenCalledWith(fullConfig);
     });
   });
@@ -370,11 +372,21 @@ describe('Mosaia', () => {
   });
 });
 
+// Test the main SDK class export
+describe('Main SDK class export', () => {
+  it('should export MosaiaClient', () => {
+    expect(MosaiaClient).toBeDefined();
+    expect(typeof MosaiaClient).toBe('function');
+  });
+});
+
 // Test the default export
 describe('Default export', () => {
-  it('should export Mosaia as default', () => {
-    expect(Mosaia).toBeDefined();
-    expect(typeof Mosaia).toBe('function');
+  it('should export MosaiaClient as default', () => {
+    const DefaultExport = require('../index').default;
+    expect(DefaultExport).toBeDefined();
+    expect(typeof DefaultExport).toBe('function');
+    expect(DefaultExport).toBe(MosaiaClient);
   });
 });
 
@@ -383,6 +395,6 @@ describe('Module exports', () => {
   it('should export all necessary types and APIs', () => {
     // This test ensures that the module exports are working correctly
     // The actual exports are tested in the individual API test files
-    expect(Mosaia).toBeDefined();
+    expect(MosaiaClient).toBeDefined();
   });
 }); 

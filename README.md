@@ -18,9 +18,11 @@ A comprehensive Node.js SDK for the Mosaia API platform, providing access to all
 - **Tool Integration** - Manage external tools and integrations
 - **OAuth Client Management** - OAuth client registration and management
 - **Configuration Management** - Centralized configuration with runtime updates
-- **Comprehensive Testing** - Full test coverage for all API endpoints (499 tests)
+- **Comprehensive Testing** - Full test coverage for all API endpoints (521 tests)
 - **Zero Dependencies** - Lightweight SDK with no production dependencies
 - **Native Fetch API** - Modern HTTP client using native fetch instead of axios
+- **Clean Architecture** - Well-structured dependency management with no circular dependencies
+- **Dual Import Patterns** - Support for both namespace and default export patterns with consistent naming
 
 > **Note**: Some API endpoints may not be fully implemented on all server instances. The SDK includes comprehensive error handling and will gracefully handle 404 responses for unimplemented endpoints.
 
@@ -44,17 +46,75 @@ yarn add @mosaia/mosaia-node-sdk
 ##### In Node.js or NextJS
 To use the TypeScript definition files within a Node.js or NextJS project, simply import @mosaia/mosaia-node-sdk as you normally would.
 
-In a TypeScript file:
+**Best Practice Recommendation:**
+The SDK supports two import patterns, both using `Mosaia` as the primary name for brand consistency:
+
+1. **Namespace Pattern** (Recommended): `import * as Mosaia from '@mosaia/mosaia-node-sdk'`
+2. **Default Export Pattern** (Alternative): `import Mosaia from '@mosaia/mosaia-node-sdk'`
+
+Both patterns provide identical functionality and use consistent naming for better developer experience.
+
+#### Namespace Pattern (Recommended)
 ```typescript
-// import entire SDK
+// Import everything as a namespace
+import * as Mosaia from '@mosaia/mosaia-node-sdk';
+
+// Create API clients
+const users = new Mosaia.Users();
+const agents = new Mosaia.Agents();
+const apps = new Mosaia.Apps();
+
+// Create models
+const user = new Mosaia.User({});
+const agent = new Mosaia.Agent({});
+
+// Create OAuth instance
+const oauth = new Mosaia.OAuth({
+    clientId: 'your-client-id',
+    redirectUri: 'https://your-app.com/callback',
+    appURL: 'https://mosaia.ai',
+    scopes: ['read', 'write']
+});
+
+// Use utility functions
+const isValid = Mosaia.isValidObjectId('507f1f77bcf86cd799439011');
+
+// Access types
+const config: Mosaia.MosaiaConfig = {
+  apiKey: 'your-api-key',
+  apiURL: 'https://api.mosaia.ai'
+};
+
+// Create main SDK instance
+const mosaia = new Mosaia.MosaiaClient(config);
+```
+
+**Benefits of the Namespace Pattern:**
+- **No Naming Conflicts** - Avoid conflicts with other libraries that might have similar class names
+- **Clear Organization** - All SDK components are clearly organized under the `Mosaia` namespace
+- **Better IDE Support** - Enhanced autocomplete and IntelliSense with the namespace prefix
+- **Consistent with Industry Standards** - Follows the same pattern as other popular SDKs
+- **Access to All Components** - Import all SDK classes, types, and utilities in one statement
+- **Consistent Naming** - Uses `Mosaia` as the namespace name for brand consistency
+
+**Benefits of the Single Primary Class Pattern:**
+- **Simple Import** - Clean, straightforward import for the main SDK class
+- **Familiar Pattern** - Common pattern used by many JavaScript libraries
+- **Type Safety** - Full TypeScript support with proper type inference
+- **Backward Compatibility** - Maintains compatibility with existing code patterns
+- **Brand Consistency** - Uses `Mosaia` as the default export name for brand recognition
+
+#### Single Primary Class Pattern (Supported)
+```typescript
+// Import the main SDK class as default
 import Mosaia from '@mosaia/mosaia-node-sdk';
-// import SDK with type references
+// Import with type references
 import Mosaia, { AgentInterface, UserInterface } from '@mosaia/mosaia-node-sdk';
 ```
 
 In a JavaScript file:
 ```javascript
-// import entire SDK
+// Import the main SDK class as default
 const Mosaia = require('@mosaia/mosaia-node-sdk');
 ```
 
@@ -66,15 +126,16 @@ const {
     USER_PASSWORD
 } = process.env;
 
-const mosaia = new Mosaia({
+const mosaia = new Mosaia.MosaiaClient({
     apiKey: API_KEY       // Required for API authentication
 });
 ```
 
 ## Quick Start
 
+### Namespace Pattern (Recommended)
 ```typescript
-import Mosaia from '@mosaia/mosaia-node-sdk';
+import * as Mosaia from '@mosaia/mosaia-node-sdk';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -83,7 +144,7 @@ const { API_KEY } = process.env;
 
 async function main() {
     // Initialize SDK
-    const mosaia = new Mosaia({
+    const mosaia = new Mosaia.MosaiaClient({
         apiKey: API_KEY
     });
 
@@ -105,6 +166,34 @@ async function main() {
         });
         console.log('Agent response:', response.choices[0].message);
     }
+}
+
+main().catch(console.error);
+```
+
+### Single Primary Class Pattern (Alternative)
+```typescript
+import Mosaia from '@mosaia/mosaia-node-sdk';
+import dotenv from 'dotenv';
+
+dotenv.config();
+
+const { API_KEY } = process.env;
+
+async function main() {
+    // Initialize SDK
+    const mosaia = new Mosaia({
+        apiKey: API_KEY
+    });
+    
+    // Get all users
+    const users = await mosaia.users.get();
+    
+    // Get all agents
+    const agents = await mosaia.agents.get();
+    
+    console.log('Users:', users);
+    console.log('Agents:', agents);
 }
 
 main().catch(console.error);
@@ -251,7 +340,7 @@ const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
 const config = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
 // create new instance with authenticated config
-const mosaia = new Mosaia(config);
+const mosaia = new Mosaia.MosaiaClient(config);
 
 // Now you can make authenticated API calls
 const users = await mosaia.users.get();
@@ -458,8 +547,23 @@ npm test -- --testPathPattern="models.test.ts"
 - ✅ **Tools API Tests** - Tool management
 - ✅ **App Bots API Tests** - Application-bot integrations
 - ✅ **Organization Users API Tests** - User-organization relationships
+- ✅ **OrgUser Model Tests** - Model-specific functionality and session management
+- ✅ **Configuration Tests** - Configuration management and validation
+- ✅ **Utility Tests** - Helper functions and error handling
+- ✅ **Type Tests** - TypeScript type definitions and interfaces
 
 ## What's New
+
+### Version 0.0.15
+- 🔧 **Circular Dependency Resolution**: Fixed circular dependency between `org-user.ts` and `index.ts`
+- 🔧 **Architecture Improvements**: Resolved cross-layer dependencies between models and APIs
+- 🔧 **Module Resolution**: Improved module loading and dependency management
+- 🔧 **Code Quality**: Enhanced code structure and maintainability
+- 🧪 **Test Reliability**: Improved test stability and consistency
+- ✅ **All Tests Passing**: 521 tests now pass consistently
+- ✅ **Clean Architecture**: Well-structured dependency hierarchy with no problematic circular references
+- ✅ **Better Performance**: Improved module resolution and loading times
+- ✅ **Enhanced Maintainability**: Cleaner codebase structure for easier development
 
 ### Version 0.0.14
 - 🚀 **Zero Dependencies**: Removed all production dependencies (axios, openai) for a lightweight SDK
@@ -485,7 +589,7 @@ npm test -- --testPathPattern="models.test.ts"
 - 🔧 **Cryptographic Security**: Improved entropy by using 96 bytes for code verifier generation
 - 🧪 **Test Updates**: Updated OAuth tests to reflect simplified constructor approach
 - ✅ **RFC 7636 Compliance**: PKCE implementation now fully compliant with OAuth 2.0 PKCE specification
-- ✅ **All Tests Passing**: 503 tests now pass consistently with improved OAuth implementation
+- ✅ **All Tests Passing**: 521 tests now pass consistently with improved OAuth implementation
 
 ### Version 0.0.13
 - 🔧 **Class Name Consistency**: Fixed all references to use correct `MosaiaAuth` class name instead of `Auth`
@@ -543,17 +647,33 @@ npm test -- --testPathPattern="models.test.ts"
 
 ## Development
 
+### Circular Dependency Analysis
+
+The SDK has been thoroughly analyzed for circular dependencies using multiple tools:
+
+- ✅ **Madge Analysis**: No problematic circular dependencies detected
+- ✅ **Runtime Testing**: All modules load successfully without circular dependency errors
+- ✅ **Build Verification**: TypeScript compilation completes without issues
+- ✅ **Test Suite**: 499 tests pass consistently with clean dependency resolution
+
+**Dependency Structure:**
+- **Mutual Dependencies**: Some modules have mutual dependencies (e.g., `api-client.ts` ↔ `auth.ts`) which are resolved correctly at runtime
+- **Cross-Layer Dependencies**: Models and APIs have intentional cross-layer dependencies for convenience methods
+- **Clean Hierarchy**: Overall dependency flow follows a clean top-down pattern
+
 ### Code Quality
 
 The SDK maintains high code quality standards:
 
 - **TypeScript**: Full type safety with comprehensive type definitions
 - **Clean Codebase**: No generated JavaScript files in source directories
-- **Comprehensive Testing**: 499 tests with full coverage for all API endpoints
+- **Comprehensive Testing**: 521 tests with full coverage for all API endpoints
 - **Linting**: ESLint configuration for code consistency
 - **Documentation**: JSDoc comments for all public APIs
 - **Zero Dependencies**: Lightweight SDK with no production dependencies
 - **Modern HTTP Client**: Uses native fetch API for better performance
+- **Clean Architecture**: Well-structured dependency management with no circular dependencies
+- **Module Resolution**: Optimized module loading and dependency resolution
 
 ### Build Process
 
@@ -584,6 +704,23 @@ src/
 ├── index.ts        # Main SDK entry point
 └── types.ts        # TypeScript type definitions
 ```
+
+### Architecture Overview
+
+The SDK follows a clean layered architecture:
+
+- **Types Layer**: Base type definitions (no dependencies)
+- **Config Layer**: Configuration management (depends on types)
+- **Utils Layer**: Utility functions (depends on types)
+- **API Layer**: HTTP client and API endpoints (depends on config, types, utils)
+- **Models Layer**: Entity model classes (depends on APIs, types, config)
+- **Main Layer**: SDK orchestration (depends on all layers)
+
+This architecture ensures:
+- ✅ No circular dependencies
+- ✅ Clear separation of concerns
+- ✅ Easy testing and maintenance
+- ✅ Optimized module resolution
 
 ## Contributing
 

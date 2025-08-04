@@ -31,9 +31,9 @@ import { isSdkError } from './utils';
  * 
  * @example
  * ```typescript
- * import { Mosaia } from '@mosaia/mosaia-node-sdk';
+ * import * as SDK from '@mosaia/mosaia-node-sdk';
  * 
- * const mosaia = new Mosaia({
+ * const mosaia = new SDK.MosaiaClient({
  *   apiKey: 'your-api-key',
  *   apiURL: 'https://api.mosaia.ai',
  *   appURL: 'https://mosaia.ai',
@@ -50,7 +50,7 @@ import { isSdkError } from './utils';
  * });
  * ```
  */
-class Mosaia {
+class MosaiaClient {
     private configManager: ConfigurationManager;
     
     /**
@@ -67,7 +67,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia({
+     * const mosaia = new SDK.MosaiaClient({
      *   apiKey: 'your-api-key',
      *   apiURL: 'https://api.mosaia.ai',
      *   appURL: 'https://mosaia.ai',
@@ -106,7 +106,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia(config);
+     * const mosaia = new SDK.MosaiaClient(config);
      * 
      * // Update API key
      * mosaia.apiKey = 'new-api-key-123';
@@ -129,7 +129,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia(config);
+     * const mosaia = new SDK.MosaiaClient(config);
      * 
      * // Update API version
      * mosaia.version = '2';
@@ -152,7 +152,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia(config);
+     * const mosaia = new SDK.MosaiaClient(config);
      * 
      * // Switch to staging environment
      * mosaia.apiURL = 'https://api-staging.mosaia.ai';
@@ -178,7 +178,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia(config);
+     * const mosaia = new SDK.MosaiaClient(config);
      * 
      * // Update OAuth client ID
      * mosaia.clientId = 'new-client-id-123';
@@ -204,7 +204,7 @@ class Mosaia {
      * 
      * @example
      * ```typescript
-     * const mosaia = new Mosaia(config);
+     * const mosaia = new SDK.MosaiaClient(config);
      * 
      * // Update OAuth client secret
      * mosaia.clientSecret = 'new-client-secret-456';
@@ -497,7 +497,7 @@ class Mosaia {
      * const newConfig = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
      * 
      * // create new instance with authenticated config
-     * const newMosaiaInstance = new Mosaia(newConfig);
+     * const newMosaiaInstance = new SDK.MosaiaClient(newConfig);
      * ```
      */
     oauth(oauthConfig: OAuthConfig): OAuth {
@@ -505,16 +505,101 @@ class Mosaia {
     }
 }
 
-// Export types
+// ============================================================================
+// NAMESPACE EXPORTS
+// ============================================================================
+
+/**
+ * Mosaia SDK Namespace
+ * 
+ * This namespace contains all SDK classes, types, and utilities.
+ * Import using: `import * as Mosaia from '@mosaia/mosaia-node-sdk'`
+ * 
+ * @example
+ * ```typescript
+ * import * as Mosaia from '@mosaia/mosaia-node-sdk';
+ * 
+ * // Create API clients
+ * const users = new Mosaia.Users();
+ * const agents = new Mosaia.Agents();
+ * const apps = new Mosaia.Apps();
+ * 
+ * // Create models
+ * const user = new Mosaia.User({});
+ * const agent = new Mosaia.Agent({});
+ * 
+ * // Create OAuth instance
+ * const oauth = new Mosaia.OAuth({
+ *   clientId: 'your-client-id',
+ *   redirectUri: 'https://your-app.com/callback',
+ *   appURL: 'https://mosaia.ai',
+ *   scopes: ['read', 'write']
+ * });
+ * 
+ * // Use utility functions
+ * const isValid = Mosaia.isValidObjectId('507f1f77bcf86cd799439011');
+ * 
+ * // Access types
+ * const config: Mosaia.MosaiaConfig = {
+ *   apiKey: 'your-api-key',
+ *   apiURL: 'https://api.mosaia.ai'
+ * };
+ * 
+ * // Create main SDK instance
+ * const mosaia = new Mosaia.MosaiaClient(config);
+ * ```
+ */
+
+// API Classes
+export { Users } from './apis';
+export { Agents } from './apis';
+export { Apps } from './apis';
+export { Tools } from './apis';
+export { Organizations } from './apis';
+export { OrgUsers } from './apis';
+export { AgentGroups } from './apis';
+export { Models } from './apis';
+export { Clients } from './apis';
+export { AppBots } from './apis';
+export { MosaiaAuth } from './apis';
+
+// Model Classes
+export { User } from './models';
+export { Agent } from './models';
+export { App } from './models';
+export { Organization } from './models';
+export { OrgUser } from './models';
+export { AppBot } from './models';
+export { AgentGroup } from './models';
+export { Tool } from './models';
+export { Client } from './models';
+export { Model } from './models';
+export { Session } from './models';
+export { BaseModel } from './models';
+
+// Auth Classes
+export { OAuth } from './oauth';
+
+// Configuration Classes
+export { ConfigurationManager, DEFAULT_CONFIG } from './config';
+
+// Utility Functions
+export { 
+    isValidObjectId, 
+    parseError, 
+    queryGenerator, 
+    isTimestampExpired,
+    failure,
+    success,
+    serverErrorToString,
+    isSdkError
+} from './utils';
+
+// Types
 export * from './types';
-// Export APIs
-export * from './apis';
-// Export models
-export * from './models';
-// Export OAuth
-export * from './oauth';
 
-export { isSdkError };
+// Main SDK Class
+export { MosaiaClient };
 
-// Export default SDK
-export default Mosaia;
+// Default export for single primary class pattern
+export default MosaiaClient;

@@ -5,9 +5,9 @@ import {
     UserInterface
 } from '../types';
 import { BaseModel } from './base';
-import Mosaia from '../index';
 import Organization from './organization';
 import User from './user';
+import { MosaiaConfig } from '../types';
 
 /**
  * OrgUser class for managing organization user relationship instances in the Mosaia SDK
@@ -159,25 +159,26 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
      * Get a session for this organization user
      * 
      * Retrieves an authentication session for the organization user relationship,
-     * returning a configured Mosaia instance with the appropriate access tokens.
+     * returning a new MosaiaConfig with the appropriate access tokens.
      * 
-     * @returns Promise that resolves to a configured Mosaia instance
+     * @returns Promise that resolves to a new MosaiaConfig
      * @throws {Error} When session retrieval fails or network errors occur
      * 
      * @example
      * ```typescript
      * try {
-     *   const mosaia = await orgUser.session();
+     *   const mosaiaConfig = await orgUser.session();
      *   console.log('Session established successfully');
      *   
      *   // Use the session to access organization resources
+     *   const mosaia = new Mosaia(mosaiaConfig);
      *   const agents = await mosaia.agents.get();
      * } catch (error) {
      *   console.error('Session failed:', error.message);
      * }
      * ```
      */
-    async session(): Promise<Mosaia> {
+    async session(): Promise<MosaiaConfig> {
         try {
             const {
                 data,
@@ -188,12 +189,11 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
                 throw new Error(error.message);
             }
 
-            const config = {
+            return Promise.resolve({
                 ...this.config,
                 apiKey: data.access_token,
                 session: data
-            }
-            return Promise.resolve(new Mosaia(config));
+            });
         } catch (error) {
             console.log('error:', error);
             if ((error as any).message) {
