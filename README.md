@@ -18,6 +18,8 @@ A comprehensive Node.js SDK for the Mosaia API platform, providing access to all
 - **Tool Integration** - Manage external tools and integrations
 - **OAuth Client Management** - OAuth client registration and management
 - **Configuration Management** - Centralized configuration with runtime updates
+- **Verbose Logging** - Enhanced debugging with detailed HTTP request/response logging
+- **Clean Response Structure** - Simplified API responses with data and paging only
 - **Comprehensive Testing** - Full test coverage for all API endpoints (521 tests)
 - **Zero Dependencies** - Lightweight SDK with no production dependencies
 - **Native Fetch API** - Modern HTTP client using native fetch instead of axios
@@ -498,9 +500,47 @@ try {
 }
 ```
 
+## Verbose Logging
+
+The SDK supports detailed HTTP request and response logging for debugging purposes. Enable verbose logging by setting the `verbose` option in your configuration:
+
+```typescript
+const mosaia = new Mosaia.MosaiaClient({
+    apiKey: 'your-api-key',
+    verbose: true  // Enable detailed logging
+});
+```
+
+When verbose logging is enabled, the SDK will log:
+- 🚀 HTTP requests with method, URL, headers, and body
+- 📋 Query parameters for GET requests
+- 📦 Request body for POST/PUT requests
+- ✅ HTTP responses with status codes
+- 📄 Response data
+- 📊 Meta information (if present in response)
+- 🚨 Error details (if present in response)
+
+This is particularly useful for debugging API calls and understanding the exact data being sent and received.
+
 ## Response Types
 
-All API methods return the raw response data from the API. For example, if you request a user, you will receive an object like `{ id: 'user-id', name: 'John Doe', ... }` rather than a wrapped object. For list endpoints, you will receive an array or a paginated object as returned by the API.
+All API methods return clean response objects with only the essential data. The SDK automatically removes meta and error information from responses and provides them through logging when verbose mode is enabled.
+
+**Response Structure:**
+- **Single Entity**: Returns the entity object directly (e.g., `{ id: 'user-id', name: 'John Doe', ... }`)
+- **List Endpoints**: Returns `{ data: [...], paging?: {...} }` structure
+- **Error Handling**: Errors are thrown as exceptions rather than returned in response objects
+
+**Example Response:**
+```typescript
+// List response
+const users = await mosaia.users.get();
+// Returns: { data: [{ id: '1', name: 'John' }, { id: '2', name: 'Jane' }], paging: { total: 2 } }
+
+// Single entity response
+const user = await mosaia.users.get({}, 'user-id');
+// Returns: { id: 'user-id', name: 'John Doe', email: 'john@example.com' }
+```
 
 ## Pagination
 
@@ -553,6 +593,18 @@ npm test -- --testPathPattern="models.test.ts"
 - ✅ **Type Tests** - TypeScript type definitions and interfaces
 
 ## What's New
+
+### Version 0.0.16
+- 🔧 **API Response Structure**: Simplified API responses to return only data and paging information
+- 🔧 **Verbose Logging Enhancement**: Added detailed HTTP request/response logging with meta and error information
+- 🔧 **Error Handling**: Improved error handling with automatic promise rejection for error responses
+- 🔧 **Response Cleanup**: Removed meta and error properties from response objects for cleaner API
+- 🔧 **Test Updates**: Updated all tests to work with new response structure
+- 🧪 **Test Reliability**: Improved test coverage and reliability
+- ✅ **All Tests Passing**: 521 tests now pass consistently
+- ✅ **Cleaner API**: Simplified response objects make the SDK easier to use
+- ✅ **Better Debugging**: Enhanced verbose logging provides detailed request/response information
+- ✅ **Improved Error Handling**: Errors are now thrown as exceptions rather than returned in response objects
 
 ### Version 0.0.15
 - 🔧 **Circular Dependency Resolution**: Fixed circular dependency between `org-user.ts` and `index.ts`

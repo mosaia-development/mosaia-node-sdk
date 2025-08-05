@@ -85,28 +85,30 @@ describe('Clients', () => {
   describe('get method', () => {
     it('should get all clients successfully', async () => {
       const mockClients = [
-        { id: '1', name: 'Web App', client_id: 'web-app-client' },
-        { id: '2', name: 'Mobile App', client_id: 'mobile-app-client' }
+        { id: '1', name: 'Client A', client_id: 'client-a' },
+        { id: '2', name: 'Client B', client_id: 'client-b' }
       ];
 
-      const mockResponse = mockClients.map(client => new MockClient(client));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockClients.map(client => new MockClient(client))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await clients.get();
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith();
+      expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific client by ID', async () => {
-      const mockClient = { id: '1', name: 'Web App', client_id: 'web-app-client' };
+      const mockClient = { id: '1', name: 'Client A', client_id: 'client-a' };
       const mockResponse = new MockClient(mockClient);
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await clients.get({}, '1');
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith({}, '1');
+      expect(mockGet).toHaveBeenCalledWith({}, '1');
       expect(result).toEqual(mockResponse);
     });
 
@@ -114,34 +116,36 @@ describe('Clients', () => {
       const params = {
         limit: 10,
         offset: 0,
-        q: 'web',
+        q: 'client',
         active: true
       };
 
       const mockClients = [
-        { id: '1', name: 'Web App', client_id: 'web-app-client' }
+        { id: '1', name: 'Client A', client_id: 'client-a' }
       ];
 
-      const mockResponse = mockClients.map(client => new MockClient(client));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockClients.map(client => new MockClient(client))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await clients.get(params);
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith(params);
+      expect(mockGet).toHaveBeenCalledWith(params);
       expect(result).toEqual(mockResponse);
     });
 
     it('should handle empty clients list', async () => {
-      const mockResponse: any[] = [];
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = { data: [] };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await clients.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
-      mockBaseAPI.get.mockResolvedValue(null);
+      mockGet.mockResolvedValue(null);
 
       const result = await clients.get();
 
@@ -350,11 +354,13 @@ describe('Clients', () => {
         { id: '2', name: 'Mobile App', client_id: 'mobile-app-client' }
       ];
 
-      const mockGetResponse = mockClients.map(client => new MockClient(client));
+      const mockGetResponse = {
+        data: mockClients.map(client => new MockClient(client))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse);
 
       const allClients = await clients.get();
-      expect(allClients).toHaveLength(2);
+      expect(allClients.data).toHaveLength(2);
 
       // Step 2: Get specific client
       const mockClient = { id: '1', name: 'Web App', client_id: 'web-app-client' };
@@ -386,11 +392,13 @@ describe('Clients', () => {
         { id: '2', name: 'Client 2', client_id: 'client-2-id' }
       ];
 
-      const mockFirstPage = firstPageClients.map(client => new MockClient(client));
+      const mockFirstPage = {
+        data: firstPageClients.map(client => new MockClient(client))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await clients.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageClients = [
@@ -398,11 +406,13 @@ describe('Clients', () => {
         { id: '4', name: 'Client 4', client_id: 'client-4-id' }
       ];
 
-      const mockSecondPage = secondPageClients.map(client => new MockClient(client));
+      const mockSecondPage = {
+        data: secondPageClients.map(client => new MockClient(client))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await clients.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -411,22 +421,26 @@ describe('Clients', () => {
         { id: '1', name: 'Web App', client_id: 'web-app-client' }
       ];
 
-      const mockSearchResults = searchResults.map(client => new MockClient(client));
+      const mockSearchResults = {
+        data: searchResults.map(client => new MockClient(client))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await clients.get({ q: 'web' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by active status
       const activeClients = [
         { id: '1', name: 'Active App', client_id: 'active-app-client' }
       ];
 
-      const mockActiveClients = activeClients.map(client => new MockClient(client));
+      const mockActiveClients = {
+        data: activeClients.map(client => new MockClient(client))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockActiveClients);
 
       const activeResults = await clients.get({ active: true });
-      expect(activeResults).toHaveLength(1);
+      expect(activeResults.data).toHaveLength(1);
     });
   });
 

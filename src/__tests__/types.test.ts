@@ -116,21 +116,17 @@ describe('AuthInterface', () => {
 describe('APIResponse', () => {
   it('should have correct structure', () => {
     const response: APIResponse<string> = {
-      meta: {
-        status: 200,
-        message: 'Success'
-      },
       data: 'test-data',
-      error: {
-        message: '',
-        code: '',
-        status: 0
+      paging: {
+        offset: 0,
+        limit: 10,
+        total: 1
       }
     };
 
-    expect(response.meta.status).toBe(200);
     expect(response.data).toBe('test-data');
-    expect(response.error).toBeDefined();
+    expect(response.paging).toBeDefined();
+    expect(response.paging?.total).toBe(1);
   });
 });
 

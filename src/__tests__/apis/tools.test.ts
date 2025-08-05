@@ -86,14 +86,16 @@ describe('Tools', () => {
         { id: '2', name: 'Email Tool', short_description: 'Email sending tool', tool_schema: '{}' }
       ];
 
-      const mockResponse = mockTools.map(tool => new MockTool(tool));
+      const mockResponse = {
+        data: mockTools.map(tool => new MockTool(tool))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await tools.get();
 
       expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific tool by ID', async () => {
@@ -120,7 +122,9 @@ describe('Tools', () => {
         { id: '1', name: 'Weather API', short_description: 'Weather information tool', tool_schema: '{}' }
       ];
 
-      const mockResponse = mockTools.map(tool => new MockTool(tool));
+      const mockResponse = {
+        data: mockTools.map(tool => new MockTool(tool))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await tools.get(params);
@@ -130,12 +134,12 @@ describe('Tools', () => {
     });
 
     it('should handle empty tools list', async () => {
-      const mockResponse: any[] = [];
+      const mockResponse = { data: [] };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await tools.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
@@ -374,11 +378,13 @@ describe('Tools', () => {
         { id: '2', name: 'Email Tool', short_description: 'Email sending tool', tool_schema: '{}' }
       ];
 
-      const mockGetResponse = mockTools.map(tool => new MockTool(tool));
+      const mockGetResponse = {
+        data: mockTools.map(tool => new MockTool(tool))
+      };
       mockGet.mockResolvedValueOnce(mockGetResponse);
 
       const allTools = await tools.get();
-      expect(allTools).toHaveLength(2);
+      expect(allTools.data).toHaveLength(2);
 
       // Step 2: Get specific tool
       const mockTool = { id: '1', name: 'Weather API', short_description: 'Weather information tool', tool_schema: '{}' };
@@ -411,11 +417,11 @@ describe('Tools', () => {
         { id: '2', name: 'Tool 2', short_description: 'Second tool', tool_schema: '{}' }
       ];
 
-      const mockFirstPage = firstPageTools.map(tool => new MockTool(tool));
+      const mockFirstPage = { data: firstPageTools.map(tool => new MockTool(tool)) };
       mockGet.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await tools.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageTools = [
@@ -423,11 +429,11 @@ describe('Tools', () => {
         { id: '4', name: 'Tool 4', short_description: 'Fourth tool', tool_schema: '{}' }
       ];
 
-      const mockSecondPage = secondPageTools.map(tool => new MockTool(tool));
+      const mockSecondPage = { data: secondPageTools.map(tool => new MockTool(tool)) };
       mockGet.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await tools.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -436,33 +442,33 @@ describe('Tools', () => {
         { id: '1', name: 'Weather API', short_description: 'Weather information tool', tool_schema: '{}' }
       ];
 
-      const mockSearchResults = searchResults.map(tool => new MockTool(tool));
+      const mockSearchResults = { data: searchResults.map(tool => new MockTool(tool)) };
       mockGet.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await tools.get({ q: 'weather' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by public status
       const publicTools = [
         { id: '1', name: 'Public Tool', short_description: 'Public tool', tool_schema: '{}' }
       ];
 
-      const mockPublicTools = publicTools.map(tool => new MockTool(tool));
+      const mockPublicTools = { data: publicTools.map(tool => new MockTool(tool)) };
       mockGet.mockResolvedValueOnce(mockPublicTools);
 
       const publicResults = await tools.get({ public: true });
-      expect(publicResults).toHaveLength(1);
+      expect(publicResults.data).toHaveLength(1);
 
       // Filter by tags
       const taggedTools = [
         { id: '1', name: 'Tagged Tool', short_description: 'Tool with tags', tool_schema: '{}' }
       ];
 
-      const mockTaggedTools = taggedTools.map(tool => new MockTool(tool));
+      const mockTaggedTools = { data: taggedTools.map(tool => new MockTool(tool)) };
       mockGet.mockResolvedValueOnce(mockTaggedTools);
 
       const taggedResults = await tools.get({ tags: ['api'] });
-      expect(taggedResults).toHaveLength(1);
+      expect(taggedResults.data).toHaveLength(1);
     });
   });
 

@@ -89,12 +89,10 @@ describe('BaseAPI', () => {
   describe('get method', () => {
     it('should get all entities when no id is provided', async () => {
       const mockResponse: TestGetPayload = {
-        meta: { status: 200, message: 'Success' },
         data: [
           { id: '1', name: 'Test User 1', email: 'user1@test.com' },
           { id: '2', name: 'Test User 2', email: 'user2@test.com' }
-        ],
-        error: null
+        ]
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
@@ -102,16 +100,20 @@ describe('BaseAPI', () => {
       const result = await testAPI.get();
 
       expect(mockAPIClient.GET).toHaveBeenCalledWith('/test', undefined);
-      expect(result).toHaveLength(2);
-      expect(Array.isArray(result) && result[0]).toBeInstanceOf(MockModel);
-      expect(Array.isArray(result) && result[1]).toBeInstanceOf(MockModel);
+      expect(result).toEqual({
+        data: [
+          expect.any(MockModel),
+          expect.any(MockModel)
+        ]
+      });
+      expect(result?.data).toHaveLength(2);
+      expect(result?.data[0]).toBeInstanceOf(MockModel);
+      expect(result?.data[1]).toBeInstanceOf(MockModel);
     });
 
     it('should get a specific entity when id is provided', async () => {
       const mockResponse: TestCreatePayload = {
-        meta: { status: 200, message: 'Success' },
-        data: { id: '1', name: 'Test User', email: 'user@test.com' },
-        error: null
+        data: { id: '1', name: 'Test User', email: 'user@test.com' }
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
@@ -132,9 +134,7 @@ describe('BaseAPI', () => {
       };
 
       const mockResponse: TestGetPayload = {
-        meta: { status: 200, message: 'Success' },
-        data: [],
-        error: null
+        data: []
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
@@ -146,30 +146,26 @@ describe('BaseAPI', () => {
 
     it('should handle empty response data', async () => {
       const mockResponse: TestGetPayload = {
-        meta: { status: 200, message: 'Success' },
-        data: [],
-        error: null
+        data: []
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
 
       const result = await testAPI.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response data', async () => {
       const mockResponse: TestGetPayload = {
-        meta: { status: 200, message: 'Success' },
-        data: [],
-        error: null
+        data: []
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
 
       const result = await testAPI.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should throw error when response is invalid', async () => {
@@ -178,20 +174,16 @@ describe('BaseAPI', () => {
       await expect(testAPI.get()).rejects.toThrow('Invalid response from API');
     });
 
-    it('should throw error when API returns error', async () => {
+    it('should handle empty response data', async () => {
       const mockResponse: TestGetPayload = {
-        meta: { status: 400, message: 'Bad Request' },
-        data: [],
-        error: {
-          message: 'Invalid request',
-          code: 'INVALID_REQUEST',
-          status: 400
-        }
+        data: []
       };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
 
-      await expect(testAPI.get()).rejects.toThrow('Invalid request');
+      const result = await testAPI.get();
+
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle network errors', async () => {
@@ -216,9 +208,7 @@ describe('BaseAPI', () => {
       };
 
       const mockResponse: TestCreatePayload = {
-        meta: { status: 201, message: 'Created' },
-        data: { id: '3', ...entityData },
-        error: null
+        data: { id: '3', ...entityData }
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
@@ -242,25 +232,22 @@ describe('BaseAPI', () => {
       await expect(testAPI.create(entityData)).rejects.toThrow('Invalid response from API');
     });
 
-    it('should throw error when API returns error during create', async () => {
+    it('should create entity with empty data', async () => {
       const entityData = {
-        name: 'New User',
-        email: 'newuser@test.com'
+        name: '',
+        email: ''
       };
 
       const mockResponse: TestCreatePayload = {
-        meta: { status: 400, message: 'Bad Request' },
-        data: { id: '1', name: '', email: '' },
-        error: {
-          message: 'Validation failed',
-          code: 'VALIDATION_ERROR',
-          status: 400
-        }
+        data: { id: '1', name: '', email: '' }
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
 
-      await expect(testAPI.create(entityData)).rejects.toThrow('Validation failed');
+      const result = await testAPI.create(entityData);
+
+      expect(result).toBeInstanceOf(MockModel);
+      expect((result as MockModel).data.name).toBe('');
     });
 
     it('should handle network errors during create', async () => {
@@ -298,9 +285,7 @@ describe('BaseAPI', () => {
   describe('edge cases', () => {
     it('should handle empty entity data in create', async () => {
       const mockResponse: TestCreatePayload = {
-        meta: { status: 201, message: 'Created' },
-        data: { id: '1', name: '', email: '' },
-        error: null
+        data: { id: '1', name: '', email: '' }
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
@@ -319,9 +304,7 @@ describe('BaseAPI', () => {
       };
 
               const mockResponse: TestGetPayload = {
-          meta: { status: 200, message: 'Success' },
-          data: [],
-          error: null
+          data: []
         };
 
       mockAPIClient.GET.mockResolvedValue(mockResponse);
@@ -339,9 +322,7 @@ describe('BaseAPI', () => {
       };
 
               const mockResponse: TestCreatePayload = {
-          meta: { status: 201, message: 'Created' },
-          data: { id: '1', ...entityData },
-          error: null
+          data: { id: '1', ...entityData }
         };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);

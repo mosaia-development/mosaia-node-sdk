@@ -1,8 +1,7 @@
 import {
     MosaiaConfig,
     QueryParams,
-    APIResponse,
-    ErrorResponse
+    BatchAPIResponse
 } from '../types';
 import APIClient from './api-client';
 import { ConfigurationManager } from '../config';
@@ -58,9 +57,14 @@ export abstract class BaseAPI<
      * 
      * @param params - Optional query parameters for filtering and pagination
      * @param id - Optional specific entity ID to retrieve
-     * @returns Promise that resolves to an array of entities, a single entity, or null
+     * @returns Promise that resolves to an array of entities with paging, a single entity, or null
      */
-    async get(params?: QueryParams, id?: string): Promise<M[] | M | null> {
+    // Overload for getting a single entity by ID
+    async get(params: QueryParams | undefined, id: string): Promise<M | null>;
+    // Overload for getting multiple entities (batch response)
+    async get(params?: QueryParams): Promise<BatchAPIResponse<M>>;
+    // Implementation
+    async get(params?: QueryParams, id?: string): Promise<BatchAPIResponse<M> | M | null> {
         try {
             let uri = this.uri;
             if (id) uri = `${uri}/${id}`;
@@ -74,17 +78,15 @@ export abstract class BaseAPI<
 
             const {
                 data,
-                error,
                 paging
             } = response;
-
-            if (error) {
-                throw new Error(String(error.message || 'Unknown error'));
-            }
             
             // Handle array response (list of entities)
             if (Array.isArray(data)) {
-                return data.map((item) => new this.ModelClass(item, uri));
+                return {
+                    data: data.map((item) => new this.ModelClass(item, uri)),
+                    paging
+                };
             }
             
             // Handle single entity response
@@ -115,11 +117,7 @@ export abstract class BaseAPI<
             if (!response || !response.data) {
                 throw new Error('Invalid response from API');
             }
-            const { data, error } = response;
-
-            if (error) {
-                throw new Error(String(error.message || 'Unknown error'));
-            }
+            const { data } = response;
             
             return new this.ModelClass(data);
         } catch (error) {

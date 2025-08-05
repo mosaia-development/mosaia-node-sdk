@@ -77,22 +77,24 @@ describe('Agents', () => {
   describe('get method', () => {
     it('should get all agents successfully', async () => {
       const mockAgents = [
-        { id: '1', name: 'Support Agent', short_description: 'Customer support agent' },
-        { id: '2', name: 'Sales Agent', short_description: 'Sales assistant agent' }
+        { id: '1', name: 'Support Agent', short_description: 'Customer support agent', model: 'gpt-4' },
+        { id: '2', name: 'Sales Agent', short_description: 'Sales assistant agent', model: 'claude-3' }
       ];
 
-      const mockResponse = mockAgents.map(agent => new MockAgent(agent));
+      const mockResponse = {
+        data: mockAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await agents.get();
 
       expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific agent by ID', async () => {
-      const mockAgent = { id: '1', name: 'Support Agent', short_description: 'Customer support agent' };
+      const mockAgent = { id: '1', name: 'Support Agent', short_description: 'Customer support agent', model: 'gpt-4' };
       const mockResponse = new MockAgent(mockAgent);
       mockGet.mockResolvedValue(mockResponse);
 
@@ -107,15 +109,16 @@ describe('Agents', () => {
         limit: 10,
         offset: 0,
         q: 'support',
-        active: true,
-        model: 'gpt-4'
+        active: true
       };
 
       const mockAgents = [
-        { id: '1', name: 'Support Agent', short_description: 'Customer support agent' }
+        { id: '1', name: 'Support Agent', short_description: 'Customer support agent', model: 'gpt-4' }
       ];
 
-      const mockResponse = mockAgents.map(agent => new MockAgent(agent));
+      const mockResponse = {
+        data: mockAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await agents.get(params);
@@ -310,7 +313,9 @@ describe('Agents', () => {
         { id: '1', name: 'Test Agent', short_description: 'Test agent' }
       ];
 
-      const mockResponse = mockAgents.map(agent => new MockAgent(agent));
+      const mockResponse = {
+        data: mockAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await agents.get(params);
@@ -335,7 +340,9 @@ describe('Agents', () => {
         { id: '1', name: 'Support Agent', short_description: 'Customer support agent' }
       ];
 
-      const mockResponse = mockAgents.map(agent => new MockAgent(agent));
+      const mockResponse = {
+        data: mockAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await agents.get(params);
@@ -352,11 +359,13 @@ describe('Agents', () => {
         { id: '2', name: 'Sales Agent', short_description: 'Sales assistant agent' }
       ];
 
-      const mockGetResponse = mockAgents.map(agent => new MockAgent(agent));
+      const mockGetResponse = {
+        data: mockAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockGetResponse);
 
       const allAgents = await agents.get();
-      expect(allAgents).toHaveLength(2);
+      expect(allAgents.data).toHaveLength(2);
 
       // Step 2: Get specific agent
       const mockAgent = { id: '1', name: 'Support Agent', short_description: 'Customer support agent' };
@@ -388,11 +397,13 @@ describe('Agents', () => {
         { id: '2', name: 'Agent 2', short_description: 'Second agent' }
       ];
 
-      const mockFirstPage = firstPageAgents.map(agent => new MockAgent(agent));
+      const mockFirstPage = {
+        data: firstPageAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await agents.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageAgents = [
@@ -400,11 +411,13 @@ describe('Agents', () => {
         { id: '4', name: 'Agent 4', short_description: 'Fourth agent' }
       ];
 
-      const mockSecondPage = secondPageAgents.map(agent => new MockAgent(agent));
+      const mockSecondPage = {
+        data: secondPageAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await agents.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -413,33 +426,39 @@ describe('Agents', () => {
         { id: '1', name: 'Support Agent', short_description: 'Customer support agent' }
       ];
 
-      const mockSearchResults = searchResults.map(agent => new MockAgent(agent));
+      const mockSearchResults = {
+        data: searchResults.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await agents.get({ q: 'support' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by model
       const gpt4Agents = [
         { id: '1', name: 'GPT-4 Agent', short_description: 'GPT-4 powered agent' }
       ];
 
-      const mockGpt4Agents = gpt4Agents.map(agent => new MockAgent(agent));
+      const mockGpt4Agents = {
+        data: gpt4Agents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockGpt4Agents);
 
       const gpt4Results = await agents.get({ model: 'gpt-4' });
-      expect(gpt4Results).toHaveLength(1);
+      expect(gpt4Results.data).toHaveLength(1);
 
       // Filter by tags
       const taggedAgents = [
         { id: '1', name: 'Tagged Agent', short_description: 'Agent with tags' }
       ];
 
-      const mockTaggedAgents = taggedAgents.map(agent => new MockAgent(agent));
+      const mockTaggedAgents = {
+        data: taggedAgents.map(agent => new MockAgent(agent))
+      };
       mockGet.mockResolvedValueOnce(mockTaggedAgents);
 
       const taggedResults = await agents.get({ tags: ['support'] });
-      expect(taggedResults).toHaveLength(1);
+      expect(taggedResults.data).toHaveLength(1);
     });
   });
 

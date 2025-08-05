@@ -72,20 +72,22 @@ describe('OrgUsers', () => {
         { id: '2', org: 'org-1', user: 'user-2', permission: 'member' }
       ];
 
-      const mockResponse = mockOrgUsers.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await orgUsers.get();
 
       expect(mockBaseAPI.get).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific org user by ID', async () => {
       const mockOrgUser = { id: '1', org: 'org-1', user: 'user-1', permission: 'admin' };
       const mockResponse = new MockOrgUser(mockOrgUser);
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await orgUsers.get({}, '1');
 
@@ -98,8 +100,6 @@ describe('OrgUsers', () => {
         limit: 10,
         offset: 0,
         org: 'org-1',
-        user: 'user-1',
-        permission: 'admin',
         active: true
       };
 
@@ -107,8 +107,10 @@ describe('OrgUsers', () => {
         { id: '1', org: 'org-1', user: 'user-1', permission: 'admin' }
       ];
 
-      const mockResponse = mockOrgUsers.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await orgUsers.get(params);
 
@@ -117,16 +119,16 @@ describe('OrgUsers', () => {
     });
 
     it('should handle empty org users list', async () => {
-      const mockResponse: any[] = [];
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = { data: [] };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await orgUsers.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
-      mockBaseAPI.get.mockResolvedValue(null);
+      mockBaseAPI.get.mockResolvedValue(null as any);
 
       const result = await orgUsers.get();
 
@@ -292,8 +294,10 @@ describe('OrgUsers', () => {
         { id: '1', org: 'Test Org', user: 'Test User', permission: 'admin' }
       ];
 
-      const mockResponse = mockOrgUsers.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       await orgUsers.get(params);
 
@@ -316,7 +320,7 @@ describe('OrgUsers', () => {
       ];
 
       const mockResponse = mockOrgUsers.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       await orgUsers.get(params);
 
@@ -332,16 +336,18 @@ describe('OrgUsers', () => {
         { id: '2', org: 'org-1', user: 'user-2', permission: 'member' }
       ];
 
-      const mockGetResponse = mockOrgUsers.map(orgUser => new MockOrgUser(orgUser));
+      const mockGetResponse = {
+        data: mockOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse);
 
       const allOrgUsers = await orgUsers.get();
-      expect(allOrgUsers).toHaveLength(2);
+      expect(allOrgUsers.data).toHaveLength(2);
 
       // Step 2: Get specific org user
       const mockOrgUser = { id: '1', org: 'org-1', user: 'user-1', permission: 'admin' };
       const mockGetOrgUserResponse = new MockOrgUser(mockOrgUser);
-      mockBaseAPI.get.mockResolvedValueOnce(mockGetOrgUserResponse);
+      mockBaseAPI.get.mockResolvedValueOnce(mockGetOrgUserResponse as any);
 
       const specificOrgUser = await orgUsers.get({}, '1');
       expect(specificOrgUser).toEqual(mockGetOrgUserResponse);
@@ -368,11 +374,13 @@ describe('OrgUsers', () => {
         { id: '2', org: 'org-1', user: 'user-2', permission: 'member' }
       ];
 
-      const mockFirstPage = firstPageOrgUsers.map(orgUser => new MockOrgUser(orgUser));
+      const mockFirstPage = {
+        data: firstPageOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await orgUsers.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageOrgUsers = [
@@ -380,11 +388,13 @@ describe('OrgUsers', () => {
         { id: '4', org: 'org-1', user: 'user-4', permission: 'viewer' }
       ];
 
-      const mockSecondPage = secondPageOrgUsers.map(orgUser => new MockOrgUser(orgUser));
+      const mockSecondPage = {
+        data: secondPageOrgUsers.map(orgUser => new MockOrgUser(orgUser))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await orgUsers.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -394,10 +404,10 @@ describe('OrgUsers', () => {
       ];
 
       const mockOrgUsers = orgUsersData.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValueOnce(mockOrgUsers);
+      mockBaseAPI.get.mockResolvedValueOnce({ data: mockOrgUsers });
 
       const orgResults = await orgUsers.get({ org: 'org-1' });
-      expect(orgResults).toHaveLength(1);
+      expect(orgResults.data).toHaveLength(1);
 
       // Filter by user
       const userOrgUsersData = [
@@ -405,10 +415,10 @@ describe('OrgUsers', () => {
       ];
 
       const mockUserOrgUsers = userOrgUsersData.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValueOnce(mockUserOrgUsers);
+      mockBaseAPI.get.mockResolvedValueOnce({ data: mockUserOrgUsers });
 
       const userResults = await orgUsers.get({ user: 'user-1' });
-      expect(userResults).toHaveLength(1);
+      expect(userResults.data).toHaveLength(1);
 
       // Filter by permission
       const adminOrgUsersData = [
@@ -416,10 +426,10 @@ describe('OrgUsers', () => {
       ];
 
       const mockAdminOrgUsers = adminOrgUsersData.map(orgUser => new MockOrgUser(orgUser));
-      mockBaseAPI.get.mockResolvedValueOnce(mockAdminOrgUsers);
+      mockBaseAPI.get.mockResolvedValueOnce({ data: mockAdminOrgUsers });
 
       const adminResults = await orgUsers.get({ permission: 'admin' });
-      expect(adminResults).toHaveLength(1);
+      expect(adminResults.data).toHaveLength(1);
     });
   });
 

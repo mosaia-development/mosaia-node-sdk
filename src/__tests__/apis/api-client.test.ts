@@ -256,18 +256,7 @@ describe('APIClient', () => {
 
       const result = await apiClient.GET('/test');
 
-      expect(result).toEqual({
-        meta: {
-          status: 204,
-          message: 'Success'
-        },
-        data: undefined,
-        error: {
-          message: '',
-          code: '',
-          status: 204
-        }
-      });
+      expect(result).toBeUndefined();
     });
   });
 
@@ -441,16 +430,6 @@ describe('APIClient', () => {
 
   describe('DELETE method', () => {
     it('should make DELETE request successfully', async () => {
-      const mockResponse = {
-        meta: { status: 204, message: 'Success' },
-        data: undefined,
-        error: {
-          message: '',
-          code: '',
-          status: 204
-        }
-      };
-
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 204,
@@ -469,7 +448,7 @@ describe('APIClient', () => {
           }
         })
       );
-      expect(result).toEqual(mockResponse);
+      expect(result).toBeUndefined();
     });
 
     it('should pass query parameters to DELETE request', async () => {

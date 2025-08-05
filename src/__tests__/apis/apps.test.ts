@@ -85,28 +85,30 @@ describe('Apps', () => {
   describe('get method', () => {
     it('should get all apps successfully', async () => {
       const mockApps = [
-        { id: '1', name: 'Support Portal', short_description: 'Customer support application' },
-        { id: '2', name: 'Sales Dashboard', short_description: 'Sales management application' }
+        { id: '1', name: 'Support App', short_description: 'Customer support application' },
+        { id: '2', name: 'Analytics App', short_description: 'Data analytics platform' }
       ];
 
-      const mockResponse = mockApps.map(app => new MockApp(app));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockApps.map(app => new MockApp(app))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await apps.get();
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith();
+      expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific app by ID', async () => {
-      const mockApp = { id: '1', name: 'Support Portal', short_description: 'Customer support application' };
+      const mockApp = { id: '1', name: 'Support App', short_description: 'Customer support application' };
       const mockResponse = new MockApp(mockApp);
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await apps.get({}, '1');
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith({}, '1');
+      expect(mockGet).toHaveBeenCalledWith({}, '1');
       expect(result).toEqual(mockResponse);
     });
 
@@ -120,29 +122,31 @@ describe('Apps', () => {
       };
 
       const mockApps = [
-        { id: '1', name: 'Support Portal', short_description: 'Customer support application' }
+        { id: '1', name: 'Support App', short_description: 'Customer support application' }
       ];
 
-      const mockResponse = mockApps.map(app => new MockApp(app));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockApps.map(app => new MockApp(app))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await apps.get(params);
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith(params);
+      expect(mockGet).toHaveBeenCalledWith(params);
       expect(result).toEqual(mockResponse);
     });
 
     it('should handle empty apps list', async () => {
-      const mockResponse: any[] = [];
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = { data: [] };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await apps.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
-      mockBaseAPI.get.mockResolvedValue(null);
+      mockGet.mockResolvedValue(null);
 
       const result = await apps.get();
 
@@ -357,11 +361,13 @@ describe('Apps', () => {
         { id: '2', name: 'Sales Dashboard', short_description: 'Sales management application' }
       ];
 
-      const mockGetResponse = mockApps.map(app => new MockApp(app));
+      const mockGetResponse = {
+        data: mockApps.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse);
 
       const allApps = await apps.get();
-      expect(allApps).toHaveLength(2);
+      expect(allApps.data).toHaveLength(2);
 
       // Step 2: Get specific app
       const mockApp = { id: '1', name: 'Support Portal', short_description: 'Customer support application' };
@@ -393,11 +399,13 @@ describe('Apps', () => {
         { id: '2', name: 'App 2', short_description: 'Second application' }
       ];
 
-      const mockFirstPage = firstPageApps.map(app => new MockApp(app));
+      const mockFirstPage = {
+        data: firstPageApps.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await apps.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageApps = [
@@ -405,11 +413,13 @@ describe('Apps', () => {
         { id: '4', name: 'App 4', short_description: 'Fourth application' }
       ];
 
-      const mockSecondPage = secondPageApps.map(app => new MockApp(app));
+      const mockSecondPage = {
+        data: secondPageApps.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await apps.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -418,33 +428,39 @@ describe('Apps', () => {
         { id: '1', name: 'Support Portal', short_description: 'Customer support application' }
       ];
 
-      const mockSearchResults = searchResults.map(app => new MockApp(app));
+      const mockSearchResults = {
+        data: searchResults.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await apps.get({ q: 'support' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by organization
       const orgApps = [
         { id: '1', name: 'Org App', short_description: 'Organization application' }
       ];
 
-      const mockOrgApps = orgApps.map(app => new MockApp(app));
+      const mockOrgApps = {
+        data: orgApps.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockOrgApps);
 
       const orgResults = await apps.get({ org: 'org-123' });
-      expect(orgResults).toHaveLength(1);
+      expect(orgResults.data).toHaveLength(1);
 
       // Filter by tags
       const taggedApps = [
         { id: '1', name: 'Tagged App', short_description: 'Application with tags' }
       ];
 
-      const mockTaggedApps = taggedApps.map(app => new MockApp(app));
+      const mockTaggedApps = {
+        data: taggedApps.map(app => new MockApp(app))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockTaggedApps);
 
       const taggedResults = await apps.get({ tags: ['support'] });
-      expect(taggedResults).toHaveLength(1);
+      expect(taggedResults.data).toHaveLength(1);
     });
   });
 

@@ -101,12 +101,19 @@ export interface SessionCredentials {
  * @template T - The type of data contained in the response
  */
 export interface APIResponse<T> {
-    meta: {
-        status: number;
-        message: string;
-    }
-    data: T;
-    error?: ErrorResponse | null;
+    data: T | T[] | null;
+    paging?: PagingInterface;
+}
+
+/**
+ * Batch API response wrapper
+ * 
+ * All batch API responses are wrapped in this structure to provide consistent
+ * response handling across the SDK.
+ */
+export interface BatchAPIResponse<T> {
+    data: T[];
+    paging?: PagingInterface;
 }
 
 /**
@@ -1071,12 +1078,12 @@ export type GetApiRequestLogPayload = {
  * ```
  */
 export interface OAuthConfig {
-    /** Redirect URI for the OAuth flow (required) */
-    redirectUri: string;
+    /** Redirect URI for the OAuth flow (optional) */
+    redirectUri?: string;
     /** App URL for authorization endpoints (optional defaults to https://mosaia.ai) */
     appURL?: string;
-    /** Array of scopes to request (required) */
-    scopes: string[];
+    /** Array of scopes to request (optional) */
+    scopes?: string[];
     /** OAuth client ID (required only if not using default) */
     clientId?: string;
     /** API URL for API endpoints (required only if not using default) */

@@ -86,14 +86,16 @@ describe('Users', () => {
         { id: '2', name: 'Jane Smith', email: 'jane@example.com' }
       ];
 
-      const mockResponse = mockUsers.map(user => new MockUser(user));
+      const mockResponse = {
+        data: mockUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await users.get();
 
       expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific user by ID', async () => {
@@ -119,7 +121,9 @@ describe('Users', () => {
         { id: '1', name: 'John Doe', email: 'john@example.com' }
       ];
 
-      const mockResponse = mockUsers.map(user => new MockUser(user));
+      const mockResponse = {
+        data: mockUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await users.get(params);
@@ -306,7 +310,9 @@ describe('Users', () => {
         { id: '1', name: 'Test User', email: 'user@example.com' }
       ];
 
-      const mockResponse = mockUsers.map(user => new MockUser(user));
+      const mockResponse = {
+        data: mockUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await users.get(params);
@@ -327,7 +333,9 @@ describe('Users', () => {
         { id: '1', name: 'John Doe', email: 'john@example.com' }
       ];
 
-      const mockResponse = mockUsers.map(user => new MockUser(user));
+      const mockResponse = {
+        data: mockUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await users.get(params);
@@ -344,11 +352,13 @@ describe('Users', () => {
         { id: '2', name: 'Jane Smith', email: 'jane@example.com' }
       ];
 
-      const mockGetResponse = mockUsers.map(user => new MockUser(user));
+      const mockGetResponse = {
+        data: mockUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockGetResponse);
 
       const allUsers = await users.get();
-      expect(allUsers).toHaveLength(2);
+      expect(allUsers.data).toHaveLength(2);
 
       // Step 2: Get specific user
       const mockUser = { id: '1', name: 'John Doe', email: 'john@example.com' };
@@ -380,11 +390,13 @@ describe('Users', () => {
         { id: '2', name: 'User 2', email: 'user2@example.com' }
       ];
 
-      const mockFirstPage = firstPageUsers.map(user => new MockUser(user));
+      const mockFirstPage = {
+        data: firstPageUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await users.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageUsers = [
@@ -392,11 +404,13 @@ describe('Users', () => {
         { id: '4', name: 'User 4', email: 'user4@example.com' }
       ];
 
-      const mockSecondPage = secondPageUsers.map(user => new MockUser(user));
+      const mockSecondPage = {
+        data: secondPageUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await users.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search scenarios', async () => {
@@ -405,22 +419,26 @@ describe('Users', () => {
         { id: '1', name: 'John Doe', email: 'john@example.com' }
       ];
 
-      const mockSearchResults = searchResults.map(user => new MockUser(user));
+      const mockSearchResults = {
+        data: searchResults.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await users.get({ q: 'john' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Search by email
       const emailResults = [
         { id: '2', name: 'Jane Smith', email: 'jane@example.com' }
       ];
 
-      const mockEmailResults = emailResults.map(user => new MockUser(user));
+      const mockEmailResults = {
+        data: emailResults.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockEmailResults);
 
       const emailSearchResults = await users.get({ q: 'jane@example.com' });
-      expect(emailSearchResults).toHaveLength(1);
+      expect(emailSearchResults.data).toHaveLength(1);
     });
 
     it('should handle filtering scenarios', async () => {
@@ -429,11 +447,13 @@ describe('Users', () => {
         { id: '1', name: 'Active User', email: 'active@example.com' }
       ];
 
-      const mockActiveUsers = activeUsers.map(user => new MockUser(user));
+      const mockActiveUsers = {
+        data: activeUsers.map(user => new MockUser(user))
+      };
       mockGet.mockResolvedValueOnce(mockActiveUsers);
 
       const activeResults = await users.get({ active: true });
-      expect(activeResults).toHaveLength(1);
+      expect(activeResults.data).toHaveLength(1);
     });
 
     it('should handle error scenarios', async () => {

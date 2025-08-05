@@ -61,14 +61,16 @@ describe('Models', () => {
         { id: '2', name: 'Claude', short_description: 'Anthropic Claude model', provider: 'anthropic', model_id: 'claude-3' }
       ];
 
-      const mockResponse = mockModels.map(model => new MockModel(model));
+      const mockResponse = {
+        data: mockModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await models.get();
 
       expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific model by ID', async () => {
@@ -87,15 +89,16 @@ describe('Models', () => {
         limit: 10,
         offset: 0,
         q: 'gpt',
-        active: true,
-        public: true
+        active: true
       };
 
       const mockModels = [
         { id: '1', name: 'GPT-4', short_description: 'OpenAI GPT-4 model', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockResponse = mockModels.map(model => new MockModel(model));
+      const mockResponse = {
+        data: mockModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await models.get(params);
@@ -293,7 +296,9 @@ describe('Models', () => {
         { id: '1', name: 'Test Model', short_description: 'Test model', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockResponse = mockModels.map(model => new MockModel(model));
+      const mockResponse = {
+        data: mockModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await models.get(params);
@@ -315,7 +320,9 @@ describe('Models', () => {
         { id: '1', name: 'GPT-4', short_description: 'GPT-4 model', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockResponse = mockModels.map(model => new MockModel(model));
+      const mockResponse = {
+        data: mockModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       await models.get(params);
@@ -332,11 +339,13 @@ describe('Models', () => {
         { id: '2', name: 'Claude-3', provider: 'anthropic', model_id: 'claude-3' }
       ];
 
-      const mockGetResponse = mockModels.map(model => new MockModel(model));
+      const mockGetResponse = {
+        data: mockModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockGetResponse);
 
       const allModels = await models.get();
-      expect(allModels).toHaveLength(2);
+      expect(allModels.data).toHaveLength(2);
 
       // Step 2: Get specific model
       const mockModel = { id: '1', name: 'GPT-4', provider: 'openai', model_id: 'gpt-4' };
@@ -370,11 +379,13 @@ describe('Models', () => {
         { id: '2', name: 'Model 2', provider: 'anthropic', model_id: 'claude-3' }
       ];
 
-      const mockFirstPage = firstPageModels.map(model => new MockModel(model));
+      const mockFirstPage = {
+        data: firstPageModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await models.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageModels = [
@@ -382,11 +393,13 @@ describe('Models', () => {
         { id: '4', name: 'Model 4', provider: 'meta', model_id: 'llama-2' }
       ];
 
-      const mockSecondPage = secondPageModels.map(model => new MockModel(model));
+      const mockSecondPage = {
+        data: secondPageModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await models.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -395,33 +408,39 @@ describe('Models', () => {
         { id: '1', name: 'GPT-4', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockSearchResults = searchResults.map(model => new MockModel(model));
+      const mockSearchResults = {
+        data: searchResults.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await models.get({ q: 'gpt' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by provider
       const openaiModels = [
         { id: '1', name: 'GPT-4', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockOpenaiModels = openaiModels.map(model => new MockModel(model));
+      const mockOpenaiModels = {
+        data: openaiModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockOpenaiModels);
 
       const openaiResults = await models.get({ provider: 'openai' });
-      expect(openaiResults).toHaveLength(1);
+      expect(openaiResults.data).toHaveLength(1);
 
       // Filter by active status
       const activeModels = [
         { id: '1', name: 'Active Model', provider: 'openai', model_id: 'gpt-4' }
       ];
 
-      const mockActiveModels = activeModels.map(model => new MockModel(model));
+      const mockActiveModels = {
+        data: activeModels.map(model => new MockModel(model))
+      };
       mockGet.mockResolvedValueOnce(mockActiveModels);
 
       const activeResults = await models.get({ active: true });
-      expect(activeResults).toHaveLength(1);
+      expect(activeResults.data).toHaveLength(1);
     });
   });
 

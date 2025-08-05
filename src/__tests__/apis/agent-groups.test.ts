@@ -56,24 +56,26 @@ describe('AgentGroups', () => {
 
   describe('get method', () => {
     it('should get all agent groups successfully', async () => {
-      const mockAgentGroups = [
-        { id: '1', name: 'Group 1', short_description: 'First group', agents: ['agent-1', 'agent-2'] },
-        { id: '2', name: 'Group 2', short_description: 'Second group', agents: ['agent-3'] }
+      const mockGroups = [
+        { id: '1', name: 'Support Team', short_description: 'Customer support agents' },
+        { id: '2', name: 'Sales Team', short_description: 'Sales and marketing agents' }
       ];
 
-      const mockResponse = mockAgentGroups.map(group => new MockAgentGroup(group));
+      const mockResponse = {
+        data: mockGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await agentGroups.get();
 
       expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific agent group by ID', async () => {
-      const mockAgentGroup = { id: '1', name: 'Group 1', short_description: 'First group', agents: ['agent-1', 'agent-2'] };
-      const mockResponse = new MockAgentGroup(mockAgentGroup);
+      const mockGroup = { id: '1', name: 'Support Team', short_description: 'Customer support agents' };
+      const mockResponse = new MockAgentGroup(mockGroup);
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await agentGroups.get({}, '1');
@@ -86,16 +88,17 @@ describe('AgentGroups', () => {
       const params = {
         limit: 10,
         offset: 0,
-        q: 'test',
-        active: true,
-        public: true
+        q: 'support',
+        active: true
       };
 
-      const mockAgentGroups = [
-        { id: '1', name: 'Test Group', short_description: 'Test group', agents: ['agent-1'] }
+      const mockGroups = [
+        { id: '1', name: 'Support Team', short_description: 'Customer support agents' }
       ];
 
-      const mockResponse = mockAgentGroups.map(group => new MockAgentGroup(group));
+      const mockResponse = {
+        data: mockGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValue(mockResponse);
 
       const result = await agentGroups.get(params);
@@ -286,11 +289,13 @@ describe('AgentGroups', () => {
         { id: '2', name: 'Sales Group', short_description: 'Sales agents', agents: ['agent-3', 'agent-4'] }
       ];
 
-      const mockGetResponse = mockAgentGroups.map(group => new MockAgentGroup(group));
+      const mockGetResponse = {
+        data: mockAgentGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValueOnce(mockGetResponse);
 
       const allGroups = await agentGroups.get();
-      expect(allGroups).toHaveLength(2);
+      expect(allGroups.data).toHaveLength(2);
 
       // Step 2: Get specific agent group
       const mockAgentGroup = { id: '1', name: 'Support Group', short_description: 'Customer support agents', agents: ['agent-1', 'agent-2'] };
@@ -322,11 +327,13 @@ describe('AgentGroups', () => {
         { id: '2', name: 'Group 2', short_description: 'Second agent group', agents: ['agent-2'] }
       ];
 
-      const mockFirstPage = firstPageGroups.map(group => new MockAgentGroup(group));
+      const mockFirstPage = {
+        data: firstPageGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await agentGroups.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageGroups = [
@@ -334,11 +341,13 @@ describe('AgentGroups', () => {
         { id: '4', name: 'Group 4', short_description: 'Fourth agent group', agents: ['agent-4'] }
       ];
 
-      const mockSecondPage = secondPageGroups.map(group => new MockAgentGroup(group));
+      const mockSecondPage = {
+        data: secondPageGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await agentGroups.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -347,22 +356,26 @@ describe('AgentGroups', () => {
         { id: '1', name: 'Support Group', short_description: 'Customer support agents', agents: ['agent-1', 'agent-2'] }
       ];
 
-      const mockSearchResults = searchResults.map(group => new MockAgentGroup(group));
+      const mockSearchResults = {
+        data: searchResults.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await agentGroups.get({ q: 'support' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by active status
       const activeGroups = [
         { id: '1', name: 'Active Group', short_description: 'Active agent group', agents: ['agent-1'] }
       ];
 
-      const mockActiveGroups = activeGroups.map(group => new MockAgentGroup(group));
+      const mockActiveGroups = {
+        data: activeGroups.map(group => new MockAgentGroup(group))
+      };
       mockGet.mockResolvedValueOnce(mockActiveGroups);
 
       const activeResults = await agentGroups.get({ active: true });
-      expect(activeResults).toHaveLength(1);
+      expect(activeResults.data).toHaveLength(1);
     });
   });
 

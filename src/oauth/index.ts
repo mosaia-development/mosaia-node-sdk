@@ -48,7 +48,8 @@ export class OAuth {
      * @param config.scopes - Optional array of scopes to request
      * @param config.state - Optional state parameter for CSRF protection
      */
-    constructor(config: OAuthConfig) {
+    constructor(config?: OAuthConfig) {
+        config = config || {} as OAuthConfig;
         const configManager = ConfigurationManager.getInstance();
         const defaultConfig = configManager.getConfig();
 
@@ -66,9 +67,6 @@ export class OAuth {
         }
         if (!config.apiVersion) {
             throw new Error('apiVersion is required in OAuth config');
-        }
-        if (!config.scopes || config.scopes.length === 0) {
-            throw new Error('scopes are required in OAuth config');
         }
         this.config = config;
     }
@@ -125,6 +123,12 @@ export class OAuth {
      * ```
      */
     getAuthorizationUrlAndCodeVerifier(): { url: string; codeVerifier: string } {
+        if (!this.config.scopes || this.config.scopes.length === 0) {
+            throw new Error('scopes are required in OAuth config to generate authorization url and code verifier');
+        }
+        if (!this.config.redirectUri) {
+            throw new Error('redirectUri is required in OAuth config to generate authorization url and code verifier');
+        }
         const { code_verifier, code_challenge } = this.generatePKCE();
         const params = new URLSearchParams({
             client_id: this.config.clientId!,
@@ -168,6 +172,9 @@ export class OAuth {
      * ```
      */
     async authenticateWithCodeAndVerifier(code: string, codeVerifier: string): Promise<MosaiaConfig> {
+        if (!this.config.redirectUri) {
+            throw new Error('redirectUri is required in OAuth config to authenticate with code and verifier');
+        }
         const params = new URLSearchParams({
             client_id: this.config.clientId!,
             redirect_uri: this.config.redirectUri,

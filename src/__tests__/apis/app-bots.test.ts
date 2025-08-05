@@ -57,25 +57,27 @@ describe('AppBots', () => {
 
   describe('get method', () => {
     it('should get all app bots successfully', async () => {
-      const mockAppBots = [
-        { id: '1', app: 'app-1', response_url: 'https://app1.com/webhook', agent: 'agent-1' },
-        { id: '2', app: 'app-2', response_url: 'https://app2.com/webhook', agent: 'agent-2' }
+      const mockBots = [
+        { id: '1', app: 'app-1', response_url: 'https://example.com/webhook' },
+        { id: '2', app: 'app-2', response_url: 'https://example.com/webhook2' }
       ];
 
-      const mockResponse = mockAppBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockBots.map(bot => new MockAppBot(bot))
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await appBots.get();
 
       expect(mockBaseAPI.get).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific app bot by ID', async () => {
-      const mockAppBot = { id: '1', app: 'app-1', response_url: 'https://app1.com/webhook', agent: 'agent-1' };
-      const mockResponse = new MockAppBot(mockAppBot);
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockBot = { id: '1', app: 'app-1', response_url: 'https://example.com/webhook' };
+      const mockResponse = new MockAppBot(mockBot);
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await appBots.get({}, '1');
 
@@ -88,16 +90,17 @@ describe('AppBots', () => {
         limit: 10,
         offset: 0,
         app: 'app-1',
-        agent: 'agent-1',
         active: true
       };
 
-      const mockAppBots = [
-        { id: '1', app: 'app-1', response_url: 'https://app1.com/webhook', agent: 'agent-1' }
+      const mockBots = [
+        { id: '1', app: 'app-1', response_url: 'https://example.com/webhook' }
       ];
 
-      const mockResponse = mockAppBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockBots.map(bot => new MockAppBot(bot))
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await appBots.get(params);
 
@@ -106,16 +109,18 @@ describe('AppBots', () => {
     });
 
     it('should handle empty app bots list', async () => {
-      const mockResponse: any[] = [];
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: []
+      };
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       const result = await appBots.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
-      mockBaseAPI.get.mockResolvedValue(null);
+      mockBaseAPI.get.mockResolvedValue(null as any);
 
       const result = await appBots.get();
 
@@ -286,7 +291,7 @@ describe('AppBots', () => {
       ];
 
       const mockResponse = mockAppBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       await appBots.get(params);
 
@@ -308,7 +313,7 @@ describe('AppBots', () => {
       ];
 
       const mockResponse = mockAppBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockBaseAPI.get.mockResolvedValue(mockResponse as any);
 
       await appBots.get(params);
 
@@ -325,7 +330,7 @@ describe('AppBots', () => {
       ];
 
       const mockGetResponse = mockAppBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse);
+      mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse as any);
 
       const allBots = await appBots.get();
       expect(allBots).toHaveLength(2);
@@ -333,7 +338,7 @@ describe('AppBots', () => {
       // Step 2: Get specific app bot
       const mockAppBot = { id: '1', app: 'app-1', response_url: 'https://app1.com/webhook', agent: 'agent-1' };
       const mockGetBotResponse = new MockAppBot(mockAppBot);
-      mockBaseAPI.get.mockResolvedValueOnce(mockGetBotResponse);
+      mockBaseAPI.get.mockResolvedValueOnce(mockGetBotResponse as any);
 
       const specificBot = await appBots.get({}, '1');
       expect(specificBot).toEqual(mockGetBotResponse);
@@ -361,7 +366,7 @@ describe('AppBots', () => {
       ];
 
       const mockFirstPage = firstPageBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage);
+      mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage as any);
 
       const firstPage = await appBots.get({ limit: 2, offset: 0 });
       expect(firstPage).toHaveLength(2);
@@ -373,7 +378,7 @@ describe('AppBots', () => {
       ];
 
       const mockSecondPage = secondPageBots.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage);
+      mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage as any);
 
       const secondPage = await appBots.get({ limit: 2, offset: 2 });
       expect(secondPage).toHaveLength(2);
@@ -386,7 +391,7 @@ describe('AppBots', () => {
       ];
 
       const mockAppBots = appBotsData.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockAppBots);
+      mockBaseAPI.get.mockResolvedValueOnce(mockAppBots as any);
 
       const appResults = await appBots.get({ app: 'app-1' });
       expect(appResults).toHaveLength(1);
@@ -397,7 +402,7 @@ describe('AppBots', () => {
       ];
 
       const mockAgentBots = agentBotsData.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockAgentBots);
+      mockBaseAPI.get.mockResolvedValueOnce(mockAgentBots as any);
 
       const agentResults = await appBots.get({ agent: 'agent-1' });
       expect(agentResults).toHaveLength(1);
@@ -408,7 +413,7 @@ describe('AppBots', () => {
       ];
 
       const mockActiveBots = activeBotsData.map(bot => new MockAppBot(bot));
-      mockBaseAPI.get.mockResolvedValueOnce(mockActiveBots);
+      mockBaseAPI.get.mockResolvedValueOnce(mockActiveBots as any);
 
       const activeResults = await appBots.get({ active: true });
       expect(activeResults).toHaveLength(1);

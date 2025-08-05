@@ -84,29 +84,31 @@ describe('Organizations', () => {
 
   describe('get method', () => {
     it('should get all organizations successfully', async () => {
-      const mockOrganizations = [
+      const mockOrgs = [
         { id: '1', name: 'Acme Corp', short_description: 'Technology company' },
-        { id: '2', name: 'Tech Solutions', short_description: 'IT consulting firm' }
+        { id: '2', name: 'Tech Solutions', short_description: 'Software solutions provider' }
       ];
 
-      const mockResponse = mockOrganizations.map(org => new MockOrganization(org));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockOrgs.map(org => new MockOrganization(org))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await organizations.get();
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith();
+      expect(mockGet).toHaveBeenCalledWith();
       expect(result).toEqual(mockResponse);
-      expect(result).toHaveLength(2);
+      expect(result.data).toHaveLength(2);
     });
 
     it('should get a specific organization by ID', async () => {
       const mockOrg = { id: '1', name: 'Acme Corp', short_description: 'Technology company' };
       const mockResponse = new MockOrganization(mockOrg);
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await organizations.get({}, '1');
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith({}, '1');
+      expect(mockGet).toHaveBeenCalledWith({}, '1');
       expect(result).toEqual(mockResponse);
     });
 
@@ -118,30 +120,32 @@ describe('Organizations', () => {
         active: true
       };
 
-      const mockOrganizations = [
+      const mockOrgs = [
         { id: '1', name: 'Acme Corp', short_description: 'Technology company' }
       ];
 
-      const mockResponse = mockOrganizations.map(org => new MockOrganization(org));
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = {
+        data: mockOrgs.map(org => new MockOrganization(org))
+      };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await organizations.get(params);
 
-      expect(mockBaseAPI.get).toHaveBeenCalledWith(params);
+      expect(mockGet).toHaveBeenCalledWith(params);
       expect(result).toEqual(mockResponse);
     });
 
     it('should handle empty organizations list', async () => {
-      const mockResponse: any[] = [];
-      mockBaseAPI.get.mockResolvedValue(mockResponse);
+      const mockResponse = { data: [] };
+      mockGet.mockResolvedValue(mockResponse);
 
       const result = await organizations.get();
 
-      expect(result).toEqual([]);
+      expect(result).toEqual({ data: [] });
     });
 
     it('should handle null response', async () => {
-      mockBaseAPI.get.mockResolvedValue(null);
+      mockGet.mockResolvedValue(null);
 
       const result = await organizations.get();
 
@@ -342,11 +346,13 @@ describe('Organizations', () => {
         { id: '2', name: 'Tech Solutions', short_description: 'IT consulting firm' }
       ];
 
-      const mockGetResponse = mockOrganizations.map(org => new MockOrganization(org));
+      const mockGetResponse = {
+        data: mockOrganizations.map(org => new MockOrganization(org))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockGetResponse);
 
       const allOrgs = await organizations.get();
-      expect(allOrgs).toHaveLength(2);
+      expect(allOrgs.data).toHaveLength(2);
 
       // Step 2: Get specific organization
       const mockOrg = { id: '1', name: 'Acme Corp', short_description: 'Technology company' };
@@ -378,11 +384,13 @@ describe('Organizations', () => {
         { id: '2', name: 'Org 2', short_description: 'Second organization' }
       ];
 
-      const mockFirstPage = firstPageOrgs.map(org => new MockOrganization(org));
+      const mockFirstPage = {
+        data: firstPageOrgs.map(org => new MockOrganization(org))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockFirstPage);
 
       const firstPage = await organizations.get({ limit: 2, offset: 0 });
-      expect(firstPage).toHaveLength(2);
+      expect(firstPage.data).toHaveLength(2);
 
       // Second page
       const secondPageOrgs = [
@@ -390,11 +398,13 @@ describe('Organizations', () => {
         { id: '4', name: 'Org 4', short_description: 'Fourth organization' }
       ];
 
-      const mockSecondPage = secondPageOrgs.map(org => new MockOrganization(org));
+      const mockSecondPage = {
+        data: secondPageOrgs.map(org => new MockOrganization(org))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSecondPage);
 
       const secondPage = await organizations.get({ limit: 2, offset: 2 });
-      expect(secondPage).toHaveLength(2);
+      expect(secondPage.data).toHaveLength(2);
     });
 
     it('should handle search and filtering scenarios', async () => {
@@ -403,22 +413,26 @@ describe('Organizations', () => {
         { id: '1', name: 'Acme Corp', short_description: 'Technology company' }
       ];
 
-      const mockSearchResults = searchResults.map(org => new MockOrganization(org));
+      const mockSearchResults = {
+        data: searchResults.map(org => new MockOrganization(org))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockSearchResults);
 
       const searchResults1 = await organizations.get({ q: 'acme' });
-      expect(searchResults1).toHaveLength(1);
+      expect(searchResults1.data).toHaveLength(1);
 
       // Filter by active status
       const activeOrgs = [
         { id: '1', name: 'Active Corp', short_description: 'Active organization' }
       ];
 
-      const mockActiveOrgs = activeOrgs.map(org => new MockOrganization(org));
+      const mockActiveOrgs = {
+        data: activeOrgs.map(org => new MockOrganization(org))
+      };
       mockBaseAPI.get.mockResolvedValueOnce(mockActiveOrgs);
 
       const activeResults = await organizations.get({ active: true });
-      expect(activeResults).toHaveLength(1);
+      expect(activeResults.data).toHaveLength(1);
     });
   });
 

@@ -182,18 +182,7 @@ export default class APIClient {
                 if (this.config?.verbose) {
                     console.log('📄 Response Data: No Content (204)');
                 }
-                return {
-                    meta: {
-                        status: 204,
-                        message: 'Success'
-                    },
-                    data: undefined as T,
-                    error: {
-                        message: '',
-                        code: '',
-                        status: 204
-                    }
-                };
+                return undefined as T;
             }
 
             // Check if response is ok (status in 200-299 range)
@@ -213,6 +202,14 @@ export default class APIClient {
                         statusText: response.statusText,
                         data: errorData
                     });
+                    
+                    // Log meta and error parameters if they exist in error response
+                    if (errorData?.meta) {
+                        console.log('📊 Response Meta:', errorData.meta);
+                    }
+                    if (errorData?.error) {
+                        console.log('🚨 Response Error:', errorData.error);
+                    }
                 }
 
                 return this.handleError(
@@ -232,8 +229,25 @@ export default class APIClient {
 
             if (this.config?.verbose) {
                 console.log('📄 Response Data:', responseData);
+                
+                // Log meta and error parameters if they exist
+                if (responseData?.meta) {
+                    console.log('📊 Response Meta:', responseData.meta);
+                }
+                if (responseData?.error) {
+                    console.log('🚨 Response Error:', responseData.error);
+                }
             }
 
+            // If response has an error parameter, reject the promise
+            if (responseData?.error) {
+                return Promise.reject(responseData.error);
+            }
+
+            if (responseData?.error) delete responseData.error;
+            if (responseData?.meta) delete responseData.meta;
+
+            // Return only the data and paging portion
             return responseData;
         } catch (error) {
             if (this.config?.verbose) {
