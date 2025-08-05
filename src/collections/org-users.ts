@@ -4,7 +4,7 @@ import {
     GetOrgUserPayload
 } from '../types';
 import { OrgUser } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Organization Users API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Organization users represent the relationship between users and organizations,
  * including permissions, roles, and access control within organizational contexts.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve organization user relationships with filtering and pagination
  * - Create new organization user associations
  * - Update existing organization user permissions and settings
@@ -42,12 +42,12 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<OrgUserInterface, OrgUser, GetOrgUsersPayload, GetOrgUserPayload>
+  * @extends BaseCollection<OrgUserInterface, OrgUser, GetOrgUsersPayload, GetOrgUserPayload>
  */
-export default class OrgUsers extends BaseAPI<
+export default class OrgUsers extends BaseCollection<
     OrgUserInterface,
     OrgUser,
-    GetOrgUsersPayload,    
+    GetOrgUsersPayload,
     GetOrgUserPayload
 > {
     /**

@@ -4,7 +4,7 @@ import {
     GetAppPayload
 } from '../types';
 import { App } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Applications API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Applications are the primary containers for AI-powered solutions, serving as
  * the entry point for users to interact with agents, tools, and workflows.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve applications with filtering and pagination
  * - Create new applications with custom configurations
  * - Update existing application settings and properties
@@ -44,9 +44,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<AppInterface, App, GetAppsPayload, GetAppPayload>
+ * @extends BaseCollection<AppInterface, App, GetAppsPayload, GetAppPayload>
  */
-export default class Apps extends BaseAPI<
+export default class Apps extends BaseCollection<
     AppInterface,
     App,
     GetAppsPayload,

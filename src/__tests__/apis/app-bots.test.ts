@@ -1,13 +1,13 @@
-import AppBots from '../../apis/app-bots';
-import { BaseAPI } from '../../apis/base-api';
+import AppBots from '../../collections/app-bots';
+import { BaseCollection } from '../../collections/base-collection';
 import { AppBot } from '../../models';
 import { GetAppBotsPayload, GetAppBotPayload, AppBotInterface } from '../../types';
 
 // Mock the BaseAPI
-jest.mock('../../apis/base-api', () => ({
-  BaseAPI: jest.fn()
+jest.mock('../../collections/base-collection', () => ({
+      BaseCollection: jest.fn()
 }));
-const { BaseAPI: MockBaseAPI } = require('../../apis/base-api');
+const { BaseCollection: MockBaseCollection } = require('../../collections/base-collection');
 
 // Mock the AppBot model
 jest.mock('../../models');
@@ -15,7 +15,7 @@ const MockAppBot = AppBot as jest.MockedClass<typeof AppBot>;
 
 describe('AppBots', () => {
   let appBots: AppBots;
-  let mockBaseAPI: jest.Mocked<BaseAPI<AppBotInterface, AppBot, GetAppBotsPayload, GetAppBotPayload>>;
+  let mockBaseAPI: jest.Mocked<BaseCollection<AppBotInterface, AppBot, GetAppBotsPayload, GetAppBotPayload>>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,31 +27,31 @@ describe('AppBots', () => {
     } as any;
 
     // Setup mock returns
-    MockBaseAPI.mockImplementation(() => mockBaseAPI);
+    MockBaseCollection.mockImplementation(() => mockBaseAPI);
     MockAppBot.mockImplementation((data: any) => ({ data } as any));
 
     appBots = new AppBots();
   });
 
   describe('constructor', () => {
-    it('should create AppBots instance extending BaseAPI', () => {
+    it('should create AppBots instance extending BaseCollection', () => {
       expect(appBots).toBeDefined();
       expect(typeof appBots.get).toBe('function');
       expect(typeof appBots.create).toBe('function');
     });
 
     it('should initialize with correct URI and AppBot model', () => {
-      expect(MockBaseAPI).toHaveBeenCalledWith('/bot', AppBot);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/bot', AppBot);
     });
 
     it('should initialize with custom URI when provided', () => {
       const customAppBots = new AppBots('/api/v1');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/bot', AppBot);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/bot', AppBot);
     });
 
     it('should initialize with empty URI when not provided', () => {
       const defaultAppBots = new AppBots();
-      expect(MockBaseAPI).toHaveBeenCalledWith('/bot', AppBot);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/bot', AppBot);
     });
   });
 

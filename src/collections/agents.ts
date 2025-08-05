@@ -4,7 +4,7 @@ import {
     GetAgentPayload
 } from '../types';
 import { Agent } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Agents API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Agents are AI-powered entities that can perform specific tasks, handle conversations,
  * and execute workflows based on their configuration and assigned tools.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve agents with filtering and pagination
  * - Create new agents with custom configurations
  * - Update existing agent settings and properties
@@ -55,9 +55,9 @@ import { BaseAPI } from './base-api';
  * }
  * ```
  * 
- * @extends BaseAPI<AgentInterface, Agent, GetAgentsPayload, GetAgentPayload>
+ * @extends BaseCollection<AgentInterface, Agent, GetAgentsPayload, GetAgentPayload>
  */
-export default class Agents extends BaseAPI<
+export default class Agents extends BaseCollection<
     AgentInterface,
     Agent,
     GetAgentsPayload,

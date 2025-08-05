@@ -1,10 +1,10 @@
-import { BaseAPI } from '../../apis/base-api';
+import { BaseCollection } from '../../collections/base-collection';
 import { ConfigurationManager } from '../../config';
-import APIClient from '../../apis/api-client';
+import APIClient from '../../utils/api-client';
 import { QueryParams, APIResponse, ErrorResponse } from '../../types';
 
 // Mock the APIClient
-jest.mock('../../apis/api-client');
+jest.mock('../../utils/api-client');
 const MockAPIClient = APIClient as jest.MockedClass<typeof APIClient>;
 
 // Mock the ConfigurationManager
@@ -33,14 +33,14 @@ interface TestInterface {
 type TestGetPayload = APIResponse<TestInterface[]>;
 type TestCreatePayload = APIResponse<TestInterface>;
 
-// Concrete implementation of BaseAPI for testing
-class TestAPI extends BaseAPI<TestInterface, MockModel, TestGetPayload, TestCreatePayload> {
+// Concrete implementation of BaseCollection for testing
+class TestAPI extends BaseCollection<TestInterface, MockModel, TestGetPayload, TestCreatePayload> {
   constructor() {
     super('/test', MockModel);
   }
 }
 
-describe('BaseAPI', () => {
+describe('BaseCollection', () => {
   let testAPI: TestAPI;
   let mockAPIClient: jest.Mocked<APIClient>;
   let mockConfigManager: jest.Mocked<ConfigurationManager>;
@@ -76,7 +76,7 @@ describe('BaseAPI', () => {
 
   describe('constructor', () => {
     it('should initialize with correct URI and ModelClass', () => {
-      expect(testAPI).toBeInstanceOf(BaseAPI);
+      expect(testAPI).toBeInstanceOf(BaseCollection);
       expect(testAPI).toBeInstanceOf(TestAPI);
     });
 

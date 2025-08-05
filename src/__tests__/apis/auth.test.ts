@@ -1,6 +1,6 @@
-import MosaiaAuth from '../../apis/auth';
+import MosaiaAuth from '../../auth/auth';
 import { ConfigurationManager } from '../../config';
-import APIClient from '../../apis/api-client';
+import APIClient from '../../utils/api-client';
 import { AuthRequest, AuthResponse } from '../../types';
 
 // Mock the ConfigurationManager
@@ -18,7 +18,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     POST: jest.fn(),
     DELETE: jest.fn(),

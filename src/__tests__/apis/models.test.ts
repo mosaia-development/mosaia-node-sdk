@@ -1,4 +1,4 @@
-import Models from '../../apis/models';
+import Models from '../../collections/models';
 import { Model } from '../../models';
 import { GetModelsPayload, GetModelPayload, ModelInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockModel = Model as jest.MockedClass<typeof Model>;
 
 // Mock the BaseAPI methods directly
-jest.mock('../../apis/base-api', () => {
+jest.mock('../../collections/base-collection', () => {
   return {
-    BaseAPI: jest.fn().mockImplementation(() => ({
+          BaseCollection: jest.fn().mockImplementation(() => ({
       get: jest.fn(),
       create: jest.fn(),
     }))

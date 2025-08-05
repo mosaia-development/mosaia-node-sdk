@@ -8,7 +8,7 @@ import {
     Models,
     OrgUsers,
     Tools
-} from '../apis';
+} from '../collections';
 
 export default class Organization extends BaseModel<OrganizationInterface> {
     constructor(data: Partial<OrganizationInterface>, uri?: string) {

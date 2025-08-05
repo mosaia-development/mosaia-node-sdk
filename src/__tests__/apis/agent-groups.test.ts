@@ -1,4 +1,4 @@
-import AgentGroups from '../../apis/agent-groups';
+import AgentGroups from '../../collections/agent-groups';
 import { AgentGroup } from '../../models';
 import { GetAgentGroupsPayload, GetAgentGroupPayload, AgentGroupInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockAgentGroup = AgentGroup as jest.MockedClass<typeof AgentGroup>;
 
 // Mock the BaseAPI methods directly
-jest.mock('../../apis/base-api', () => {
+jest.mock('../../collections/base-collection', () => {
   return {
-    BaseAPI: jest.fn().mockImplementation(() => ({
+          BaseCollection: jest.fn().mockImplementation(() => ({
       get: jest.fn(),
       create: jest.fn(),
     }))

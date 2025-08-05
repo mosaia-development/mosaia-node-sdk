@@ -1,4 +1,4 @@
-import Clients from '../../apis/clients';
+import Clients from '../../collections/clients';
 import { Client } from '../../models';
 import { GetClientsPayload, GetClientPayload, ClientInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockClient = Client as jest.MockedClass<typeof Client>;
 
 // Mock the BaseAPI class properly
-jest.mock('../../apis/base-api');
-const { BaseAPI } = require('../../apis/base-api');
-const MockBaseAPI = BaseAPI as jest.MockedClass<typeof BaseAPI>;
+jest.mock('../../collections/base-collection');
+const { BaseCollection } = require('../../collections/base-collection');
+const MockBaseCollection = BaseCollection as jest.MockedClass<typeof BaseCollection>;
 
 // Mock the ConfigurationManager
 jest.mock('../../config', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),
@@ -51,7 +51,7 @@ describe('Clients', () => {
       get: jest.fn(),
       create: jest.fn(),
     };
-    MockBaseAPI.mockImplementation(() => mockBaseAPI);
+    MockBaseCollection.mockImplementation(() => mockBaseAPI);
 
     clients = new Clients();
     
@@ -61,24 +61,24 @@ describe('Clients', () => {
   });
 
   describe('constructor', () => {
-    it('should create Clients instance extending BaseAPI', () => {
+    it('should create Clients instance extending BaseCollection', () => {
       expect(clients).toBeDefined();
       expect(typeof clients.get).toBe('function');
       expect(typeof clients.create).toBe('function');
     });
 
     it('should initialize with correct URI and Client model', () => {
-      expect(MockBaseAPI).toHaveBeenCalledWith('/client', Client);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/client', Client);
     });
 
     it('should initialize with custom URI when provided', () => {
       const customClients = new Clients('/api/v1');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/client', Client);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/client', Client);
     });
 
     it('should initialize with empty URI when not provided', () => {
       const defaultClients = new Clients();
-      expect(MockBaseAPI).toHaveBeenCalledWith('/client', Client);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/client', Client);
     });
   });
 

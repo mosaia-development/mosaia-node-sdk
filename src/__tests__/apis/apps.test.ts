@@ -1,4 +1,4 @@
-import Apps from '../../apis/apps';
+import Apps from '../../collections/apps';
 import { App } from '../../models';
 import { GetAppsPayload, GetAppPayload, AppInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockApp = App as jest.MockedClass<typeof App>;
 
 // Mock the BaseAPI class properly
-jest.mock('../../apis/base-api');
-const { BaseAPI } = require('../../apis/base-api');
-const MockBaseAPI = BaseAPI as jest.MockedClass<typeof BaseAPI>;
+jest.mock('../../collections/base-collection');
+const { BaseCollection } = require('../../collections/base-collection');
+const MockBaseCollection = BaseCollection as jest.MockedClass<typeof BaseCollection>;
 
 // Mock the ConfigurationManager
 jest.mock('../../config', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),
@@ -51,7 +51,7 @@ describe('Apps', () => {
       get: jest.fn(),
       create: jest.fn(),
     };
-    MockBaseAPI.mockImplementation(() => mockBaseAPI);
+    MockBaseCollection.mockImplementation(() => mockBaseAPI);
 
     apps = new Apps();
     
@@ -61,24 +61,24 @@ describe('Apps', () => {
   });
 
   describe('constructor', () => {
-    it('should create Apps instance extending BaseAPI', () => {
+    it('should create Apps instance extending BaseCollection', () => {
       expect(apps).toBeDefined();
       expect(typeof apps.get).toBe('function');
       expect(typeof apps.create).toBe('function');
     });
 
     it('should initialize with correct URI and App model', () => {
-      expect(MockBaseAPI).toHaveBeenCalledWith('/app', App);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/app', App);
     });
 
     it('should initialize with custom URI when provided', () => {
       const customApps = new Apps('/api/v1');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/app', App);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/app', App);
     });
 
     it('should initialize with empty URI when not provided', () => {
       const defaultApps = new Apps();
-      expect(MockBaseAPI).toHaveBeenCalledWith('/app', App);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/app', App);
     });
   });
 

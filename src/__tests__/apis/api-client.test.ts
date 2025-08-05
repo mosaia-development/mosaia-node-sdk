@@ -1,9 +1,9 @@
-import APIClient from '../../apis/api-client';
+import APIClient from '../../utils/api-client';
 import { ConfigurationManager } from '../../config';
 import { MosaiaConfig, APIResponse, ErrorResponse } from '../../types';
 
 // Mock the MosaiaAuth class
-jest.mock('../../apis/auth', () => {
+jest.mock('../../auth/auth', () => {
   return jest.fn().mockImplementation(() => ({
     refreshToken: jest.fn()
   }));
@@ -71,7 +71,7 @@ describe('APIClient', () => {
     });
 
     // Setup mock MosaiaAuth
-    const MosaiaAuth = require('../../apis/auth');
+    const MosaiaAuth = require('../../auth/auth');
     mockAuth = new MosaiaAuth();
     mockAuth.refreshToken.mockResolvedValue({
       apiKey: 'refreshed-api-key',

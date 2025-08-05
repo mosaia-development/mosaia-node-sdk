@@ -1,4 +1,4 @@
-import Agents from '../../apis/agents';
+import Agents from '../../collections/agents';
 import { Agent } from '../../models';
 import { GetAgentsPayload, GetAgentPayload, AgentInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockAgent = Agent as jest.MockedClass<typeof Agent>;
 
 // Mock the BaseAPI class properly
-jest.mock('../../apis/base-api');
-const { BaseAPI } = require('../../apis/base-api');
-const MockBaseAPI = BaseAPI as jest.MockedClass<typeof BaseAPI>;
+jest.mock('../../collections/base-collection');
+const { BaseCollection } = require('../../collections/base-collection');
+const MockBaseCollection = BaseCollection as jest.MockedClass<typeof BaseCollection>;
 
 // Mock the ConfigurationManager
 jest.mock('../../config', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),

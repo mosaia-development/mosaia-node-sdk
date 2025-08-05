@@ -1,13 +1,13 @@
-import OrgUsers from '../../apis/org-users';
-import { BaseAPI } from '../../apis/base-api';
+import OrgUsers from '../../collections/org-users';
+import { BaseCollection } from '../../collections/base-collection';
 import { OrgUser } from '../../models';
 import { GetOrgUsersPayload, GetOrgUserPayload, OrgUserInterface } from '../../types';
 
 // Mock the BaseAPI
-jest.mock('../../apis/base-api', () => ({
-  BaseAPI: jest.fn()
+jest.mock('../../collections/base-collection', () => ({
+      BaseCollection: jest.fn()
 }));
-const { BaseAPI: MockBaseAPI } = require('../../apis/base-api');
+const { BaseCollection: MockBaseCollection } = require('../../collections/base-collection');
 
 // Mock the OrgUser model
 jest.mock('../../models');
@@ -15,7 +15,7 @@ const MockOrgUser = OrgUser as jest.MockedClass<typeof OrgUser>;
 
 describe('OrgUsers', () => {
   let orgUsers: OrgUsers;
-  let mockBaseAPI: jest.Mocked<BaseAPI<OrgUserInterface, OrgUser, GetOrgUsersPayload, GetOrgUserPayload>>;
+  let mockBaseAPI: jest.Mocked<BaseCollection<OrgUserInterface, OrgUser, GetOrgUsersPayload, GetOrgUserPayload>>;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -27,41 +27,41 @@ describe('OrgUsers', () => {
     } as any;
 
     // Setup mock returns
-    MockBaseAPI.mockImplementation(() => mockBaseAPI);
+    MockBaseCollection.mockImplementation(() => mockBaseAPI);
     MockOrgUser.mockImplementation((data: any) => ({ data } as any));
 
     orgUsers = new OrgUsers();
   });
 
   describe('constructor', () => {
-    it('should create OrgUsers instance extending BaseAPI', () => {
+    it('should create OrgUsers instance extending BaseCollection', () => {
       expect(orgUsers).toBeDefined();
       expect(typeof orgUsers.get).toBe('function');
       expect(typeof orgUsers.create).toBe('function');
     });
 
     it('should initialize with correct URI and OrgUser model', () => {
-      expect(MockBaseAPI).toHaveBeenCalledWith('/user', OrgUser);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/user', OrgUser);
     });
 
     it('should initialize with custom URI when provided', () => {
       const customOrgUsers = new OrgUsers('/api/v1');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/user', OrgUser);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/user', OrgUser);
     });
 
     it('should initialize with empty URI when not provided', () => {
       const defaultOrgUsers = new OrgUsers();
-      expect(MockBaseAPI).toHaveBeenCalledWith('/user', OrgUser);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/user', OrgUser);
     });
 
     it('should initialize with custom endpoint when provided', () => {
       const orgContextOrgUsers = new OrgUsers('/api/v1', '/org');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/org', OrgUser);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/org', OrgUser);
     });
 
     it('should initialize with custom URI and endpoint', () => {
       const customOrgUsers = new OrgUsers('/api/v2', '/member');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v2/member', OrgUser);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v2/member', OrgUser);
     });
   });
 

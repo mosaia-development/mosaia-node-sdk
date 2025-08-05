@@ -10,17 +10,16 @@ import {
     Models,
     Clients,
     MosaiaAuth
-} from './apis';
+} from './collections';
 import { Session } from './models';
-import APIClient from './apis/api-client';
+import APIClient from './utils/api-client';
 import {
     MosaiaConfig,
     OAuthConfig,
     UserInterface
 } from './types';
 import { ConfigurationManager } from './config';
-import { OAuth } from './oauth';
-import { isSdkError } from './utils';
+import { OAuth } from './auth/oauth';
 
 /**
  * Main Mosaia SDK client class
@@ -551,17 +550,17 @@ class MosaiaClient {
  */
 
 // API Classes
-export { Users } from './apis';
-export { Agents } from './apis';
-export { Apps } from './apis';
-export { Tools } from './apis';
-export { Organizations } from './apis';
-export { OrgUsers } from './apis';
-export { AgentGroups } from './apis';
-export { Models } from './apis';
-export { Clients } from './apis';
-export { AppBots } from './apis';
-export { MosaiaAuth } from './apis';
+export { Users } from './collections';
+export { Agents } from './collections';
+export { Apps } from './collections';
+export { Tools } from './collections';
+export { Organizations } from './collections';
+export { OrgUsers } from './collections';
+export { AgentGroups } from './collections';
+export { Models } from './collections';
+export { Clients } from './collections';
+export { AppBots } from './collections';
+export { MosaiaAuth } from './collections';
 
 // Model Classes
 export { User } from './models';
@@ -578,7 +577,7 @@ export { Session } from './models';
 export { BaseModel } from './models';
 
 // Auth Classes
-export { OAuth } from './oauth';
+export { OAuth } from './auth/oauth';
 
 // Configuration Classes
 export { ConfigurationManager, DEFAULT_CONFIG } from './config';

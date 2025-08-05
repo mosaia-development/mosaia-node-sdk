@@ -1,4 +1,4 @@
-import Users from '../../apis/users';
+import Users from '../../collections/users';
 import { User } from '../../models';
 import { GetUsersPayload, GetUserPayload, UserInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockUser = User as jest.MockedClass<typeof User>;
 
 // Mock the BaseAPI class properly
-jest.mock('../../apis/base-api', () => {
+jest.mock('../../collections/base-collection', () => {
   return {
-    BaseAPI: jest.fn().mockImplementation(() => ({
+          BaseCollection: jest.fn().mockImplementation(() => ({
       get: jest.fn(),
       create: jest.fn(),
     }))
@@ -30,7 +30,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),

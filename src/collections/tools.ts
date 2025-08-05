@@ -4,7 +4,7 @@ import {
     GetToolPayload,
 } from '../types';
 import { Tool } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Tools API client for the Mosaia SDK
@@ -14,7 +14,7 @@ import { BaseAPI } from './base-api';
  * perform specific tasks, such as API calls, data processing, or
  * external service integrations.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve tools with filtering and pagination
  * - Create new tool integrations
  * - Update existing tool configurations
@@ -51,9 +51,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<ToolInterface, Tool, GetToolsPayload, GetToolPayload>
+ * @extends BaseCollection<ToolInterface, Tool, GetToolsPayload, GetToolPayload>
  */
-export default class Tools extends BaseAPI<
+export default class Tools extends BaseCollection<
     ToolInterface,
     Tool,
     GetToolsPayload,

@@ -1,3 +1,4 @@
+import { Chat } from '../functions/chat';
 import {
     APIResponse,
     ChatCompletionRequest,
@@ -76,41 +77,11 @@ export default class Model extends BaseModel<ModelInterface> {
     }
 
     /**
-     * Perform a chat completion with the model
+     * Get the chat function
      * 
-     * Sends a chat completion request to the AI model and returns the generated response.
-     * Supports both synchronous and asynchronous completion modes.
-     * 
-     * @param request - Chat completion request parameters including model, messages, and options
-     * @param isAsync - Whether to perform an asynchronous completion. Defaults to false.
-     * @returns Promise that resolves to the chat completion response
-     * 
-     * @example
-     * ```typescript
-     * // Synchronous completion
-     * const response = await model.chatCompletion({
-     *   model: 'gpt-4',
-     *   messages: [
-     *     { role: 'system', content: 'You are a helpful assistant.' },
-     *     { role: 'user', content: 'What is 2+2?' }
-     *   ],
-     *   max_tokens: 100,
-     *   temperature: 0.7
-     * });
-     * 
-     * // Asynchronous completion for long-running tasks
-     * const asyncResponse = await model.chatCompletion({
-     *   model: 'gpt-4',
-     *   messages: [
-     *     { role: 'user', content: 'Write a comprehensive essay about AI.' }
-     *   ]
-     * }, true);
-     * ```
+     * @returns The chat function
      */
-    async chatCompletion(request: ChatCompletionRequest, isAsync: boolean = false): Promise<APIResponse<ChatCompletionResponse>> {
-        let uri = '/chat/completions';
-
-        if (isAsync) uri += '?type=async';
-        return this.apiClient.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
+    get chat() {
+        return new Chat(this.getUri());
     }
 }

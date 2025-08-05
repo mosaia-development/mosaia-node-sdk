@@ -8,7 +8,7 @@ import {
     OrgUsers,
     AgentGroups,
     Tools
-} from '../apis';
+} from '../collections';
 
 /**
  * User class for managing user instances in the Mosaia SDK

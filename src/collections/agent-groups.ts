@@ -4,7 +4,7 @@ import {
     GetAgentGroupPayload
 } from '../types';
 import { AgentGroup } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Agent Groups API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Agent groups allow you to organize and manage multiple AI agents together,
  * enabling coordinated workflows and shared configurations.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve agent groups with filtering and pagination
  * - Create new agent groups
  * - Update existing agent groups
@@ -41,9 +41,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<AgentGroupInterface, AgentGroup, GetAgentGroupsPayload, GetAgentGroupPayload>
+ * @extends BaseCollection<AgentGroupInterface, AgentGroup, GetAgentGroupsPayload, GetAgentGroupPayload>
  */
-export default class AgentGroups extends BaseAPI<
+export default class AgentGroups extends BaseCollection<
     AgentGroupInterface,
     AgentGroup,
     GetAgentGroupsPayload,

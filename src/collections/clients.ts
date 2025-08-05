@@ -4,7 +4,7 @@ import {
     GetClientPayload,
 } from '../types';
 import { Client } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Clients API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Clients represent OAuth applications that can authenticate with the Mosaia API,
  * enabling secure access to platform resources through various authentication flows.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve OAuth clients with filtering and pagination
  * - Create new OAuth client applications
  * - Update existing client configurations
@@ -44,9 +44,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<ClientInterface, Client, GetClientsPayload, GetClientPayload>
+ * @extends BaseCollection<ClientInterface, Client, GetClientsPayload, GetClientPayload>
  */
-export default class Clients extends BaseAPI<
+export default class Clients extends BaseCollection<
     ClientInterface,
     Client,
     GetClientsPayload,

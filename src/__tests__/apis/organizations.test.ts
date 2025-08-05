@@ -1,4 +1,4 @@
-import Organizations from '../../apis/organizations';
+import Organizations from '../../collections/organizations';
 import { Organization } from '../../models';
 import { GetOrgsPayload, GetOrgPayload, OrganizationInterface } from '../../types';
 
@@ -7,9 +7,9 @@ jest.mock('../../models');
 const MockOrganization = Organization as jest.MockedClass<typeof Organization>;
 
 // Mock the BaseAPI class properly
-jest.mock('../../apis/base-api');
-const { BaseAPI } = require('../../apis/base-api');
-const MockBaseAPI = BaseAPI as jest.MockedClass<typeof BaseAPI>;
+jest.mock('../../collections/base-collection');
+const { BaseCollection } = require('../../collections/base-collection');
+const MockBaseCollection = BaseCollection as jest.MockedClass<typeof BaseCollection>;
 
 // Mock the ConfigurationManager
 jest.mock('../../config', () => ({
@@ -25,7 +25,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),
@@ -51,7 +51,7 @@ describe('Organizations', () => {
       get: jest.fn(),
       create: jest.fn(),
     };
-    MockBaseAPI.mockImplementation(() => mockBaseAPI);
+    MockBaseCollection.mockImplementation(() => mockBaseAPI);
 
     organizations = new Organizations();
     
@@ -61,24 +61,24 @@ describe('Organizations', () => {
   });
 
   describe('constructor', () => {
-    it('should create Organizations instance extending BaseAPI', () => {
+    it('should create Organizations instance extending BaseCollection', () => {
       expect(organizations).toBeDefined();
       expect(typeof organizations.get).toBe('function');
       expect(typeof organizations.create).toBe('function');
     });
 
     it('should initialize with correct URI and Organization model', () => {
-      expect(MockBaseAPI).toHaveBeenCalledWith('/org', Organization);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/org', Organization);
     });
 
     it('should initialize with custom URI when provided', () => {
       const customOrganizations = new Organizations('/api/v1');
-      expect(MockBaseAPI).toHaveBeenCalledWith('/api/v1/org', Organization);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/api/v1/org', Organization);
     });
 
     it('should initialize with empty URI when not provided', () => {
       const defaultOrganizations = new Organizations();
-      expect(MockBaseAPI).toHaveBeenCalledWith('/org', Organization);
+      expect(MockBaseCollection).toHaveBeenCalledWith('/org', Organization);
     });
   });
 

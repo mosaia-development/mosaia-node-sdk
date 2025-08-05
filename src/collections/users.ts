@@ -4,7 +4,7 @@ import {
     UserInterface,
 } from '../types';
 import { User } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Users API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Users represent individual accounts that can access the platform, manage
  * resources, and interact with AI agents and applications.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve users with filtering and pagination
  * - Create new user accounts
  * - Update existing user profiles and settings
@@ -43,9 +43,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<UserInterface, User, GetUsersPayload, GetUserPayload>
+ * @extends BaseCollection<UserInterface, User, GetUsersPayload, GetUserPayload>
  */
-export default class Users extends BaseAPI<
+export default class Users extends BaseCollection<
     UserInterface,
     User,
     GetUsersPayload,

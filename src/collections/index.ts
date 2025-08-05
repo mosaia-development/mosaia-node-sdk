@@ -1,11 +1,11 @@
 /**
- * API client exports for the Mosaia SDK
+ * Collection client exports for the Mosaia SDK
  * 
- * This module exports all the API client classes that can be used to interact
+ * This module exports all the collection client classes that can be used to interact
  * with different resources on the Mosaia platform. Each client provides
  * methods for CRUD operations and specialized functionality.
  * 
- * ## Available API Clients
+ * ## Available Collection Clients
  * 
  * - **Agents**: Manage AI agents for conversation and task execution
  * - **Apps**: Manage applications and their configurations
@@ -21,9 +21,9 @@
  * 
  * @example
  * ```typescript
- * import { Apps, Tools, Agents, Auth } from './apis';
+ * import { Apps, Tools, Agents, Auth } from './collections';
  * 
- * // Create API clients
+ * // Create collection clients
  * const apps = new Apps();
  * const tools = new Tools();
  * const agents = new Agents();
@@ -38,7 +38,7 @@
 
 import Agents from './agents';
 import Apps from './apps';
-import MosaiaAuth from './auth';
+import MosaiaAuth from '../auth/auth';
 import Users from './users';
 import Organizations from './organizations';
 import OrgUsers from './org-users';
@@ -49,7 +49,7 @@ import AppBots from './app-bots';
 import AgentGroups from './agent-groups';
 
 /**
- * Agents API client for managing AI agents
+ * Agents collection client for managing AI agents
  * 
  * Provides CRUD operations for AI agents that can perform specific tasks,
  * handle conversations, and execute workflows based on their configuration.
@@ -59,7 +59,7 @@ import AgentGroups from './agent-groups';
 export { Agents };
 
 /**
- * Applications API client for managing applications
+ * Applications collection client for managing applications
  * 
  * Provides CRUD operations for applications, which are the primary containers
  * for AI-powered solutions and serve as entry points for user interactions.
@@ -69,7 +69,7 @@ export { Agents };
 export { Apps };
 
 /**
- * Authentication API client for managing user authentication
+ * Authentication collection client for managing user authentication
  * 
  * Provides authentication methods including password-based login, client credentials,
  * and token refresh operations for secure access to the Mosaia platform.
@@ -79,7 +79,7 @@ export { Apps };
 export { MosaiaAuth };
 
 /**
- * Users API client for managing user accounts
+ * Users collection client for managing user accounts
  * 
  * Provides CRUD operations for user accounts, including profile management,
  * settings, and user-specific configurations within the platform.
@@ -89,7 +89,7 @@ export { MosaiaAuth };
 export { Users };
 
 /**
- * Organizations API client for managing organizations
+ * Organizations collection client for managing organizations
  * 
  * Provides CRUD operations for organizations, which are containers for grouping
  * users, applications, and resources to enable team collaboration.
@@ -99,7 +99,7 @@ export { Users };
 export { Organizations };
 
 /**
- * Organization Users API client for managing org-user relationships
+ * Organization Users collection client for managing org-user relationships
  * 
  * Provides CRUD operations for managing the relationships between users and
  * organizations, including permissions and access control.
@@ -109,7 +109,7 @@ export { Organizations };
 export { OrgUsers };
 
 /**
- * Tools API client for managing external integrations
+ * Tools collection client for managing external integrations
  * 
  * Provides CRUD operations for tools, which are external integrations and
  * utilities that agents can use to perform specific tasks.
@@ -119,7 +119,7 @@ export { OrgUsers };
 export { Tools };
 
 /**
- * Clients API client for managing OAuth applications
+ * Clients collection client for managing OAuth applications
  * 
  * Provides CRUD operations for OAuth clients that can authenticate with
  * the Mosaia API through various authentication flows.
@@ -129,7 +129,7 @@ export { Tools };
 export { Clients };
 
 /**
- * Models API client for managing AI model configurations
+ * Models collection client for managing AI model configurations
  * 
  * Provides CRUD operations for AI models that can be used by agents for
  * various tasks such as text generation and analysis.
@@ -139,7 +139,7 @@ export { Clients };
 export { Models };
 
 /**
- * App Bots API client for managing application-bot integrations
+ * App Bots collection client for managing application-bot integrations
  * 
  * Provides CRUD operations for app bots, which are specialized integrations
  * that connect applications with AI agents through webhook-style interactions.
@@ -149,7 +149,7 @@ export { Models };
 export { AppBots };
 
 /**
- * Agent Groups API client for managing agent collections
+ * Agent Groups collection client for managing agent collections
  * 
  * Provides CRUD operations for agent groups, which allow organizing and
  * managing multiple AI agents together for coordinated workflows.

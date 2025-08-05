@@ -1,16 +1,16 @@
 import * as SDK from '../index';
 import { ConfigurationManager } from '../config';
 import { MosaiaConfig, UserInterface } from '../types';
-import APIClient from '../apis/api-client';
+import APIClient from '../utils/api-client';
 import { Session } from '../models';
-import { OAuth } from '../oauth';
+import { OAuth } from '../auth/oauth';
 
 const { MosaiaClient } = SDK;
 
 // Mock dependencies
-jest.mock('../apis/api-client');
+jest.mock('../utils/api-client');
 jest.mock('../models');
-jest.mock('../oauth');
+jest.mock('../auth/oauth');
 
 const MockAPIClient = APIClient as jest.MockedClass<typeof APIClient>;
 const MockSession = Session as jest.MockedClass<typeof Session>;

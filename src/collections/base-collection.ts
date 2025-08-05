@@ -3,11 +3,11 @@ import {
     QueryParams,
     BatchAPIResponse
 } from '../types';
-import APIClient from './api-client';
+import APIClient from '../utils/api-client';
 import { ConfigurationManager } from '../config';
 
 /**
- * Base API class that provides common functionality for all API clients
+ * Base Collection class that provides common functionality for all collection clients
  * 
  * This abstract class provides:
  * - Common CRUD operations (GET, POST, PUT, DELETE)
@@ -21,7 +21,7 @@ import { ConfigurationManager } from '../config';
  * @template GetPayload - The payload type for GET responses
  * @template CreatePayload - The payload type for POST responses
  */
-export abstract class BaseAPI<
+export abstract class BaseCollection<
     T,
     M,
     GetPayload = any,
@@ -33,7 +33,7 @@ export abstract class BaseAPI<
     protected ModelClass: new (data: Partial<T>, uri?: string) => M;
 
     /**
-     * Creates a new Base API instance
+     * Creates a new Base Collection instance
      * 
      * @param uri - The API endpoint path (e.g., '/user', '/agent')
      * @param ModelClass - The model class constructor to use for creating instances

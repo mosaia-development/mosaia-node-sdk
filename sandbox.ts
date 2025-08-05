@@ -35,13 +35,13 @@ const authentication = async () => {
             USER_PASSWORD as string
         );
 
-        console.log('authConfig:', authConfig);
-        console.log(' Attempting to refresh...');
-        const auth = new Mosaia.MosaiaAuth(authConfig);
-        const refreshConfig = await auth.refreshToken();
+        // console.log('authConfig:', authConfig);
+        // console.log(' Attempting to refresh...');
+        // const auth = new Mosaia.MosaiaAuth(authConfig);
+        // const refreshConfig = await auth.refreshToken();
 
-        console.log('refreshConfig:', refreshConfig);
-        mosaia.config = refreshConfig;
+        // console.log('refreshConfig:', refreshConfig);
+        mosaia.config = authConfig;
 
         const session = await mosaia.session();
         console.log('session:', session);
@@ -75,7 +75,9 @@ async function testSDK() {
         console.log('firstAgent:', (firstAgent as any).description);
 
         try {
-            const res = await firstAgent?.chatCompletion({
+            console.log(firstAgent);
+            
+            const res = await firstAgent?.chat.completions.create({
                 messages: [
                     { role: "user", content: "Hello, who are you?" }
                 ]

@@ -1,8 +1,5 @@
-import {
-    MosaiaConfig,
-    BaseEntity
-} from '../types';
-import APIClient from '../apis/api-client';
+import { MosaiaConfig } from '../types';
+import APIClient from '../utils/api-client';
 import { ConfigurationManager } from '../config';
 
 /**

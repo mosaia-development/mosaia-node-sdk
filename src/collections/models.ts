@@ -4,7 +4,7 @@ import {
     GetModelPayload,
 } from '../types';
 import { Model } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Models API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Models represent different AI/ML models that can be used by agents for
  * various tasks such as text generation, analysis, and decision-making.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve AI models with filtering and pagination
  * - Create new model configurations
  * - Update existing model settings and properties
@@ -45,9 +45,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<ModelInterface, Model, GetModelsPayload, GetModelPayload>
+ * @extends BaseCollection<ModelInterface, Model, GetModelsPayload, GetModelPayload>
  */
-export default class Models extends BaseAPI<
+export default class Models extends BaseCollection<
     ModelInterface,
     Model,
     GetModelsPayload,

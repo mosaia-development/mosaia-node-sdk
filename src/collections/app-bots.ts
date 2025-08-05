@@ -4,7 +4,7 @@ import {
     GetAppBotPayload
 } from '../types';
 import { AppBot } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * App Bots API client for the Mosaia SDK
@@ -14,7 +14,7 @@ import { BaseAPI } from './base-api';
  * or agent groups, enabling automated responses and workflows within external
  * applications through webhook-style interactions.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve app bots with filtering and pagination
  * - Create new app bot integrations
  * - Update existing app bot configurations
@@ -44,9 +44,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<AppBotInterface, AppBot, GetAppBotsPayload, GetAppBotPayload>
+ * @extends BaseCollection<AppBotInterface, AppBot, GetAppBotsPayload, GetAppBotPayload>
  */
-export default class AppBots extends BaseAPI<
+export default class AppBots extends BaseCollection<
     AppBotInterface,
     AppBot,
     GetAppBotsPayload,

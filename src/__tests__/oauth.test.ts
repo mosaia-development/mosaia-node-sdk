@@ -1,4 +1,4 @@
-import { OAuth } from '../oauth';
+import { OAuth } from '../auth/oauth';
 import { OAuthConfig, OAuthErrorResponse, MosaiaConfig } from '../types';
 import { ConfigurationManager } from '../config';
 

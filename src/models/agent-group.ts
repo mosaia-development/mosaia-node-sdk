@@ -6,6 +6,7 @@ import {
     GetAgentGroupPayload
 } from '../types';
 import { BaseModel } from './base';
+import { Chat } from '../functions/chat';
 
 /**
  * AgentGroup class for managing agent group instances in the Mosaia SDK
@@ -119,42 +120,11 @@ export default class AgentGroup extends BaseModel<AgentGroupInterface> {
     }
 
     /**
-     * Perform a chat completion with the agent group
+     * Get the chat function
      * 
-     * Sends a chat completion request to the agent group and returns the generated response.
-     * The agent group will coordinate among its member agents to provide the best response.
-     * Supports both synchronous and asynchronous completion modes.
-     * 
-     * @param request - Chat completion request parameters including model, messages, and options
-     * @param isAsync - Whether to perform an asynchronous completion. Defaults to false.
-     * @returns Promise that resolves to the chat completion response
-     * 
-     * @example
-     * ```typescript
-     * // Synchronous completion with agent group
-     * const response = await agentGroup.chatCompletion({
-     *   model: 'gpt-4',
-     *   messages: [
-     *     { role: 'system', content: 'You are a customer support team.' },
-     *     { role: 'user', content: 'I have a billing question.' }
-     *   ],
-     *   max_tokens: 200,
-     *   temperature: 0.7
-     * });
-     * 
-     * // Asynchronous completion for complex queries
-     * const asyncResponse = await agentGroup.chatCompletion({
-     *   model: 'gpt-4',
-     *   messages: [
-     *     { role: 'user', content: 'Analyze my entire order history and provide recommendations.' }
-     *   ]
-     * }, true);
-     * ```
+     * @returns The chat function
      */
-    async chatCompletion(request: ChatCompletionRequest, isAsync: boolean = false): Promise<APIResponse<ChatCompletionResponse>> {
-        let uri = '/chat/completions';
-
-        if (isAsync) uri += '?type=async';
-        return this.apiClient.POST<ChatCompletionResponse>(`${this.getUri()}${uri}`, request);
+    get chat() {
+        return new Chat(this.getUri());
     }
 } 

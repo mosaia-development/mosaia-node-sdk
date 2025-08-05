@@ -25,8 +25,11 @@ A comprehensive Node.js SDK for the Mosaia API platform, providing access to all
 - **Native Fetch API** - Modern HTTP client using native fetch instead of axios
 - **Clean Architecture** - Well-structured dependency management with no circular dependencies
 - **Dual Import Patterns** - Support for both namespace and default export patterns with consistent naming
+- **Modern API Pattern** - Nested API structure for chat completions (`agent.chat.completions.create()`) following industry standards
 
 > **Note**: Some API endpoints may not be fully implemented on all server instances. The SDK includes comprehensive error handling and will gracefully handle 404 responses for unimplemented endpoints.
+
+> **Migration Note**: If you're upgrading from a previous version, the chat completion API has changed from `agent.chatCompletion()` to `agent.chat.completions.create()`. See the "What's New" section for details and migration examples.
 
 ## Getting Started
 ### Installation
@@ -161,7 +164,7 @@ async function main() {
     // Chat with an agent
     if (Array.isArray(agents) && agents.length > 0) {
         const firstAgent = agents[0];
-        const response = await firstAgent.chatCompletion({
+        const response = await firstAgent.chat.completions.create({
             messages: [
                 { role: "user", content: "Hello, who are you?" }
             ]
@@ -462,7 +465,7 @@ An inference call is performed on an Agent, AgentGroup or Model entity
 
 ```typescript
 // Chat completion with agent (using agent instance)
-const response = await agent.chatCompletion({
+const response = await agent.chat.completions.create({
     messages: [
         { role: 'user', content: 'Hello, how are you?' }
     ],
@@ -471,7 +474,7 @@ const response = await agent.chatCompletion({
 });
 
 // Chat completion with model (using model instance)
-const response = await model.chatCompletion({
+const response = await model.chat.completions.create({
     messages: [
         { role: 'user', content: 'Hello, how are you?' }
     ],
@@ -595,16 +598,46 @@ npm test -- --testPathPattern="models.test.ts"
 ## What's New
 
 ### Version 0.0.16
+
+#### New Chat Completion API Pattern
+
+The SDK now uses a new nested API pattern for chat completions that provides better organization and follows industry standards:
+
+**Previous API (Deprecated):**
+```typescript
+const response = await agent.chatCompletion({
+    messages: [{ role: 'user', content: 'Hello!' }]
+});
+```
+
+**New API (Recommended):**
+```typescript
+const response = await agent.chat.completions.create({
+    messages: [{ role: 'user', content: 'Hello!' }]
+});
+```
+
+This new pattern:
+- **Better Organization**: Groups related functionality under logical namespaces
+- **Industry Standard**: Follows the same pattern as other popular AI SDKs
+- **Extensibility**: Allows for future expansion of chat-related features
+- **Consistency**: Provides a unified API across all entity types (agents, models, agent groups)
+
+#### Additional Improvements in v0.0.16:
+- 🔧 **Enhanced Paging Support**: Improved support for paging details with batch requests and better pagination handling
+- 🔧 **Verbose Logging Enhancement**: Added more detailed HTTP request/response logging with enhanced debugging capabilities
 - 🔧 **API Response Structure**: Simplified API responses to return only data and paging information
-- 🔧 **Verbose Logging Enhancement**: Added detailed HTTP request/response logging with meta and error information
 - 🔧 **Error Handling**: Improved error handling with automatic promise rejection for error responses
 - 🔧 **Response Cleanup**: Removed meta and error properties from response objects for cleaner API
-- 🔧 **Test Updates**: Updated all tests to work with new response structure
+- 🔧 **Test Updates**: Updated all tests to work with new response structure and API patterns
 - 🧪 **Test Reliability**: Improved test coverage and reliability
 - ✅ **All Tests Passing**: 521 tests now pass consistently
 - ✅ **Cleaner API**: Simplified response objects make the SDK easier to use
 - ✅ **Better Debugging**: Enhanced verbose logging provides detailed request/response information
 - ✅ **Improved Error Handling**: Errors are now thrown as exceptions rather than returned in response objects
+- ✅ **Modern API Pattern**: New nested API structure provides better organization and follows industry standards
+
+
 
 ### Version 0.0.15
 - 🔧 **Circular Dependency Resolution**: Fixed circular dependency between `org-user.ts` and `index.ts`

@@ -1,4 +1,4 @@
-import MosaiaAuth from './auth';
+import MosaiaAuth from '../auth/auth';
 import {
     MosaiaConfig,
     APIResponse,
@@ -154,7 +154,7 @@ export default class APIClient {
 
         if (data && method !== 'GET') {
             requestOptions.body = JSON.stringify(data);
-        }
+        }        
 
         // Log request if verbose mode is enabled
         if (this.config?.verbose) {

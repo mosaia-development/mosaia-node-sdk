@@ -4,7 +4,7 @@ import {
     GetOrgPayload
 } from '../types';
 import { Organization } from '../models';
-import { BaseAPI } from './base-api';
+import { BaseCollection } from './base-collection';
 
 /**
  * Organizations API client for the Mosaia SDK
@@ -13,7 +13,7 @@ import { BaseAPI } from './base-api';
  * Organizations are containers for grouping users, applications, and resources,
  * enabling team collaboration and resource management at scale.
  * 
- * This class inherits from BaseAPI and provides the following functionality:
+ * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve organizations with filtering and pagination
  * - Create new organizations
  * - Update existing organization settings and properties
@@ -43,9 +43,9 @@ import { BaseAPI } from './base-api';
  * });
  * ```
  * 
- * @extends BaseAPI<OrganizationInterface, Organization, GetOrgsPayload, GetOrgPayload>
+ * @extends BaseCollection<OrganizationInterface, Organization, GetOrgsPayload, GetOrgPayload>
  */
-export default class Organizations extends BaseAPI<
+export default class Organizations extends BaseCollection<
     OrganizationInterface,
     Organization,
     GetOrgsPayload,    

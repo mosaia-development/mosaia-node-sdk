@@ -1,4 +1,4 @@
-import Tools from '../../apis/tools';
+import Tools from '../../collections/tools';
 import { Tool } from '../../models';
 import { GetToolsPayload, GetToolPayload, ToolInterface } from '../../types';
 
@@ -6,10 +6,10 @@ import { GetToolsPayload, GetToolPayload, ToolInterface } from '../../types';
 jest.mock('../../models');
 const MockTool = Tool as jest.MockedClass<typeof Tool>;
 
-// Mock the BaseAPI class properly
-jest.mock('../../apis/base-api', () => {
+// Mock the BaseCollections class properly
+jest.mock('../../collections/base-collection', () => {
   return {
-    BaseAPI: jest.fn().mockImplementation(() => ({
+          BaseCollection: jest.fn().mockImplementation(() => ({
       get: jest.fn(),
       create: jest.fn(),
     }))
@@ -30,7 +30,7 @@ jest.mock('../../config', () => ({
 }));
 
 // Mock the APIClient
-jest.mock('../../apis/api-client', () => {
+jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     GET: jest.fn(),
     POST: jest.fn(),

@@ -1,4 +1,4 @@
-import APIClient from './api-client';
+import APIClient from '../utils/api-client';
 import {
     MosaiaConfig,
     AuthRequest,
