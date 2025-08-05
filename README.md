@@ -597,7 +597,7 @@ npm test -- --testPathPattern="models.test.ts"
 
 ## What's New
 
-### Version 0.0.18
+### Version 0.0.19
 
 #### New Chat Completion API Pattern
 

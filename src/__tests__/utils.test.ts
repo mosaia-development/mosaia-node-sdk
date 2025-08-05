@@ -27,8 +27,8 @@ describe('isTimestampExpired', () => {
 
   it('should handle the specific example timestamp', () => {
     const exampleTimestamp = '1754078962511';
-    // This timestamp is in the year 2025, so it should be false (not expired) for current time
-    expect(isTimestampExpired(exampleTimestamp)).toBe(false);
+    // This timestamp is now in the past, so it should be true (expired) for current time
+    expect(isTimestampExpired(exampleTimestamp)).toBe(true);
   });
 
   it('should handle very old timestamps', () => {

@@ -423,13 +423,25 @@ describe('ChatCompletionResponse', () => {
       usage: {
         prompt_tokens: 10,
         completion_tokens: 15,
-        total_tokens: 25
-      }
+        total_tokens: 25,
+        prompt_tokens_details: {
+          cached_tokens: 0,
+          audio_tokens: 0
+        },
+        completion_tokens_details: {
+          reasoning_tokens: 0,
+          audio_tokens: 0,
+          accepted_prediction_tokens: 15,
+          rejected_prediction_tokens: 0
+        }
+      },
+      service_tier: 'standard',
+      system_fingerprint: 'fp_1234567890'
     };
 
     expect(response.id).toBe('chat-123');
     expect(response.choices).toHaveLength(1);
-    expect(response.usage.total_tokens).toBe(25);
+    expect(response.usage?.total_tokens).toBe(25);
   });
 });
 
