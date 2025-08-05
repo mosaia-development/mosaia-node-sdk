@@ -415,7 +415,7 @@ const results = await user.agents.get({
 
 // Get specific agent by ID
 const { user } = await mosaia.session();
-const agent = await user.agents.get({}, 'agent-id');;
+const agent = await user.agents.get({}, 'agent-id');
 ```
 #### Creates
 
@@ -441,7 +441,7 @@ Update the entity with new data
 ```typescript
 // Get specific agent by ID
 const { user } = await mosaia.session();
-const agent = await user.agents.get({}, 'agent-id');;
+const agent = await user.agents.get({}, 'agent-id');
 // Update with the new name
 agent.update({
     name: 'Updated Assistant Name'
