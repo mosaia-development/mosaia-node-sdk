@@ -50,7 +50,8 @@ export default class MosaiaAuth {
             this.configManager = ConfigurationManager.getInstance();
             this.config = this.configManager.getConfig();
         }
-        this.apiClient = new APIClient(this.config);
+        // Skip token refresh to prevent circular dependency
+        this.apiClient = new APIClient(this.config, true);
     }
 
     /**

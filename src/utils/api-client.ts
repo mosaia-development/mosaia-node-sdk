@@ -31,11 +31,14 @@ export default class APIClient {
      * 
      * Uses the ConfigurationManager to get configuration settings.
      * No longer requires config parameter as it uses the centralized configuration.
+     * 
+     * @param config - Optional configuration object
+     * @param skipTokenRefresh - Skip token refresh check (used to prevent circular dependency)
      */
-    constructor(config?: MosaiaConfig) {
+    constructor(config?: MosaiaConfig, skipTokenRefresh: boolean = false) {
         if (config) this.config = config;
         this.configManager = ConfigurationManager.getInstance();
-        this.initializeClient();
+        this.initializeClient(skipTokenRefresh);
     }
 
     /**
@@ -43,13 +46,14 @@ export default class APIClient {
      * 
      * @private
      */
-    private async initializeClient(): Promise<void> {
+    private async initializeClient(skipTokenRefresh: boolean = false): Promise<void> {
         try {
             let config = this.config;
 
             if (!this.config) config = this.configManager.getConfig();        
             // Parse and validate expiration timestamp if it exists
-            if (config?.session?.exp && isTimestampExpired(config.session.exp)) {
+            // Skip token refresh check when called from MosaiaAuth to prevent circular dependency
+            if (!skipTokenRefresh && config?.session?.exp && isTimestampExpired(config.session.exp)) {
                 const auth = new MosaiaAuth();
 
                 const refreshedConfig = await auth.refreshToken();
@@ -79,7 +83,7 @@ export default class APIClient {
      */
     private async updateClientConfig(): Promise<void> {
         try {
-            await this.initializeClient();
+            await this.initializeClient(false);
         } catch (error) {
             throw error;
         }

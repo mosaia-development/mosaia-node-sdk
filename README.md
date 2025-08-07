@@ -597,6 +597,29 @@ npm test -- --testPathPattern="models.test.ts"
 
 ## What's New
 
+### Version 0.0.20
+
+#### Circular Dependency Fix
+
+Fixed a critical circular dependency issue that caused "Maximum call stack size exceeded" errors when calling `mosaia.session()` with expired configurations. The issue was caused by infinite recursion between `APIClient` and `MosaiaAuth` during token refresh operations.
+
+**Problem:**
+- `mosaia.session()` → `APIClient` → `initializeClient()` → checks token expiration
+- If expired → `MosaiaAuth` → `APIClient` → `initializeClient()` → checks token expiration again
+- This created an infinite loop: `APIClient` → `MosaiaAuth` → `APIClient` → `MosaiaAuth` → ...
+
+**Solution:**
+- Added `skipTokenRefresh` parameter to `APIClient` constructor
+- `MosaiaAuth` creates `APIClient` with `skipTokenRefresh: true` to prevent circular dependency
+- Normal `APIClient` instances still perform token refresh when needed
+- Maintains all existing functionality while preventing infinite loops
+
+**Benefits:**
+- ✅ **No More Stack Overflow**: Eliminates "Maximum call stack size exceeded" errors
+- ✅ **Maintains Functionality**: Token refresh still works for normal API calls
+- ✅ **Clean Architecture**: Explicit control over token refresh behavior
+- ✅ **Backward Compatible**: No breaking changes to existing API
+
 ### Version 0.0.19
 
 #### New Chat Completion API Pattern
