@@ -2,55 +2,121 @@ import { ClientInterface } from '../types';
 import { BaseModel } from './base';
 
 /**
- * Client class for managing OAuth client instances in the Mosaia SDK
+ * Client class for managing OAuth client applications
  * 
- * Represents an OAuth client application that can authenticate with the Mosaia API
- * through various authentication flows. OAuth clients enable secure access to
- * platform resources for external applications.
+ * This class represents an OAuth client application that can authenticate with
+ * the Mosaia API through various OAuth flows. It manages client credentials,
+ * redirect URIs, and scopes for secure API access.
  * 
- * This class inherits from BaseModel and provides the following functionality:
- * - OAuth client data management and validation
- * - Client configuration and settings management
- * - Integration with the Mosaia API for client operations
- * - OAuth flow support and authentication handling
+ * Features:
+ * - OAuth client management
+ * - Secure credential handling
+ * - Redirect URI configuration
+ * - Scope management
+ * - Flow configuration
+ * 
+ * @remarks
+ * OAuth clients are essential for:
+ * - Third-party application integration
+ * - Secure API access
+ * - User authentication flows
+ * - Resource authorization
+ * - Access token management
+ * 
+ * The class supports multiple OAuth 2.0 flows:
+ * - Authorization Code (with PKCE)
+ * - Client Credentials
+ * - Resource Owner Password
  * 
  * @example
+ * Basic client setup:
  * ```typescript
  * import { Client } from 'mosaia-node-sdk';
  * 
- * // Create a client instance
- * const client = new Client({
- *   name: 'My Application',
- *   client_id: 'my-app-client-id',
- *   client_secret: 'my-app-client-secret',
- *   redirect_uris: ['https://myapp.com/callback'],
- *   scopes: ['read', 'write']
+ * // Create an OAuth client for web application
+ * const webClient = new Client({
+ *   name: 'Web Dashboard',
+ *   client_id: process.env.CLIENT_ID,
+ *   client_secret: process.env.CLIENT_SECRET,
+ *   redirect_uris: ['https://app.example.com/oauth/callback'],
+ *   scopes: ['read:users', 'write:data']
  * });
  * 
- * // Access client data
- * console.log('Client ID:', client.client_id);
- * console.log('Client Name:', client.name);
+ * await webClient.save();
+ * ```
+ * 
+ * @example
+ * Service account setup:
+ * ```typescript
+ * // Create a service account client
+ * const serviceClient = new Client({
+ *   name: 'Background Service',
+ *   client_id: process.env.SERVICE_CLIENT_ID,
+ *   client_secret: process.env.SERVICE_CLIENT_SECRET,
+ *   grant_types: ['client_credentials'],
+ *   scopes: ['service:full'],
+ *   metadata: {
+ *     service: 'data-processor',
+ *     environment: 'production'
+ *   }
+ * });
+ * 
+ * if (serviceClient.isActive()) {
+ *   console.log('Service client ready');
+ *   console.log('Available scopes:', serviceClient.scopes);
+ * }
  * ```
  * 
  * @extends BaseModel<ClientInterface>
+ * @category Models
  */
 export default class Client extends BaseModel<ClientInterface> {
     /**
-     * Creates a new Client instance
+     * Creates a new OAuth client instance
      * 
-     * Initializes an OAuth client with the provided configuration data and optional URI.
-     * The client represents an OAuth application that can authenticate with the platform.
+     * Initializes an OAuth client application with the provided configuration.
+     * The client manages authentication and authorization for accessing the
+     * Mosaia API securely.
      * 
-     * @param data - OAuth client configuration data
-     * @param uri - Optional URI path for the client endpoint. Defaults to '/client'
+     * @param data - Configuration data including:
+     *               - name: Client application name
+     *               - client_id: OAuth client ID
+     *               - client_secret: OAuth client secret
+     *               - redirect_uris: Authorized redirect URIs
+     *               - scopes: Authorized scope list
+     *               - grant_types: Supported OAuth grant types
+     *               - metadata: Custom metadata object
+     * @param uri - Optional custom URI path for the client endpoint
      * 
      * @example
+     * Web application client:
      * ```typescript
-     * const client = new Client({
-     *   name: 'My App',
-     *   client_id: 'app-client-id',
-     *   redirect_uris: ['https://myapp.com/callback']
+     * const webClient = new Client({
+     *   name: 'Web App',
+     *   client_id: process.env.CLIENT_ID,
+     *   client_secret: process.env.CLIENT_SECRET,
+     *   redirect_uris: [
+     *     'https://app.example.com/oauth/callback',
+     *     'http://localhost:3000/callback'  // Development
+     *   ],
+     *   scopes: ['read:users', 'write:data']
      * });
+     * ```
+     * 
+     * @example
+     * Machine-to-machine client:
+     * ```typescript
+     * const serviceClient = new Client({
+     *   name: 'API Service',
+     *   client_id: process.env.SERVICE_CLIENT_ID,
+     *   client_secret: process.env.SERVICE_CLIENT_SECRET,
+     *   grant_types: ['client_credentials'],
+     *   scopes: ['service:full'],
+     *   metadata: {
+     *     type: 'service-account',
+     *     owner: 'system'
+     *   }
+     * }, '/service/client');
      * ```
      */
     constructor(data: Partial<ClientInterface>, uri?: string) {

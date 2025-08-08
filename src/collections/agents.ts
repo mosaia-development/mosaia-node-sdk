@@ -7,29 +7,38 @@ import { Agent } from '../models';
 import { BaseCollection } from './base-collection';
 
 /**
- * Agents API client for the Mosaia SDK
+ * Agents API client for managing AI agents in the Mosaia platform
  * 
- * Provides CRUD operations for managing AI agents in the Mosaia platform.
- * Agents are AI-powered entities that can perform specific tasks, handle conversations,
+ * This class provides comprehensive functionality for managing AI agents,
+ * which are intelligent entities that can perform tasks, handle conversations,
  * and execute workflows based on their configuration and assigned tools.
  * 
- * This class inherits from BaseCollection and provides the following functionality:
- * - Retrieve agents with filtering and pagination
- * - Create new agents with custom configurations
- * - Update existing agent settings and properties
- * - Delete agents
- * - Manage agent tools and configurations
- * - Handle agent-specific operations like chat completions
+ * Features:
+ * - Create and configure AI agents
+ * - Manage agent settings and properties
+ * - Handle agent tools and capabilities
+ * - Support for chat and completion operations
+ * - Integration with models and tools
+ * 
+ * @remarks
+ * Agents can be configured with different models, temperature settings,
+ * and system prompts to customize their behavior. They can also be
+ * assigned tools to extend their capabilities.
  * 
  * @example
+ * Basic agent operations:
  * ```typescript
  * import { Mosaia } from 'mosaia-node-sdk';
  * 
  * const mosaia = new Mosaia({ apiKey: 'your-api-key' });
  * const agents = mosaia.agents;
  * 
- * // Get all agents
- * const allAgents = await agents.get();
+ * // List all agents with filtering
+ * const allAgents = await agents.get({
+ *   limit: 10,
+ *   q: 'support',
+ *   active: true
+ * });
  * 
  * // Get a specific agent
  * const agent = await agents.get({}, 'agent-id');
@@ -43,19 +52,30 @@ import { BaseCollection } from './base-collection';
  *   max_tokens: 1000,
  *   system_prompt: 'You are a helpful customer support agent.'
  * });
+ * ```
  * 
- * // Use agent for chat completion
+ * @example
+ * Using agent chat capabilities:
+ * ```typescript
+ * // Get an agent
+ * const agent = await agents.get({}, 'agent-id');
+ * 
  * if (agent instanceof Agent) {
- *   const response = await agent.chatCompletion({
- *     model: 'gpt-4',
+ *   // Use the new chat completions API
+ *   const response = await agent.chat.completions.create({
  *     messages: [
  *       { role: 'user', content: 'How can I reset my password?' }
- *     ]
+ *     ],
+ *     temperature: 0.7,
+ *     max_tokens: 150
  *   });
+ *   
+ *   console.log('Agent response:', response.choices[0].message.content);
  * }
  * ```
  * 
  * @extends BaseCollection<AgentInterface, Agent, GetAgentsPayload, GetAgentPayload>
+ * @category Collections
  */
 export default class Agents extends BaseCollection<
     AgentInterface,
@@ -66,24 +86,39 @@ export default class Agents extends BaseCollection<
     /**
      * Creates a new Agents API client instance
      * 
-     * Initializes the agents client with the appropriate endpoint URI
-     * and model class for handling agent operations.
+     * Initializes an Agents collection for managing AI agents through the API.
+     * The collection provides methods for creating, retrieving, and managing
+     * agent configurations.
      * 
-     * The constructor sets up the API endpoint to `/agent` (or `${uri}/agent` if a base URI is provided),
-     * which corresponds to the Mosaia API's agents endpoint.
-     * 
-     * @param uri - Optional base URI path. If provided, the endpoint will be `${uri}/agent`.
-     *              If not provided, defaults to `/agent`.
+     * @param uri - Optional base URI path (e.g., '/org/123' for org-scoped agents)
      * 
      * @example
+     * Default initialization:
      * ```typescript
-     * // Create with default endpoint (/agent)
+     * // Uses /agent endpoint
      * const agents = new Agents();
      * 
-     * // Create with custom base URI
-     * const agents = new Agents('/api/v1');
-     * // This will use endpoint: /api/v1/agent
+     * // Create a new agent
+     * const agent = await agents.create({
+     *   name: 'Support Bot',
+     *   shortDescription: 'Customer support agent'
+     * });
      * ```
+     * 
+     * @example
+     * Organization-scoped agents:
+     * ```typescript
+     * // Uses /org/123/agent endpoint
+     * const orgAgents = new Agents('/org/123');
+     * 
+     * // List org's agents
+     * const agents = await orgAgents.get({
+     *   active: true,
+     *   limit: 10
+     * });
+     * ```
+     * 
+     * @category Collections
      */
     constructor(uri = '') {
         super(`${uri}/agent`, Agent);

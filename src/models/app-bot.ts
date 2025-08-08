@@ -2,55 +2,113 @@ import { AppBotInterface } from '../types';
 import { BaseModel } from './base';
 
 /**
- * AppBot class for managing application bot instances in the Mosaia SDK
+ * AppBot class for managing webhook-based AI integrations
  * 
- * Represents a specialized integration that connects applications with AI agents
- * or agent groups through webhook-style interactions. App bots enable automated
- * responses and workflows within external applications.
+ * This class represents a specialized integration that connects external
+ * applications with AI agents through webhook-style interactions. AppBots
+ * enable automated responses and workflows by bridging the gap between
+ * applications and AI capabilities.
  * 
- * This class inherits from BaseModel and provides the following functionality:
- * - App bot data management and validation
- * - Webhook endpoint and response URL management
- * - Bot-specific API key and authentication handling
- * - Integration with the Mosaia API for app bot operations
+ * Features:
+ * - Webhook endpoint management
+ * - Secure API key handling
+ * - Agent/group assignment
+ * - Response routing
+ * - Event handling
+ * 
+ * @remarks
+ * AppBots are particularly useful for:
+ * - Chat platform integrations (Slack, Discord, etc.)
+ * - Custom application webhooks
+ * - Automated response systems
+ * - Event-driven AI interactions
+ * - Secure API access management
  * 
  * @example
+ * Basic bot setup:
  * ```typescript
  * import { AppBot } from 'mosaia-node-sdk';
  * 
- * // Create an app bot instance
- * const appBot = new AppBot({
- *   app: 'app-id',
- *   response_url: 'https://myapp.com/webhook',
- *   agent: 'agent-id',
- *   api_key: 'bot-api-key',
- *   api_key_partial: 'bot-***-key'
+ * // Create a Slack integration bot
+ * const slackBot = new AppBot({
+ *   app: 'slack-app-id',
+ *   response_url: 'https://slack.example.com/webhook',
+ *   agent: 'support-agent-id',
+ *   name: 'Slack Support Bot'
  * });
  * 
- * // Access app bot data
- * console.log('Response URL:', appBot.response_url);
- * console.log('API Key Partial:', appBot.api_key_partial);
+ * await slackBot.save();
+ * console.log('Bot API Key:', slackBot.api_key);
+ * ```
+ * 
+ * @example
+ * Custom webhook integration:
+ * ```typescript
+ * // Create a custom webhook bot
+ * const webhookBot = new AppBot({
+ *   app: 'custom-app-id',
+ *   response_url: 'https://api.example.com/ai-webhook',
+ *   agent_group: 'expert-team-id',
+ *   name: 'API Integration Bot',
+ *   metadata: {
+ *     team: 'engineering',
+ *     environment: 'production'
+ *   }
+ * });
+ * 
+ * // Configure and activate
+ * await webhookBot.save();
+ * if (webhookBot.isActive()) {
+ *   console.log('Webhook URL:', webhookBot.response_url);
+ *   console.log('API Key:', webhookBot.api_key);
+ * }
  * ```
  * 
  * @extends BaseModel<AppBotInterface>
+ * @category Models
  */
 export default class AppBot extends BaseModel<AppBotInterface> {
     /**
      * Creates a new AppBot instance
      * 
-     * Initializes an app bot with the provided configuration data and optional URI.
-     * The app bot represents a webhook integration between an application and AI agents.
+     * Initializes an app bot that connects external applications with AI agents
+     * through webhook-style interactions. The bot manages webhook endpoints,
+     * API keys, and routing of responses.
      * 
-     * @param data - App bot configuration data
-     * @param uri - Optional URI path for the app bot endpoint. Defaults to '/bot'
+     * @param data - Configuration data including:
+     *               - app: Parent application ID
+     *               - response_url: Webhook endpoint URL
+     *               - agent: Associated agent ID (optional)
+     *               - agent_group: Associated agent group ID (optional)
+     *               - name: Bot display name
+     *               - metadata: Custom metadata object
+     * @param uri - Optional custom URI path for the bot endpoint
      * 
      * @example
+     * Basic webhook bot:
      * ```typescript
-     * const appBot = new AppBot({
-     *   app: 'my-app-id',
-     *   response_url: 'https://myapp.com/webhook',
-     *   agent: 'support-agent-id'
+     * const bot = new AppBot({
+     *   app: 'app-123',
+     *   response_url: 'https://api.example.com/webhook',
+     *   agent: 'agent-456',
+     *   name: 'API Bot'
      * });
+     * ```
+     * 
+     * @example
+     * Advanced configuration:
+     * ```typescript
+     * const bot = new AppBot({
+     *   app: 'app-123',
+     *   response_url: 'https://chat.example.com/events',
+     *   agent_group: 'group-789',
+     *   name: 'Chat Integration',
+     *   metadata: {
+     *     platform: 'slack',
+     *     channel: 'support',
+     *     team: 'customer-success'
+     *   }
+     * }, '/integrations/bot');
      * ```
      */
     constructor(data: Partial<AppBotInterface>, uri?: string) {

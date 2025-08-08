@@ -4,17 +4,42 @@ import { ErrorResponse } from "../types";
  * Validates if a string is a valid MongoDB ObjectID
  * 
  * MongoDB ObjectIDs are 24-character hexadecimal strings that serve as unique
- * identifiers for documents in MongoDB collections.
+ * identifiers for documents in collections. This function validates
+ * the format and structure of ObjectID strings.
  * 
  * @param id - The string to validate as an ObjectID
  * @returns True if the string is a valid ObjectID, false otherwise
  * 
  * @example
+ * Valid ObjectIDs:
  * ```typescript
  * isValidObjectId('507f1f77bcf86cd799439011'); // true
+ * isValidObjectId('507f1f77bcf86cd799439012'); // true
+ * isValidObjectId('507f1f77bcf86cd799439013'); // true
+ * ```
+ * 
+ * @example
+ * Invalid ObjectIDs:
+ * ```typescript
  * isValidObjectId('invalid-id'); // false
  * isValidObjectId('123'); // false
+ * isValidObjectId('507f1f77bcf86cd79943901'); // false (23 chars)
+ * isValidObjectId('507f1f77bcf86cd7994390111'); // false (25 chars)
+ * isValidObjectId('507f1f77bcf86cd79943901g'); // false (invalid char)
  * ```
+ * 
+ * @example
+ * Usage in validation:
+ * ```typescript
+ * function validateUserId(userId: string): boolean {
+ *   if (!isValidObjectId(userId)) {
+ *     throw new Error('Invalid user ID format');
+ *   }
+ *   return true;
+ * }
+ * ```
+ * 
+ * @category Utilities
  */
 export function isValidObjectId(id: string): boolean {
     // MongoDB ObjectID is a 24-character hexadecimal string
@@ -26,21 +51,68 @@ export function isValidObjectId(id: string): boolean {
  * Parses and standardizes error objects
  * 
  * This function takes any error object and converts it to a standardized format
- * with consistent properties for error handling throughout the SDK.
+ * with consistent properties for error handling throughout the SDK. It ensures
+ * that all errors have the same structure regardless of their source.
  * 
- * @param error - Any error object to parse
+ * @param error - Any error object to parse and standardize
  * @returns Promise that rejects with a standardized error object
  * 
  * @example
+ * Basic error parsing:
  * ```typescript
  * try {
  *   // Some operation that might fail
+ *   await someApiCall();
  * } catch (error) {
  *   const standardizedError = await parseError(error);
  *   console.log('Error message:', standardizedError.message);
  *   console.log('Status code:', standardizedError.status_code);
+ *   console.log('Status:', standardizedError.status);
  * }
  * ```
+ * 
+ * @example
+ * Error handling in API calls:
+ * ```typescript
+ * async function safeApiCall() {
+ *   try {
+ *     const response = await fetch('/api/data');
+ *     if (!response.ok) {
+ *       throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+ *     }
+ *     return await response.json();
+ *   } catch (error) {
+ *     const standardizedError = await parseError(error);
+ *     console.error('API Error:', {
+ *       message: standardizedError.message,
+ *       status: standardizedError.status,
+ *       code: standardizedError.status_code,
+ *       details: standardizedError.more_info
+ *     });
+ *     throw standardizedError;
+ *   }
+ * }
+ * ```
+ * 
+ * @example
+ * Custom error handling:
+ * ```typescript
+ * async function handleDatabaseError(error: any) {
+ *   const standardizedError = await parseError(error);
+ *   
+ *   if (standardizedError.status_code === 404) {
+ *     console.log('Resource not found');
+ *   } else if (standardizedError.status_code >= 500) {
+ *     console.log('Server error occurred');
+ *   } else {
+ *     console.log('Client error:', standardizedError.message);
+ *   }
+ *   
+ *   return standardizedError;
+ * }
+ * ```
+ * 
+ * @category Utilities
  */
 export function parseError(error: any): Promise<any> {
     const e = {
@@ -58,23 +130,75 @@ export function parseError(error: any): Promise<any> {
  * Generates a URL query string from an object of parameters
  * 
  * This function converts an object of key-value pairs into a properly formatted
- * URL query string, handling both simple values and arrays.
+ * URL query string, handling both simple values and arrays. It automatically
+ * handles URL encoding and array notation for query parameters.
  * 
  * @param params - Object containing query parameters
  * @returns URL query string (e.g., "?key1=value1&key2=value2&key3[]=value3&key3[]=value4")
  * 
  * @example
+ * Basic query parameters:
  * ```typescript
  * const params = {
  *   limit: 10,
  *   offset: 0,
  *   search: 'john',
- *   tags: ['tag1', 'tag2']
+ *   active: true
  * };
  * 
  * const queryString = queryGenerator(params);
- * // Result: "?limit=10&offset=0&search=john&tags[]=tag1&tags[]=tag2"
+ * // Result: "?limit=10&offset=0&search=john&active=true"
  * ```
+ * 
+ * @example
+ * With array parameters:
+ * ```typescript
+ * const params = {
+ *   tags: ['ai', 'automation', 'support'],
+ *   categories: ['featured', 'popular'],
+ *   exclude: ['archived', 'draft']
+ * };
+ * 
+ * const queryString = queryGenerator(params);
+ * // Result: "?tags[]=ai&tags[]=automation&tags[]=support&categories[]=featured&categories[]=popular&exclude[]=archived&exclude[]=draft"
+ * ```
+ * 
+ * @example
+ * Complex filtering:
+ * ```typescript
+ * const filterParams = {
+ *   user: 'user-123',
+ *   org: 'org-456',
+ *   status: ['active', 'pending'],
+ *   created_after: '2024-01-01',
+ *   sort_by: 'created_at',
+ *   sort_order: 'desc',
+ *   include_metadata: true
+ * };
+ * 
+ * const queryString = queryGenerator(filterParams);
+ * // Result: "?user=user-123&org=org-456&status[]=active&status[]=pending&created_after=2024-01-01&sort_by=created_at&sort_order=desc&include_metadata=true"
+ * ```
+ * 
+ * @example
+ * Usage in API calls:
+ * ```typescript
+ * async function fetchUsers(filters: any) {
+ *   const queryString = queryGenerator(filters);
+ *   const response = await fetch(`/api/users${queryString}`);
+ *   return response.json();
+ * }
+ * 
+ * // Usage
+ * const users = await fetchUsers({
+ *   limit: 20,
+ *   offset: 0,
+ *   search: 'john',
+ *   tags: ['admin', 'verified']
+ * });
+ * ```
+ * 
+ * @category Utilities
  */
 export function queryGenerator(params: any = {}): string {
     return Object.keys(params).reduce((a, c, i) => {

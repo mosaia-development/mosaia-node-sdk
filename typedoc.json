@@ -1,0 +1,39 @@
+{
+  "entryPoints": ["src/index.ts"],
+  "out": "docs",
+  "exclude": [
+    "**/__tests__/**",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/node_modules/**",
+    "**/dist/**"
+  ],
+  "excludePrivate": true,
+  "excludeProtected": true,
+  "excludeExternals": true,
+  "includeVersion": true,
+  "categorizeByGroup": true,
+  "categoryOrder": [
+    "Authentication",
+    "Models",
+    "Collections", 
+    "Functions",
+    "Configuration",
+    "Utilities",
+    "*"
+  ],
+  "defaultCategory": "Other",
+  "readme": "README.md",
+  "theme": "default",
+  "name": "Mosaia Node.js SDK",
+  "gitRevision": "main",
+  "gitRemote": "origin",
+  "validation": {
+    "invalidLink": true,
+    "notExported": true
+  },
+  "plugin": [],
+  "hideGenerator": false,
+  "searchInComments": true,
+  "sort": ["source-order"]
+}

@@ -10,26 +10,72 @@ import { ConfigurationManager } from '../config';
 /**
  * Authentication API client for the Mosaia SDK
  * 
- * Provides methods for user authentication, token management, and session handling.
- * Supports multiple authentication flows including password-based, client credentials,
- * and token refresh operations.
+ * This class provides comprehensive authentication functionality for the Mosaia SDK,
+ * supporting multiple authentication flows:
+ * - Password-based authentication
+ * - Client credentials authentication
+ * - Token refresh operations
+ * - OAuth token management
+ * - Session handling
+ * 
+ * The class integrates with ConfigurationManager for centralized configuration
+ * management and uses APIClient for making authenticated HTTP requests.
+ * 
+ * @remarks
+ * All authentication methods return a {@link MosaiaConfig} object that can be used
+ * to configure the main SDK client. The configuration includes access tokens,
+ * refresh tokens, and session information.
  * 
  * @example
+ * Basic usage with password authentication:
  * ```typescript
  * const auth = new MosaiaAuth();
  * 
- * // Sign in with email and password
- * const mosaia = await auth.signInWithPassword('user@example.com', 'password', 'client-id');
- * 
- * // Sign in with client credentials
- * const mosaia = await auth.signInWithClient('client-id', 'client-secret');
- * 
- * // Refresh an existing token
- * const mosaia = await auth.refreshToken('refresh-token');
- * 
- * // Sign out
- * await auth.signOut('api-key');
+ * try {
+ *   // Sign in with email/password
+ *   const config = await auth.signInWithPassword(
+ *     'user@example.com',
+ *     'password'
+ *   );
+ *   
+ *   // Use the config with the SDK
+ *   const mosaia = new MosaiaClient(config);
+ * } catch (error) {
+ *   console.error('Authentication failed:', error.message);
+ * }
  * ```
+ * 
+ * @example
+ * Client credentials authentication:
+ * ```typescript
+ * const auth = new MosaiaAuth();
+ * 
+ * try {
+ *   // Sign in with client credentials
+ *   const config = await auth.signInWithClient(
+ *     'client-id',
+ *     'client-secret'
+ *   );
+ *   
+ *   // Use the config with the SDK
+ *   const mosaia = new MosaiaClient(config);
+ * } catch (error) {
+ *   console.error('Client auth failed:', error.message);
+ * }
+ * ```
+ * 
+ * @example
+ * Token refresh and sign out:
+ * ```typescript
+ * // Refresh token when needed
+ * const newConfig = await auth.refreshToken();
+ * mosaia.config = newConfig;
+ * 
+ * // Sign out when done
+ * await auth.signOut();
+ * ```
+ * 
+ * @category Authentication
  */
 export default class MosaiaAuth {
     private apiClient: APIClient;
@@ -39,10 +85,29 @@ export default class MosaiaAuth {
     /**
      * Creates a new Authentication API client instance
      * 
-     * Initializes the authentication client with a configuration manager
-     * and API client for making HTTP requests to the Mosaia authentication endpoints.
+     * Initializes the authentication client with an optional configuration.
+     * If no configuration is provided, it uses the ConfigurationManager to
+     * get the current configuration.
      * 
-     * Uses ConfigurationManager for configuration settings.
+     * @param config - Optional configuration object
+     * @param config.apiKey - API key for authentication
+     * @param config.apiURL - Base URL for API requests
+     * @param config.clientId - OAuth client ID
+     * @param config.session - Current session information
+     * 
+     * @example
+     * ```typescript
+     * // Create with default configuration
+     * const auth = new MosaiaAuth();
+     * 
+     * // Create with custom configuration
+     * const auth = new MosaiaAuth({
+     *   apiURL: 'https://api.mosaia.ai',
+     *   clientId: 'your-client-id'
+     * });
+     * ```
+     * 
+     * @throws {Error} When required configuration values are missing
      */
     constructor(config?: MosaiaConfig) {
         this.config = config;

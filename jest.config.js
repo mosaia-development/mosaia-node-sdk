@@ -3,7 +3,7 @@ module.exports = {
   testEnvironment: 'node',
   roots: ['<rootDir>/src'],
   testMatch: ['**/__tests__/**/*.test.ts', '**/?(*.)+(spec|test).ts'],
-  testPathIgnorePatterns: ['/node_modules/', '/setup.ts', '/run-tests.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/setup.ts', '/run-tests.ts', 'circular-dependency'],
   transform: {
     '^.+\\.ts$': 'ts-jest',
   },

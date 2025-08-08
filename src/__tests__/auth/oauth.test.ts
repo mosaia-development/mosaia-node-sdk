@@ -1,6 +1,6 @@
-import { OAuth } from '../auth/oauth';
-import { OAuthConfig, OAuthErrorResponse, MosaiaConfig } from '../types';
-import { ConfigurationManager } from '../config';
+import { OAuth } from '../../auth/oauth';
+import { OAuthConfig, OAuthErrorResponse, MosaiaConfig } from '../../types';
+import { ConfigurationManager } from '../../config';
 
 // Mock fetch globally
 global.fetch = jest.fn();

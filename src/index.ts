@@ -1,3 +1,19 @@
+/**
+ * @fileoverview Main entry point for the Mosaia Node.js SDK
+ * 
+ * This module provides the primary interface for interacting with the Mosaia API.
+ * It exports the main MosaiaClient class, all collection classes for API operations,
+ * model classes for data structures, authentication utilities, and configuration
+ * management tools.
+ * 
+ * The SDK supports both API key and OAuth2 authentication methods, and provides
+ * comprehensive access to all Mosaia platform features including user management,
+ * organization management, AI agents, tools, applications, and more.
+ * 
+ * @module index
+ * @packageDocumentation
+ */
+
 import {
     Apps,
     Tools,
@@ -28,6 +44,9 @@ import { OAuth } from './auth/oauth';
  * Supports authentication, user management, organization management, AI agents,
  * tools, applications, and more.
  * 
+ * The MosaiaClient is the primary entry point for all SDK operations. It manages
+ * configuration, authentication, and provides access to all API collections.
+ * 
  * @example
  * ```typescript
  * import * as SDK from '@mosaia/mosaia-node-sdk';
@@ -48,12 +67,29 @@ import { OAuth } from './auth/oauth';
  *   scopes: ['read', 'write']
  * });
  * ```
+ * 
+ * @example
+ * ```typescript
+ * // Using individual collection classes
+ * const users = new SDK.Users();
+ * const agents = new SDK.Agents();
+ * const apps = new SDK.Apps();
+ * 
+ * // Perform operations
+ * const allUsers = await users.get();
+ * const agent = await agents.get({}, 'agent-id');
+ * ```
  */
 class MosaiaClient {
+    /** Configuration manager instance for this client */
     private configManager: ConfigurationManager;
     
     /**
      * Creates a new Mosaia SDK instance
+     * 
+     * Initializes the SDK with the provided configuration and sets up
+     * the internal configuration manager. The configuration is used
+     * for all subsequent API requests.
      * 
      * @param config - Configuration object for the SDK
      * @param config.apiKey - API key for authentication (optional)
@@ -73,6 +109,25 @@ class MosaiaClient {
      *   clientId: 'your-client-id'
      * });
      * ```
+     * 
+     * @example
+     * ```typescript
+     * // Minimal configuration with API key
+     * const mosaia = new SDK.MosaiaClient({
+     *   apiKey: 'your-api-key'
+     * });
+     * 
+     * // Full configuration with OAuth support
+     * const mosaia = new SDK.MosaiaClient({
+     *   apiKey: 'your-api-key',
+     *   apiURL: 'https://api.mosaia.ai',
+     *   version: '1',
+     *   clientId: 'your-client-id',
+     *   clientSecret: 'your-client-secret',
+     *   user: 'user-id',
+     *   org: 'org-id'
+     * });
+     * ```
      */
     constructor(config: MosaiaConfig) {
         this.configManager = ConfigurationManager.getInstance();
@@ -81,6 +136,17 @@ class MosaiaClient {
 
     /**
      * Get the current configuration
+     * 
+     * Returns the current configuration object used by this client instance.
+     * 
+     * @returns The current configuration object
+     * 
+     * @example
+     * ```typescript
+     * const config = mosaia.config;
+     * console.log(config.apiKey); // 'your-api-key'
+     * console.log(config.apiURL); // 'https://api.mosaia.ai'
+     * ```
      */
     get config(): MosaiaConfig {
         return this.configManager.getConfig();
@@ -89,7 +155,18 @@ class MosaiaClient {
     /**
      * Set the configuration
      * 
+     * Updates the configuration for this client instance. This will
+     * affect all subsequent API requests made through this client.
+     * 
      * @param config - The new configuration object
+     * 
+     * @example
+     * ```typescript
+     * mosaia.config = {
+     *   apiKey: 'new-api-key',
+     *   apiURL: 'https://api-staging.mosaia.ai'
+     * };
+     * ```
      */
     set config(config: MosaiaConfig) {
         this.configManager.initialize(config);
@@ -225,7 +302,7 @@ class MosaiaClient {
      * 
      * Handle authentication flows, including sign in, sign out, token refresh, and session management.
      * 
-     * @returns {Auth} Authentication API client
+     * @returns {MosaiaAuth} Authentication API client
      * 
      * @example
      * ```typescript
@@ -279,7 +356,22 @@ class MosaiaClient {
     /**
      * Get the current user session
      * 
-     * @returns {Session} Session object
+     * Retrieves information about the currently authenticated user,
+     * including user details, organization information, and permissions.
+     * 
+     * @returns {Promise<Session>} Session object containing user and organization information
+     * @throws {Error} When authentication fails or session is invalid
+     * 
+     * @example
+     * ```typescript
+     * try {
+     *   const session = await mosaia.session();
+     *   console.log('User:', session.user?.email);
+     *   console.log('Organization:', session.org?.name);
+     * } catch (error) {
+     *   console.error('Session error:', error.message);
+     * }
+     * ```
      */
     async session() {
         try {
@@ -470,13 +562,11 @@ class MosaiaClient {
      * This method creates an OAuth client that supports the PKCE (Proof Key for Code Exchange)
      * flow for secure authentication, even for public clients.
      * 
-     * @param config - OAuth configuration object
-     * @param config.redirectUri - The redirect URI for the OAuth flow (must match registered client)
-     * @param config.scopes - Optional array of scopes to request (e.g., ['read', 'write'])
+     * @param oauthConfig - OAuth configuration object
+     * @param oauthConfig.redirectUri - The redirect URI for the OAuth flow (must match registered client)
+     * @param oauthConfig.scopes - Optional array of scopes to request (e.g., ['read', 'write'])
      * @returns {OAuth} OAuth instance for handling the authentication flow
-     * 
      * @throws {Error} When clientId is not provided in SDK configuration
-
      * 
      * @example
      * ```typescript
@@ -513,6 +603,9 @@ class MosaiaClient {
  * 
  * This namespace contains all SDK classes, types, and utilities.
  * Import using: `import * as Mosaia from '@mosaia/mosaia-node-sdk'`
+ * 
+ * The SDK provides comprehensive access to the Mosaia platform through
+ * various collection classes, model classes, and utility functions.
  * 
  * @example
  * ```typescript

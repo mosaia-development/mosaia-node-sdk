@@ -10,61 +10,117 @@ import User from './user';
 import { MosaiaConfig } from '../types';
 
 /**
- * OrgUser class for managing organization user relationship instances in the Mosaia SDK
+ * OrgUser class for managing organization-user relationships
  * 
- * Represents the relationship between a user and an organization, including
- * permissions, roles, and access control within organizational contexts.
- * This class provides methods for managing user-organization relationships
- * and accessing related user and organization data.
+ * This class represents the relationship between a user and an organization
+ * in the Mosaia platform. It manages permissions, roles, and access control
+ * within organizational contexts, enabling fine-grained control over user
+ * access to organizational resources.
  * 
- * This class inherits from BaseModel and provides the following functionality:
- * - Organization user relationship data management and validation
- * - Access to related user and organization instances
- * - Session management for organization users
- * - Relationship management (enable/disable)
- * - Integration with the Mosaia API for org-user operations
+ * Features:
+ * - Permission management
+ * - Role-based access control
+ * - Session handling
+ * - User-org relationship lifecycle
+ * - Access control enforcement
+ * 
+ * @remarks
+ * Organization-user relationships are crucial for:
+ * - Multi-tenant access control
+ * - Team member management
+ * - Resource sharing
+ * - Activity tracking
+ * - Compliance and auditing
+ * 
+ * The class supports various permission levels:
+ * - Owner: Full control over organization
+ * - Admin: Administrative access
+ * - Member: Standard access
+ * - Guest: Limited access
  * 
  * @example
+ * Basic relationship setup:
  * ```typescript
  * import { OrgUser } from 'mosaia-node-sdk';
  * 
- * // Create an org user relationship instance
- * const orgUser = new OrgUser({
- *   org: 'org-id',
- *   user: 'user-id',
- *   permission: 'admin'
+ * // Create a new team member relationship
+ * const teamMember = new OrgUser({
+ *   org: 'acme-org',
+ *   user: 'john-doe',
+ *   permission: 'member',
+ *   metadata: {
+ *     department: 'engineering',
+ *     role: 'developer'
+ *   }
  * });
  * 
- * // Access related user and organization data
- * const user = orgUser.user;
- * const organization = orgUser.org;
+ * await teamMember.save();
+ * ```
  * 
- * // Get a session for this org user
- * const mosaia = await orgUser.session();
+ * @example
+ * Managing access and sessions:
+ * ```typescript
+ * // Get user and organization details
+ * const user = teamMember.user;
+ * const org = teamMember.org;
  * 
- * // Disable the relationship
- * await orgUser.disable();
+ * // Create an authenticated session
+ * const config = await teamMember.session();
+ * const mosaia = new Mosaia(config);
+ * 
+ * // Check access and permissions
+ * if (teamMember.isActive()) {
+ *   console.log(`${user.name} is active in ${org.name}`);
+ *   console.log(`Permission level: ${teamMember.permission}`);
+ * } else {
+ *   // Remove access if needed
+ *   await teamMember.disable();
+ *   console.log('Access removed');
+ * }
  * ```
  * 
  * @extends BaseModel<OrgUserInterface>
+ * @category Models
  */
 export default class OrgUser extends BaseModel<OrgUserInterface> {
     /**
-     * Creates a new OrgUser instance
+     * Creates a new organization-user relationship
      * 
-     * Initializes an organization user relationship with the provided data and optional URI.
-     * The org user represents the relationship between a user and an organization.
+     * Initializes a relationship between a user and an organization with
+     * specified permissions and metadata. This relationship controls the
+     * user's access and capabilities within the organization.
      * 
-     * @param data - Organization user relationship data
-     * @param uri - Optional URI path for the org user endpoint. Defaults to '/org'
+     * @param data - Configuration data including:
+     *               - org: Organization ID or data
+     *               - user: User ID or data
+     *               - permission: Access level ('owner', 'admin', 'member', 'guest')
+     *               - metadata: Custom metadata object
+     * @param uri - Optional custom URI path for the relationship endpoint
      * 
      * @example
+     * Basic member setup:
      * ```typescript
-     * const orgUser = new OrgUser({
-     *   org: 'acme-corp',
-     *   user: 'john-doe',
+     * const member = new OrgUser({
+     *   org: 'acme-org',
+     *   user: 'jane-doe',
      *   permission: 'member'
      * });
+     * ```
+     * 
+     * @example
+     * Admin with metadata:
+     * ```typescript
+     * const admin = new OrgUser({
+     *   org: 'tech-corp',
+     *   user: 'admin-user',
+     *   permission: 'admin',
+     *   metadata: {
+     *     department: 'IT',
+     *     role: 'system-admin',
+     *     access_level: 'full',
+     *     joined_date: new Date().toISOString()
+     *   }
+     * }, '/enterprise/org-user');
      * ```
      */
     constructor(data: Partial<OrgUserInterface>, uri?: string) {
@@ -72,18 +128,35 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Get the user associated with this organization relationship
+     * Get the associated user details
      * 
-     * Returns a User instance representing the user in this organization relationship.
+     * This getter provides access to the user's details within the context
+     * of the organization relationship. It returns a User instance that
+     * can be used to access and manage user-specific data.
      * 
-     * @returns User instance for the associated user
-     * @throws {Error} When user data is not available
+     * @returns User instance with full user details
+     * @throws {Error} When user data is not available in the relationship
      * 
      * @example
+     * Basic user access:
      * ```typescript
      * const user = orgUser.user;
-     * console.log('User name:', user.name);
-     * console.log('User email:', user.email);
+     * console.log(`Member: ${user.name} (${user.email})`);
+     * ```
+     * 
+     * @example
+     * Detailed user information:
+     * ```typescript
+     * try {
+     *   const user = orgUser.user;
+     *   console.log('User Details:');
+     *   console.log(`Name: ${user.name}`);
+     *   console.log(`Email: ${user.email}`);
+     *   console.log(`Status: ${user.isActive() ? 'Active' : 'Inactive'}`);
+     *   console.log(`Last Login: ${user.last_login_at}`);
+     * } catch (error) {
+     *   console.error('User data not available:', error.message);
+     * }
      * ```
      */
     get user(): User {
@@ -94,19 +167,44 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Set the user data for this organization relationship
+     * Set the associated user details
      * 
-     * Updates the user data associated with this organization relationship.
+     * This setter updates the user details within the organization relationship.
+     * It's typically used when reassigning the relationship to a different user
+     * or updating user details in bulk.
      * 
-     * @param data - User interface data to set
+     * @param data - Complete user data including:
+     *               - id: User's unique identifier
+     *               - name: User's full name
+     *               - email: User's email address
+     *               - metadata: Additional user data
      * 
      * @example
+     * Basic user update:
      * ```typescript
      * orgUser.user = {
-     *   id: 'new-user-id',
-     *   name: 'Jane Doe',
-     *   email: 'jane@example.com'
+     *   id: 'user-123',
+     *   name: 'Jane Smith',
+     *   email: 'jane.smith@example.com'
      * };
+     * ```
+     * 
+     * @example
+     * Detailed user update:
+     * ```typescript
+     * orgUser.user = {
+     *   id: 'user-456',
+     *   name: 'John Developer',
+     *   email: 'john@example.com',
+     *   metadata: {
+     *     title: 'Senior Developer',
+     *     skills: ['typescript', 'node.js'],
+     *     start_date: '2024-01-01'
+     *   }
+     * };
+     * 
+     * // Save changes
+     * await orgUser.save();
      * ```
      */
     set user(data: UserInterface) {
@@ -114,18 +212,40 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Get the organization associated with this user relationship
+     * Get the associated organization details
      * 
-     * Returns an Organization instance representing the organization in this relationship.
+     * This getter provides access to the organization's details within the
+     * context of the user relationship. It returns an Organization instance
+     * that can be used to access and manage organization-specific data.
      * 
-     * @returns Organization instance for the associated organization
-     * @throws {Error} When organization data is not available
+     * @returns Organization instance with full organization details
+     * @throws {Error} When organization data is not available in the relationship
      * 
      * @example
+     * Basic organization access:
      * ```typescript
-     * const organization = orgUser.org;
-     * console.log('Org name:', organization.name);
-     * console.log('Org description:', organization.short_description);
+     * const org = orgUser.org;
+     * console.log(`Organization: ${org.name}`);
+     * console.log(`Description: ${org.short_description}`);
+     * ```
+     * 
+     * @example
+     * Detailed organization information:
+     * ```typescript
+     * try {
+     *   const org = orgUser.org;
+     *   console.log('Organization Details:');
+     *   console.log(`Name: ${org.name}`);
+     *   console.log(`Description: ${org.short_description}`);
+     *   console.log(`Status: ${org.isActive() ? 'Active' : 'Inactive'}`);
+     *   console.log(`Members: ${org.member_count}`);
+     *   
+     *   if (org.metadata?.industry) {
+     *     console.log(`Industry: ${org.metadata.industry}`);
+     *   }
+     * } catch (error) {
+     *   console.error('Organization data not available:', error.message);
+     * }
      * ```
      */
     get org(): Organization {
@@ -136,19 +256,46 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Set the organization data for this user relationship
+     * Set the associated organization details
      * 
-     * Updates the organization data associated with this user relationship.
+     * This setter updates the organization details within the user relationship.
+     * It's typically used when reassigning the relationship to a different
+     * organization or updating organization details in bulk.
      * 
-     * @param data - Organization interface data to set
+     * @param data - Complete organization data including:
+     *               - id: Organization's unique identifier
+     *               - name: Organization name
+     *               - short_description: Brief description
+     *               - metadata: Additional organization data
      * 
      * @example
+     * Basic organization update:
      * ```typescript
      * orgUser.org = {
-     *   id: 'new-org-id',
-     *   name: 'New Organization',
-     *   short_description: 'A new organization'
+     *   id: 'org-123',
+     *   name: 'Acme Corporation',
+     *   short_description: 'Leading tech company'
      * };
+     * ```
+     * 
+     * @example
+     * Detailed organization update:
+     * ```typescript
+     * orgUser.org = {
+     *   id: 'org-456',
+     *   name: 'Tech Innovators',
+     *   short_description: 'AI and ML solutions',
+     *   long_description: 'Cutting-edge AI/ML solutions for enterprises',
+     *   metadata: {
+     *     industry: 'technology',
+     *     size: 'enterprise',
+     *     founded: '2020',
+     *     locations: ['San Francisco', 'London']
+     *   }
+     * };
+     * 
+     * // Save changes
+     * await orgUser.save();
      * ```
      */
     set org(data: OrganizationInterface) {
@@ -156,25 +303,64 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Get a session for this organization user
+     * Create an authenticated session for the organization user
      * 
-     * Retrieves an authentication session for the organization user relationship,
-     * returning a new MosaiaConfig with the appropriate access tokens.
+     * This method creates a new authenticated session for the user within
+     * the organization context. The session includes access tokens and
+     * configuration needed to interact with organization resources.
      * 
-     * @returns Promise that resolves to a new MosaiaConfig
-     * @throws {Error} When session retrieval fails or network errors occur
+     * The method:
+     * 1. Validates the relationship is active
+     * 2. Requests new access tokens
+     * 3. Creates a configured session
+     * 
+     * @returns Promise resolving to MosaiaConfig with session details
+     * @throws {Error} When session creation fails
+     * @throws {Error} When relationship is inactive
+     * @throws {Error} When network errors occur
      * 
      * @example
+     * Basic session creation:
      * ```typescript
      * try {
-     *   const mosaiaConfig = await orgUser.session();
-     *   console.log('Session established successfully');
+     *   const config = await orgUser.session();
+     *   const mosaia = new Mosaia(config);
      *   
-     *   // Use the session to access organization resources
-     *   const mosaia = new Mosaia(mosaiaConfig);
+     *   // Use the authenticated session
      *   const agents = await mosaia.agents.get();
+     *   console.log(`Found ${agents.length} agents`);
      * } catch (error) {
      *   console.error('Session failed:', error.message);
+     * }
+     * ```
+     * 
+     * @example
+     * Advanced session usage:
+     * ```typescript
+     * try {
+     *   // Create authenticated session
+     *   const config = await orgUser.session();
+     *   const mosaia = new Mosaia(config);
+     *   
+     *   // Access organization resources
+     *   const [agents, models, apps] = await Promise.all([
+     *     mosaia.agents.get(),
+     *     mosaia.models.get(),
+     *     mosaia.apps.get()
+     *   ]);
+     *   
+     *   console.log('Organization Resources:');
+     *   console.log(`- ${agents.length} AI agents`);
+     *   console.log(`- ${models.length} models`);
+     *   console.log(`- ${apps.length} applications`);
+     * } catch (error) {
+     *   if (error.message.includes('inactive')) {
+     *     console.error('User access is inactive');
+     *   } else if (error.message.includes('unauthorized')) {
+     *     console.error('Invalid permissions');
+     *   } else {
+     *     console.error('Session error:', error.message);
+     *   }
      * }
      * ```
      */
@@ -204,21 +390,56 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
     }
 
     /**
-     * Disable the organization user relationship
+     * Disable the organization-user relationship
      * 
-     * Deactivates the relationship between the user and organization,
-     * effectively removing the user's access to the organization.
+     * This method deactivates the relationship between the user and organization,
+     * effectively revoking the user's access to organization resources. This is
+     * useful for:
+     * - Removing team members
+     * - Revoking access temporarily
+     * - Managing user offboarding
      * 
-     * @returns Promise that resolves when the relationship is disabled
-     * @throws {Error} When disable operation fails or network errors occur
+     * The method:
+     * 1. Validates the relationship exists
+     * 2. Sends deactivation request
+     * 3. Clears local session data
+     * 
+     * @returns Promise resolving when relationship is disabled
+     * @throws {Error} When disable operation fails
+     * @throws {Error} When relationship doesn't exist
+     * @throws {Error} When network errors occur
      * 
      * @example
+     * Basic deactivation:
      * ```typescript
      * try {
      *   await orgUser.disable();
-     *   console.log('User removed from organization successfully');
+     *   console.log('User access revoked successfully');
      * } catch (error) {
-     *   console.error('Failed to remove user:', error.message);
+     *   console.error('Failed to revoke access:', error.message);
+     * }
+     * ```
+     * 
+     * @example
+     * Managed offboarding:
+     * ```typescript
+     * async function offboardUser(orgUser: OrgUser): Promise<void> {
+     *   try {
+     *     // Get user details for logging
+     *     const user = orgUser.user;
+     *     const org = orgUser.org;
+     *     
+     *     // Revoke access
+     *     await orgUser.disable();
+     *     
+     *     console.log('User offboarded successfully:');
+     *     console.log(`- User: ${user.name} (${user.email})`);
+     *     console.log(`- From: ${org.name}`);
+     *     console.log(`- Time: ${new Date().toISOString()}`);
+     *   } catch (error) {
+     *     console.error('Offboarding failed:', error.message);
+     *     throw error; // Re-throw for handling by caller
+     *   }
      * }
      * ```
      */

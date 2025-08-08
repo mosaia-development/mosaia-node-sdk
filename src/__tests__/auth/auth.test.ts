@@ -82,7 +82,7 @@ describe('MosaiaAuth', () => {
 
       const authWithConfig = new MosaiaAuth(config);
       expect(authWithConfig).toBeInstanceOf(MosaiaAuth);
-      expect(APIClient).toHaveBeenCalledWith(config);
+      expect(APIClient).toHaveBeenCalledWith(config, true);
     });
   });
 

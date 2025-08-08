@@ -11,18 +11,24 @@ import { BaseModel } from './base';
 /**
  * Agent class for managing AI agent instances in the Mosaia SDK
  * 
- * Represents an AI agent that can perform specific tasks, handle conversations,
- * and execute workflows based on its configuration. Agents are the core AI entities
- * that interact with users and perform intelligent operations.
+ * This class represents an AI agent that can perform tasks, handle conversations,
+ * and execute workflows. Agents are the core AI entities in the platform,
+ * providing natural language understanding and task automation capabilities.
  * 
- * This class inherits from BaseModel and provides the following functionality:
- * - Agent data management and validation
- * - Image upload for agent branding and identification
- * - Chat completion operations using the agent
- * - Agent configuration and tool management
- * - Integration with the Mosaia API for agent operations
+ * Features:
+ * - Agent configuration management
+ * - Chat and completion operations
+ * - Image/avatar management
+ * - Tool integration
+ * - Model configuration
+ * 
+ * @remarks
+ * Agents can be configured with different models, temperature settings,
+ * and system prompts to customize their behavior. They can also be
+ * assigned tools to extend their capabilities.
  * 
  * @example
+ * Basic agent usage:
  * ```typescript
  * import { Agent } from 'mosaia-node-sdk';
  * 
@@ -38,17 +44,25 @@ import { BaseModel } from './base';
  * // Upload an agent avatar
  * const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
  * await agent.uploadImage(file);
+ * ```
  * 
- * // Perform a chat completion with the agent
- * const response = await agent.chatCompletion({
- *   model: 'gpt-4',
+ * @example
+ * Using chat capabilities:
+ * ```typescript
+ * // Chat with the agent
+ * const response = await agent.chat.completions.create({
  *   messages: [
  *     { role: 'user', content: 'How can I reset my password?' }
- *   ]
+ *   ],
+ *   temperature: 0.7,
+ *   max_tokens: 150
  * });
+ * 
+ * console.log('Agent response:', response.choices[0].message.content);
  * ```
  * 
  * @extends BaseModel<AgentInterface>
+ * @category Models
  */
 export default class Agent extends BaseModel<AgentInterface> {
     /**
@@ -123,9 +137,39 @@ export default class Agent extends BaseModel<AgentInterface> {
     }
 
     /**
-     * Get the chat function
+     * Get the chat functionality for this agent
      * 
-     * @returns The chat function
+     * This getter provides access to the agent's chat capabilities through
+     * the Chat class. It allows for chat completions and other chat-related
+     * operations specific to this agent.
+     * 
+     * @returns A new Chat instance configured for this agent
+     * 
+     * @example
+     * Basic chat:
+     * ```typescript
+     * const response = await agent.chat.completions.create({
+     *   messages: [
+     *     { role: 'user', content: 'Hello!' }
+     *   ]
+     * });
+     * ```
+     * 
+     * @example
+     * Advanced chat configuration:
+     * ```typescript
+     * const response = await agent.chat.completions.create({
+     *   messages: [
+     *     { role: 'system', content: 'You are a helpful assistant.' },
+     *     { role: 'user', content: 'What can you help me with?' }
+     *   ],
+     *   temperature: 0.7,
+     *   max_tokens: 150,
+     *   stream: false
+     * });
+     * 
+     * console.log('Response:', response.choices[0].message.content);
+     * ```
      */
     get chat() {
         return new Chat(this.getUri());

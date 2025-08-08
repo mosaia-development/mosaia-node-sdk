@@ -10,50 +10,142 @@ import { isTimestampExpired } from '../utils';
 /**
  * Internal API client for making HTTP requests to the Mosaia API
  * 
- * This class handles all HTTP communication with the Mosaia API, including
- * request configuration, error handling, and response processing.
+ * This class provides a centralized HTTP client for all API communication
+ * with the Mosaia platform. It handles authentication, request formatting,
+ * response processing, and error handling in a consistent manner.
+ * 
+ * Features:
+ * - Automatic authentication header management
+ * - Token refresh handling
+ * - Request/response standardization
+ * - Error handling and formatting
+ * - Query parameter building
+ * - Content type management
+ * 
+ * @remarks
+ * The APIClient uses the ConfigurationManager for settings and automatically
+ * handles token refresh when needed. It supports all standard HTTP methods
+ * and provides type-safe responses through generics.
  * 
  * @example
+ * Basic usage:
  * ```typescript
  * const client = new APIClient();
+ * 
+ * // GET request
  * const users = await client.GET<UserInterface[]>('/user');
- * const newUser = await client.POST<UserInterface>('/user', userData);
+ * 
+ * // POST request
+ * const newUser = await client.POST<UserInterface>('/user', {
+ *   name: 'John Doe',
+ *   email: 'john@example.com'
+ * });
+ * 
+ * // PUT request
+ * const updatedUser = await client.PUT<UserInterface>('/user/123', {
+ *   name: 'John Smith'
+ * });
+ * 
+ * // DELETE request
+ * await client.DELETE('/user/123');
  * ```
+ * 
+ * @example
+ * With query parameters:
+ * ```typescript
+ * // GET with query parameters
+ * const filteredUsers = await client.GET<UserInterface[]>('/user', {
+ *   limit: 10,
+ *   offset: 0,
+ *   search: 'john',
+ *   active: true
+ * });
+ * 
+ * // DELETE with parameters
+ * await client.DELETE('/user/123', {
+ *   force: true,
+ *   reason: 'account_deletion'
+ * });
+ * ```
+ * 
+ * @example
+ * Error handling:
+ * ```typescript
+ * try {
+ *   const user = await client.GET<UserInterface>('/user/123');
+ *   console.log('User:', user.data);
+ * } catch (error) {
+ *   console.error('API Error:', error.message);
+ *   console.error('Status:', error.status);
+ *   console.error('Code:', error.code);
+ * }
+ * ```
+ * 
+ * @category Utilities
  */
 export default class APIClient {
     private baseURL: string = '';
     private headers: Record<string, string> = {};
     private configManager: ConfigurationManager;
     private config?: MosaiaConfig;
+    private skipTokenRefresh: boolean = false;
 
     /**
      * Creates a new API client instance
      * 
-     * Uses the ConfigurationManager to get configuration settings.
-     * No longer requires config parameter as it uses the centralized configuration.
+     * Initializes the API client with configuration from the ConfigurationManager.
+     * The client automatically handles authentication and token refresh.
      * 
-     * @param config - Optional configuration object
-     * @param skipTokenRefresh - Skip token refresh check (used to prevent circular dependency)
+     * @param config - Optional configuration object (if not provided, uses ConfigurationManager)
+     * @param skipTokenRefresh - Skip token refresh check to prevent circular dependencies
+     * 
+     * @example
+     * Basic initialization:
+     * ```typescript
+     * const client = new APIClient();
+     * ```
+     * 
+     * @example
+     * With custom config:
+     * ```typescript
+     * const client = new APIClient({
+     *   apiKey: 'your-api-key',
+     *   apiURL: 'https://api.mosaia.ai',
+     *   version: '1'
+     * });
+     * ```
+     * 
+     * @example
+     * Skip token refresh (for auth flows):
+     * ```typescript
+     * const client = new APIClient(config, true);
+     * ```
      */
     constructor(config?: MosaiaConfig, skipTokenRefresh: boolean = false) {
         if (config) this.config = config;
         this.configManager = ConfigurationManager.getInstance();
+        this.skipTokenRefresh = skipTokenRefresh;
         this.initializeClient(skipTokenRefresh);
     }
 
     /**
      * Initialize the client with current configuration
      * 
+     * Sets up the base URL, headers, and authentication for the API client.
+     * Handles token refresh if the current token is expired.
+     * 
+     * @param skipTokenRefresh - Skip token refresh check to prevent circular dependencies
      * @private
      */
-    private async initializeClient(skipTokenRefresh: boolean = false): Promise<void> {
+    private async initializeClient(skipTokenRefresh?: boolean): Promise<void> {
         try {
             let config = this.config;
 
             if (!this.config) config = this.configManager.getConfig();        
             // Parse and validate expiration timestamp if it exists
             // Skip token refresh check when called from MosaiaAuth to prevent circular dependency
-            if (!skipTokenRefresh && config?.session?.exp && isTimestampExpired(config.session.exp)) {
+            const shouldSkipRefresh = skipTokenRefresh !== undefined ? skipTokenRefresh : this.skipTokenRefresh;
+            if (!shouldSkipRefresh && config?.session?.exp && isTimestampExpired(config.session.exp)) {
                 const auth = new MosaiaAuth();
 
                 const refreshedConfig = await auth.refreshToken();
@@ -76,14 +168,15 @@ export default class APIClient {
     /**
      * Update the client configuration
      * 
-     * Reinitializes the client with updated configuration.
-     * This is useful when configuration changes at runtime.
+     * Reinitializes the client with updated configuration settings.
+     * This is useful when configuration changes at runtime, such as
+     * when tokens are refreshed or API settings are updated.
      * 
      * @private
      */
     private async updateClientConfig(): Promise<void> {
         try {
-            await this.initializeClient(false);
+            await this.initializeClient(this.skipTokenRefresh);
         } catch (error) {
             throw error;
         }
@@ -92,9 +185,13 @@ export default class APIClient {
     /**
      * Handles HTTP errors and converts them to standardized error responses
      * 
-     * @param error - Error object
-     * @param status - HTTP status code
+     * This method processes various types of errors and converts them to a
+     * consistent format for error handling throughout the SDK.
+     * 
+     * @param error - Error object from HTTP request
+     * @param status - HTTP status code (optional)
      * @returns Promise that rejects with a standardized error response
+     * 
      * @private
      */
     private handleError(error: Error, status?: number): Promise<never> {
@@ -264,15 +361,46 @@ export default class APIClient {
     /**
      * Makes a GET request to the API
      * 
-     * @param path - API endpoint path (e.g., '/user', '/org')
-     * @param params - Optional query parameters
+     * Retrieves data from the specified API endpoint. Supports query parameters
+     * for filtering, pagination, and other request options.
+     * 
+     * @template T - The expected response data type
+     * @param path - API endpoint path (e.g., '/user', '/org', '/agent')
+     * @param params - Optional query parameters for filtering and pagination
      * @returns Promise that resolves to the API response data
      * 
      * @example
+     * Basic GET request:
      * ```typescript
      * const users = await client.GET<UserInterface[]>('/user');
      * const user = await client.GET<UserInterface>('/user/123');
-     * const filteredUsers = await client.GET<UserInterface[]>('/user', { limit: 10, offset: 0 });
+     * ```
+     * 
+     * @example
+     * With query parameters:
+     * ```typescript
+     * const filteredUsers = await client.GET<UserInterface[]>('/user', {
+     *   limit: 10,
+     *   offset: 0,
+     *   search: 'john',
+     *   active: true
+     * });
+     * 
+     * const userAgents = await client.GET<AgentInterface[]>('/agent', {
+     *   user: 'user-123',
+     *   tags: ['support', 'ai']
+     * });
+     * ```
+     * 
+     * @example
+     * Error handling:
+     * ```typescript
+     * try {
+     *   const user = await client.GET<UserInterface>('/user/123');
+     *   console.log('User data:', user.data);
+     * } catch (error) {
+     *   console.error('Failed to fetch user:', error.message);
+     * }
      * ```
      */
     async GET<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
@@ -282,16 +410,43 @@ export default class APIClient {
     /**
      * Makes a POST request to the API
      * 
-     * @param path - API endpoint path (e.g., '/user', '/org')
-     * @param data - Request body data
+     * Creates new resources or performs actions that require data submission.
+     * The request body is automatically serialized as JSON.
+     * 
+     * @template T - The expected response data type
+     * @param path - API endpoint path (e.g., '/user', '/org', '/agent')
+     * @param data - Request body data to be sent
      * @returns Promise that resolves to the API response data
      * 
      * @example
+     * Create a new user:
      * ```typescript
      * const newUser = await client.POST<UserInterface>('/user', {
      *   email: 'user@example.com',
      *   first_name: 'John',
      *   last_name: 'Doe'
+     * });
+     * ```
+     * 
+     * @example
+     * Create an AI agent:
+     * ```typescript
+     * const agent = await client.POST<AgentInterface>('/agent', {
+     *   name: 'Support Assistant',
+     *   model: 'gpt-4',
+     *   temperature: 0.7,
+     *   system_prompt: 'You are a helpful support agent.'
+     * });
+     * ```
+     * 
+     * @example
+     * Perform an action:
+     * ```typescript
+     * const result = await client.POST<ChatCompletionResponse>('/agent/123/chat', {
+     *   messages: [
+     *     { role: 'user', content: 'Hello, how can you help me?' }
+     *   ],
+     *   temperature: 0.7
      * });
      * ```
      */
@@ -302,14 +457,41 @@ export default class APIClient {
     /**
      * Makes a PUT request to the API
      * 
-     * @param path - API endpoint path (e.g., '/user/123', '/org/456')
+     * Updates existing resources with new data. The request body is automatically
+     * serialized as JSON and sent to the specified endpoint.
+     * 
+     * @template T - The expected response data type
+     * @param path - API endpoint path (e.g., '/user/123', '/org/456', '/agent/789')
      * @param data - Request body data for updates
      * @returns Promise that resolves to the API response data
      * 
      * @example
+     * Update user profile:
      * ```typescript
      * const updatedUser = await client.PUT<UserInterface>('/user/123', {
-     *   first_name: 'Jane'
+     *   first_name: 'Jane',
+     *   last_name: 'Smith',
+     *   email: 'jane.smith@example.com'
+     * });
+     * ```
+     * 
+     * @example
+     * Update agent configuration:
+     * ```typescript
+     * const updatedAgent = await client.PUT<AgentInterface>('/agent/789', {
+     *   temperature: 0.5,
+     *   system_prompt: 'You are a technical support specialist.',
+     *   tags: ['support', 'technical']
+     * });
+     * ```
+     * 
+     * @example
+     * Update organization settings:
+     * ```typescript
+     * const updatedOrg = await client.PUT<OrganizationInterface>('/org/456', {
+     *   name: 'Updated Corp Name',
+     *   short_description: 'Updated description',
+     *   active: true
      * });
      * ```
      */
@@ -320,14 +502,38 @@ export default class APIClient {
     /**
      * Makes a DELETE request to the API
      * 
-     * @param path - API endpoint path (e.g., '/user/123', '/org/456')
-     * @param params - Optional query parameters
+     * Removes resources from the system. Supports optional query parameters
+     * for additional deletion options like force deletion or soft deletion.
+     * 
+     * @template T - The expected response data type
+     * @param path - API endpoint path (e.g., '/user/123', '/org/456', '/agent/789')
+     * @param params - Optional query parameters for deletion options
      * @returns Promise that resolves to the API response data
      * 
      * @example
+     * Basic deletion:
      * ```typescript
      * await client.DELETE<void>('/user/123');
+     * await client.DELETE<void>('/agent/789');
+     * ```
+     * 
+     * @example
+     * Force deletion:
+     * ```typescript
      * await client.DELETE<void>('/org/456', { force: true });
+     * await client.DELETE<void>('/user/123', { 
+     *   force: true, 
+     *   reason: 'account_deletion' 
+     * });
+     * ```
+     * 
+     * @example
+     * Soft deletion:
+     * ```typescript
+     * await client.DELETE<void>('/agent/789', { 
+     *   soft: true,
+     *   archive: true 
+     * });
      * ```
      */
     async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {

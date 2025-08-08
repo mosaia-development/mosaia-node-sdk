@@ -1,4 +1,4 @@
-import { isTimestampExpired } from '../utils';
+import { isTimestampExpired } from '../../utils';
 
 describe('isTimestampExpired', () => {
   it('should return true for expired timestamps', () => {

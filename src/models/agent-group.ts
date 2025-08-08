@@ -9,44 +9,62 @@ import { BaseModel } from './base';
 import { Chat } from '../functions/chat';
 
 /**
- * AgentGroup class for managing agent group instances in the Mosaia SDK
+ * AgentGroup class for managing collaborative AI agent groups
  * 
- * Represents a collection of AI agents that can work together to perform coordinated
- * tasks and workflows. Agent groups allow for organizing multiple agents with
- * shared configurations and collaborative capabilities.
+ * This class represents a collection of AI agents that work together to handle
+ * complex tasks and workflows. Agent groups enable coordinated responses and
+ * shared knowledge across multiple specialized agents.
  * 
- * This class inherits from BaseModel and provides the following functionality:
- * - Agent group data management and validation
- * - Image upload for group branding and identification
- * - Chat completion operations using the agent group
- * - Group configuration and member management
- * - Integration with the Mosaia API for group operations
+ * Features:
+ * - Group configuration management
+ * - Member agent coordination
+ * - Collaborative chat capabilities
+ * - Group branding/image management
+ * - Shared knowledge base
+ * 
+ * @remarks
+ * Agent groups are particularly useful for scenarios requiring multiple
+ * specialized agents to work together, such as:
+ * - Customer support teams with different expertise
+ * - Multi-step workflow automation
+ * - Complex problem-solving requiring diverse skills
  * 
  * @example
+ * Basic group setup:
  * ```typescript
  * import { AgentGroup } from 'mosaia-node-sdk';
  * 
- * // Create an agent group instance
- * const agentGroup = new AgentGroup({
+ * // Create a support team group
+ * const supportTeam = new AgentGroup({
  *   name: 'Customer Support Team',
- *   short_description: 'AI agents for customer support',
- *   agents: ['agent-1', 'agent-2', 'agent-3']
+ *   short_description: 'Collaborative support agents',
+ *   agents: ['billing-expert', 'tech-support', 'general-help']
  * });
  * 
- * // Upload a group image
- * const file = new File(['image data'], 'group-logo.png', { type: 'image/png' });
- * await agentGroup.uploadImage(file);
+ * // Add branding
+ * const logo = new File(['...'], 'team-logo.png', { type: 'image/png' });
+ * await supportTeam.uploadImage(logo);
+ * ```
  * 
- * // Perform a chat completion with the group
- * const response = await agentGroup.chatCompletion({
- *   model: 'gpt-4',
+ * @example
+ * Using group chat:
+ * ```typescript
+ * // Engage with the agent group
+ * const response = await supportTeam.chat.completions.create({
  *   messages: [
- *     { role: 'user', content: 'I need help with my order.' }
- *   ]
+ *     {
+ *       role: 'user',
+ *       content: 'I have a billing question about my subscription.'
+ *     }
+ *   ],
+ *   temperature: 0.7
  * });
+ * 
+ * console.log('Team response:', response.choices[0].message.content);
  * ```
  * 
  * @extends BaseModel<AgentGroupInterface>
+ * @category Models
  */
 export default class AgentGroup extends BaseModel<AgentGroupInterface> {
     /**
@@ -120,9 +138,44 @@ export default class AgentGroup extends BaseModel<AgentGroupInterface> {
     }
 
     /**
-     * Get the chat function
+     * Get the chat functionality for this agent group
      * 
-     * @returns The chat function
+     * This getter provides access to the group's collaborative chat capabilities
+     * through the Chat class. It enables coordinated responses from multiple
+     * agents within the group.
+     * 
+     * @returns A new Chat instance configured for this agent group
+     * 
+     * @example
+     * Basic group chat:
+     * ```typescript
+     * const response = await group.chat.completions.create({
+     *   messages: [
+     *     { role: 'user', content: 'I need help with a complex issue.' }
+     *   ]
+     * });
+     * ```
+     * 
+     * @example
+     * Advanced group chat with context:
+     * ```typescript
+     * const response = await group.chat.completions.create({
+     *   messages: [
+     *     {
+     *       role: 'system',
+     *       content: 'You are a collaborative team of experts.'
+     *     },
+     *     {
+     *       role: 'user',
+     *       content: 'This problem requires both technical and billing expertise.'
+     *     }
+     *   ],
+     *   temperature: 0.7,
+     *   max_tokens: 200
+     * });
+     * 
+     * console.log('Team response:', response.choices[0].message.content);
+     * ```
      */
     get chat() {
         return new Chat(this.getUri());

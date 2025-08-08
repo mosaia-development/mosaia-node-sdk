@@ -1,3 +1,21 @@
+/**
+ * @fileoverview Type definitions for the Mosaia SDK
+ * 
+ * This module contains all TypeScript interfaces, types, and enums used throughout
+ * the Mosaia SDK. It defines the structure of API requests and responses, configuration
+ * objects, authentication interfaces, and all data models used by the platform.
+ * 
+ * The types are organized into logical groups:
+ * - Configuration and authentication interfaces
+ * - API response and request structures
+ * - Entity interfaces for platform resources
+ * - Chat completion and OAuth interfaces
+ * - Utility types and payload definitions
+ * 
+ * @module types
+ * @packageDocumentation
+ */
+
 "use strict";
 
 /**
@@ -9,12 +27,37 @@
  * 
  * @example
  * ```typescript
- * const config: MosiaConfig = {
+ * const config: MosaiaConfig = {
  *   apiKey: 'your-api-key',
  *   apiURL: 'https://api.mosaia.ai',
  *   clientId: 'your-client-id',
  *   user: 'user-id',
  *   org: 'org-id'
+ * };
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Minimal configuration with just API key
+ * const config: MosaiaConfig = {
+ *   apiKey: 'your-api-key'
+ * };
+ * 
+ * // Full configuration with OAuth support
+ * const config: MosaiaConfig = {
+ *   apiKey: 'your-api-key',
+ *   apiURL: 'https://api.mosaia.ai',
+ *   version: '1',
+ *   clientId: 'your-client-id',
+ *   clientSecret: 'your-client-secret',
+ *   user: 'user-id',
+ *   org: 'org-id',
+ *   verbose: true,
+ *   session: {
+ *     accessToken: 'token',
+ *     refreshToken: 'refresh-token',
+ *     authType: 'oauth'
+ *   }
  * };
  * ```
  */
@@ -50,20 +93,47 @@ export interface MosaiaConfig {
  *   password: 'password123'
  * };
  * ```
+ * 
+ * @example
+ * ```typescript
+ * // Client credentials flow
+ * const auth: AuthInterface = {
+ *   grant_type: 'client',
+ *   client_id: 'client-id',
+ *   client_secret: 'client-secret'
+ * };
+ * 
+ * // Refresh token flow
+ * const auth: AuthInterface = {
+ *   grant_type: 'refresh',
+ *   refresh_token: 'refresh-token-here'
+ * };
+ * ```
  */
 export interface AuthInterface {
+    /** Type of authentication grant */
     grant_type: 'password' | 'client' | 'refresh';
+    /** User email (required for password grant) */
     email?: string;
+    /** User password (required for password grant) */
     password?: string;
+    /** OAuth client ID (required for client grant) */
     client_id?: string;
+    /** OAuth client secret (required for client grant) */
     client_secret?: string;
+    /** Refresh token (required for refresh grant) */
     refresh_token?: string;
+    /** Authorization code (for OAuth code exchange) */
     code?: string;
+    /** PKCE code verifier (for OAuth PKCE flow) */
     code_verifier?: string;
 }
 
 /**
  * Session credentials for OAuth and token-based authentication
+ * 
+ * Contains the tokens and metadata needed for authenticated API requests.
+ * This interface is used to store and manage authentication state.
  * 
  * @example
  * ```typescript
@@ -99,9 +169,27 @@ export interface SessionCredentials {
  * response handling across the SDK.
  * 
  * @template T - The type of data contained in the response
+ * 
+ * @example
+ * ```typescript
+ * const response: APIResponse<UserInterface> = {
+ *   data: {
+ *     id: 'user-123',
+ *     email: 'user@example.com',
+ *     name: 'John Doe'
+ *   },
+ *   paging: {
+ *     limit: 10,
+ *     offset: 0,
+ *     total: 1
+ *   }
+ * };
+ * ```
  */
 export interface APIResponse<T> {
+    /** The response data, can be a single item or array */
     data: T | T[] | null;
+    /** Pagination information for list responses */
     paging?: PagingInterface;
 }
 
@@ -110,9 +198,28 @@ export interface APIResponse<T> {
  * 
  * All batch API responses are wrapped in this structure to provide consistent
  * response handling across the SDK.
+ * 
+ * @template T - The type of data contained in the response
+ * 
+ * @example
+ * ```typescript
+ * const batchResponse: BatchAPIResponse<UserInterface> = {
+ *   data: [
+ *     { id: 'user-1', email: 'user1@example.com' },
+ *     { id: 'user-2', email: 'user2@example.com' }
+ *   ],
+ *   paging: {
+ *     limit: 10,
+ *     offset: 0,
+ *     total: 2
+ *   }
+ * };
+ * ```
  */
 export interface BatchAPIResponse<T> {
+    /** Array of response data items */
     data: T[];
+    /** Pagination information */
     paging?: PagingInterface;
 }
 
@@ -120,6 +227,15 @@ export interface BatchAPIResponse<T> {
  * Standard error response structure
  * 
  * All API errors follow this structure for consistent error handling.
+ * 
+ * @example
+ * ```typescript
+ * const error: ErrorResponse = {
+ *   message: 'Invalid API key provided',
+ *   code: 'INVALID_API_KEY',
+ *   status: 401
+ * };
+ * ```
  */
 export interface ErrorResponse {
     /** Human-readable error message */
@@ -134,6 +250,18 @@ export interface ErrorResponse {
  * Pagination interface for list responses
  * 
  * Used by API endpoints that return paginated lists of resources.
+ * Supports both offset-based and page-based pagination.
+ * 
+ * @example
+ * ```typescript
+ * const paging: PagingInterface = {
+ *   offset: 20,
+ *   limit: 10,
+ *   total: 100,
+ *   page: 3,
+ *   total_pages: 10
+ * };
+ * ```
  */
 export interface PagingInterface {
     /** Number of items to skip (for offset-based pagination) */
@@ -167,6 +295,19 @@ export interface PagingInterface {
  *   org: 'org-123'
  * };
  * ```
+ * 
+ * @example
+ * ```typescript
+ * // Search for active agents with specific tags
+ * const agentQuery: QueryParams = {
+ *   q: 'customer support',
+ *   tags: ['support', 'automation'],
+ *   active: true,
+ *   limit: 20
+ * };
+ * 
+ * const agents = await mosaia.agents.get(agentQuery);
+ * ```
  */
 export interface QueryParams {
     /** Search term for text-based filtering */
@@ -189,7 +330,21 @@ export interface QueryParams {
  * Base entity interface for all platform resources
  * 
  * All entities in the Mosaia platform extend this interface to provide
- * consistent base properties across all resource types.
+ * consistent base properties across all resource types. This ensures
+ * that all entities have common fields for identification, status,
+ * and integration capabilities.
+ * 
+ * @example
+ * ```typescript
+ * const entity: BaseEntity = {
+ *   id: 'entity-123',
+ *   active: true,
+ *   external_id: 'external-system-id',
+ *   extensors: {
+ *     custom_field: 'custom_value'
+ *   }
+ * };
+ * ```
  */
 export interface BaseEntity {
     /** Unique identifier for the entity */
@@ -202,6 +357,7 @@ export interface BaseEntity {
     extensors?: {
         [key: string]: string;
     }
+    /** Record history tracking information */
     record_history?: RecordHistory;
 }
 
@@ -209,7 +365,20 @@ export interface BaseEntity {
  * Record history tracking interface
  * 
  * Used to track creation and update timestamps for entities that
- * maintain historical records.
+ * maintain historical records. This provides audit trail capabilities
+ * for compliance and debugging purposes.
+ * 
+ * @example
+ * ```typescript
+ * const history: RecordHistory = {
+ *   created_at: new Date('2024-01-01T00:00:00Z'),
+ *   created_by: 'user-123',
+ *   created_by_type: 'user',
+ *   updated_at: new Date('2024-01-02T00:00:00Z'),
+ *   updated_by: 'user-456',
+ *   updated_by_type: 'user'
+ * };
+ * ```
  */
 export interface RecordHistory {
     /** Timestamp when the record was created */
@@ -230,28 +399,44 @@ export interface RecordHistory {
  * User entity interface
  * 
  * Represents a user account in the Mosaia platform. Users can be associated
- * with organizations and have various profile information.
+ * with organizations and have various profile information including contact
+ * details, social links, and profile metadata.
  * 
  * @example
  * ```typescript
  * const user: UserInterface = {
  *   id: 'user-123',
  *   email: 'john.doe@example.com',
- *   first_name: 'John',
- *   last_name: 'Doe',
- *   org: 'org-456',
+ *   name: 'John Doe',
+ *   username: 'johndoe',
+ *   image: 'https://example.com/avatar.jpg',
+ *   description: 'Software Engineer',
+ *   url: 'https://johndoe.com',
+ *   location: 'San Francisco, CA',
+ *   links: {
+ *     github: 'https://github.com/johndoe',
+ *     linkedin: 'https://linkedin.com/in/johndoe'
+ *   },
  *   active: true
  * };
  * ```
  */
 export interface UserInterface extends BaseEntity {
+    /** Unique username for the user */
     username?: string;
+    /** Full name of the user */
     name?: string;
+    /** URL to user's profile image/avatar */
     image?: string;
+    /** User's bio or description */
     description?: string;
+    /** User's email address */
     email?: string;
+    /** User's personal website URL */
     url?: string;
+    /** User's location */
     location?: string;
+    /** Social media and other external links */
     links?: {
         [key: string]: string;
     }
@@ -261,7 +446,8 @@ export interface UserInterface extends BaseEntity {
  * Organization entity interface
  * 
  * Represents an organization in the Mosaia platform. Organizations can contain
- * multiple users, applications, and other resources.
+ * multiple users, applications, and other resources. They provide a way to
+ * group and manage related resources and users.
  * 
  * @example
  * ```typescript
@@ -269,7 +455,13 @@ export interface UserInterface extends BaseEntity {
  *   id: 'org-123',
  *   name: 'Acme Corp',
  *   short_description: 'Leading technology company',
- *   long_description: 'Acme Corp is a leading technology company...',
+ *   long_description: 'Acme Corp is a leading technology company specializing in AI solutions...',
+ *   image: 'https://example.com/logo.png',
+ *   external_id: 'acme-corp-123',
+ *   extensors: {
+ *     industry: 'technology',
+ *     founded_year: '2020'
+ *   },
  *   active: true
  * };
  * ```
@@ -1080,6 +1272,8 @@ export type GetApiRequestLogPayload = {
  * 
  * Configuration object for OAuth2 Authorization Code flow with PKCE.
  * Used when initializing OAuth instances for secure authentication.
+ * This interface defines all the parameters needed to configure
+ * OAuth authentication flows.
  * 
  * @example
  * ```typescript
@@ -1088,6 +1282,25 @@ export type GetApiRequestLogPayload = {
  *   redirectUri: 'https://your-app.com/callback',
  *   scopes: ['read', 'write'],
  *   state: 'random-state-string'
+ * };
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Minimal OAuth configuration
+ * const oauthConfig: OAuthConfig = {
+ *   redirectUri: 'https://myapp.com/callback'
+ * };
+ * 
+ * // Full OAuth configuration with custom endpoints
+ * const oauthConfig: OAuthConfig = {
+ *   clientId: 'custom-client-id',
+ *   redirectUri: 'https://myapp.com/callback',
+ *   appURL: 'https://custom-auth.mosaia.ai',
+ *   apiURL: 'https://custom-api.mosaia.ai',
+ *   apiVersion: '2',
+ *   scopes: ['read', 'write', 'admin'],
+ *   state: 'csrf-protection-token'
  * };
  * ```
  */
@@ -1112,7 +1325,8 @@ export interface OAuthConfig {
  * OAuth token response interface
  * 
  * Response structure returned when exchanging authorization codes for tokens
- * or refreshing access tokens.
+ * or refreshing access tokens. This interface defines the complete token
+ * response including all metadata needed for authentication and token management.
  * 
  * @example
  * ```typescript
@@ -1124,6 +1338,22 @@ export interface OAuthConfig {
  *   sub: 'user-123',
  *   iat: '1640995200',
  *   exp: '1640998800'
+ * };
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Handle token response
+ * const handleTokenResponse = (response: OAuthTokenResponse) => {
+ *   // Store tokens securely
+ *   localStorage.setItem('access_token', response.access_token);
+ *   if (response.refresh_token) {
+ *     localStorage.setItem('refresh_token', response.refresh_token);
+ *   }
+ *   
+ *   // Calculate expiration time
+ *   const expiresAt = new Date(parseInt(response.exp) * 1000);
+ *   console.log('Token expires at:', expiresAt);
  * };
  * ```
  */
@@ -1148,6 +1378,8 @@ export interface OAuthTokenResponse {
  * OAuth error response interface
  * 
  * Error response structure returned when OAuth operations fail.
+ * This interface defines the standard OAuth error response format
+ * for handling authentication failures and other OAuth-related errors.
  * 
  * @example
  * ```typescript
@@ -1155,6 +1387,30 @@ export interface OAuthTokenResponse {
  *   error: 'invalid_grant',
  *   error_description: 'The authorization code has expired',
  *   error_uri: 'https://docs.mosaia.ai/oauth/errors'
+ * };
+ * ```
+ * 
+ * @example
+ * ```typescript
+ * // Handle OAuth errors
+ * const handleOAuthError = (error: OAuthErrorResponse) => {
+ *   switch (error.error) {
+ *     case 'invalid_grant':
+ *       console.error('Token expired or invalid');
+ *       break;
+ *     case 'invalid_client':
+ *       console.error('Invalid client credentials');
+ *       break;
+ *     case 'invalid_request':
+ *       console.error('Invalid request parameters');
+ *       break;
+ *     default:
+ *       console.error('OAuth error:', error.error_description);
+ *   }
+ *   
+ *   if (error.error_uri) {
+ *     console.log('See documentation:', error.error_uri);
+ *   }
  * };
  * ```
  */
