@@ -2,3 +2,17 @@ node_modules
 .github
 .git
 *.log
+
+# Test files and configurations
+src/__tests__
+coverage
+jest.config.js
+*.test.ts
+*.test.js
+
+# Build and config files
+tsconfig.json
+typedoc.json
+
+# Documentation
+docs
