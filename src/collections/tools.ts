@@ -17,8 +17,6 @@ import { BaseCollection } from './base-collection';
  * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve tools with filtering and pagination
  * - Create new tool integrations
- * - Update existing tool configurations
- * - Delete tools
  * - Manage tool schemas and configurations
  * - Handle tool-specific environment variables and requirements
  * 
@@ -49,6 +47,9 @@ import { BaseCollection } from './base-collection';
  *   required_environment_variables: ['WEATHER_API_KEY'],
  *   source_url: 'https://api.weatherapi.com'
  * });
+ * 
+ * // Like a tool (via model instance)
+ * await tool.like();
  * ```
  * 
  * @extends BaseCollection<ToolInterface, Tool, GetToolsPayload, GetToolPayload>

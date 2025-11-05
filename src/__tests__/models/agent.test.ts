@@ -31,9 +31,12 @@ jest.mock('../../models/base', () => ({
       return payload;
     });
     
-    // Set properties from data
+    // Set properties from data (skip getters)
     Object.keys(data).forEach(key => {
-      this[key] = data[key];
+      const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+      if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
+        this[key] = data[key];
+      }
     });
   })
 }));
@@ -44,6 +47,13 @@ jest.mock('../../functions/chat', () => ({
     completions: {
       create: jest.fn()
     }
+  }))
+}));
+
+// Mock the Image class
+jest.mock('../../functions/image', () => ({
+  Image: jest.fn().mockImplementation(() => ({
+    upload: jest.fn()
   }))
 }));
 
@@ -110,45 +120,46 @@ describe('Agent Model', () => {
     });
   });
 
-  describe('uploadImage', () => {
-    it('should upload image successfully', async () => {
-      const mockFile = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
-      const mockResponse = {
-        data: {
+  describe('image getter', () => {
+    it('should return Image instance', () => {
+      const { Image } = require('../../functions/image');
+      
+      const image = agent.image;
+
+      expect(Image).toHaveBeenCalled();
+      expect(image).toBeDefined();
+    });
+
+    it('should create Image with correct URI', () => {
+      const { Image } = require('../../functions/image');
+      
+      agent.image;
+
+      expect(Image).toHaveBeenCalledWith('/agent/123', expect.anything());
+    });
+
+      it('should pass image URL from data if available', () => {
+        const agentData: Partial<AgentInterface> = {
           id: '123',
           name: 'Test Agent',
-          short_description: 'A test agent',
-          model: 'gpt-4',
-          temperature: 0.7,
-          system_prompt: 'You are a helpful assistant.',
-          active: true
-        }
-      };
+          image: 'https://example.com/image.png'
+        };
+        const agentWithImage = new Agent(agentData);
+        // Clear previous calls
+        const { Image } = require('../../functions/image');
+        (Image as jest.Mock).mockClear();
+        
+        agentWithImage.image;
 
-      mockApiClient.POST.mockResolvedValue(mockResponse);
+        expect(Image).toHaveBeenCalledWith('/agent/123', 'https://example.com/image.png');
+      });
 
-      const result = await agent.uploadImage(mockFile);
+    it('should pass empty string if image URL not available', () => {
+      const { Image } = require('../../functions/image');
+      
+      agent.image;
 
-      expect(mockApiClient.POST).toHaveBeenCalledWith('/agent/123/image/upload', expect.any(FormData));
-      expect(result).toBe(agent);
-    });
-
-    it('should handle upload errors', async () => {
-      const mockFile = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
-      const uploadError = new Error('Upload failed');
-      mockApiClient.POST.mockRejectedValue(uploadError);
-
-      await expect(agent.uploadImage(mockFile)).rejects.toThrow('Upload failed');
-    });
-
-    it('should create FormData with file', async () => {
-      const mockFile = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
-      const mockResponse = { data: { id: '123', name: 'Test Agent' } };
-      mockApiClient.POST.mockResolvedValue(mockResponse);
-
-      await agent.uploadImage(mockFile);
-
-      expect(mockApiClient.POST).toHaveBeenCalledWith('/agent/123/image/upload', expect.any(FormData));
+      expect(Image).toHaveBeenCalledWith('/agent/123', '');
     });
   });
 

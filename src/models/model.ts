@@ -3,7 +3,12 @@ import {
     APIResponse,
     ChatCompletionRequest,
     ChatCompletionResponse,
-    ModelInterface
+    ModelInterface,
+    GetModelPayload,
+    RerankRequest,
+    RerankResponse,
+    EmbeddingRequest,
+    EmbeddingResponse
 } from '../types';
 import { BaseModel } from './base';
 
@@ -172,5 +177,118 @@ export default class Model extends BaseModel<ModelInterface> {
      */
     get chat() {
         return new Chat(this.getUri());
+    }
+
+    /**
+     * Rerank documents using this model
+     * 
+     * Uses this model to rerank documents based on their relevance
+     * to a query string.
+     * 
+     * @param request - Rerank request parameters
+     * @param request.query - The query string to rank documents against
+     * @param request.documents - Array of document strings to rank
+     * @param request.model - Optional model identifier override
+     * @param request.reorder_results - Optional flag to reorder results by relevance score
+     * @returns Promise resolving to the rerank response
+     * 
+     * @example
+     * ```typescript
+     * const response = await model.rerank({
+     *   query: 'What is artificial intelligence?',
+     *   documents: [
+     *     'Document about AI...',
+     *     'Document about machine learning...',
+     *     'Document about unrelated topic...'
+     *   ],
+     *   reorder_results: true
+     * });
+     * 
+     * console.log('Top result:', response.results[0].document.text);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async rerank(request: RerankRequest): Promise<RerankResponse> {
+        try {
+            const response = await this.apiClient.POST<RerankResponse>(`${this.getUri()}/rerank`, request);
+            return response.data || response as RerankResponse;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Generate embeddings using this model
+     * 
+     * Generates vector embeddings for text input using this model.
+     * 
+     * @param request - Embedding request parameters
+     * @param request.input - Single string or array of strings to generate embeddings for
+     * @param request.model - Optional model identifier override
+     * @returns Promise resolving to the embedding response
+     * 
+     * @example
+     * ```typescript
+     * // Generate embedding for single text
+     * const response = await model.embeddings({
+     *   input: 'Text to embed'
+     * });
+     * 
+     * // Generate embeddings for multiple texts
+     * const response = await model.embeddings({
+     *   input: ['Text 1', 'Text 2', 'Text 3']
+     * });
+     * 
+     * console.log('First embedding:', response.data[0].embedding);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async embeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+        try {
+            const response = await this.apiClient.POST<EmbeddingResponse>(`${this.getUri()}/embeddings`, request);
+            return response.data || response as EmbeddingResponse;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Like or unlike this model
+     * 
+     * Toggles the like status of this model. If the model is already liked,
+     * it will be unliked, and vice versa.
+     * 
+     * @returns Promise that resolves to the updated model instance
+     * 
+     * @example
+     * ```typescript
+     * await model.like();
+     * console.log('Model liked:', model.liked);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async like(): Promise<Model> {
+        try {
+            const response = await this.apiClient.POST<GetModelPayload>(`${this.getUri()}/like`);
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+            this.update(response.data);
+            return this;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 }

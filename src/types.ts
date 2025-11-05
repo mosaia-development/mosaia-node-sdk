@@ -698,7 +698,32 @@ export interface AppBotInterface extends BaseEntity {
     record_history?: RecordHistory;
 }
 
+// App Connector interfaces
+export interface AppConnectorInterface extends BaseEntity {
+    id?: string;
+    app: string | AppInterface;
+    org?: string | OrganizationInterface;
+    user?: string | UserInterface;
+    agent?: string | AgentInterface;
+    agent_group?: string | AgentGroupInterface;
+    client?: string | ClientInterface;
+    response_hook?: string| AppWebhookInterface;
+    tags?: string[];
+    active?: boolean;
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+    record_history?: RecordHistory;
+}
+
+/**
+ * Deprecated
+ */
 export type DehydratedAppBotInterface = Omit<AppBotInterface, 'id' | 'app'> & { id: string, app: string }
+
+export type DehydratedAppConnectorInterface = Omit<AppConnectorInterface, 'id' | 'app'> & { id: string, app: string }
+
 
 // Billing interfaces
 export interface WalletInterface extends BaseEntity {
@@ -816,6 +841,39 @@ export interface SnapshotInterface extends BaseEntity {
     user?: string;
     type: string;
     data: any;
+    metadata?: {
+        [key: string]: any;
+    }
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
+// Drive interfaces
+export interface DriveInterface extends BaseEntity {
+    id?: string;
+    org?: string;
+    user?: string;
+    name: string;
+    description?: string;
+    active?: boolean;
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
+// Drive Item (FileMetadata) interfaces
+export interface DriveItemInterface extends BaseEntity {
+    id?: string;
+    drive: string;
+    name: string;
+    filename?: string;
+    path?: string;
+    size?: number;
+    mime_type?: string;
+    url?: string;
     metadata?: {
         [key: string]: any;
     }
@@ -1006,6 +1064,69 @@ export interface ChatCompletionResponse {
     system_fingerprint: string;
 }
 
+/**
+ * Rerank request interface
+ */
+export interface RerankRequest {
+    query: string;
+    documents: string[];
+    model?: string;
+    reorder_results?: boolean;
+}
+
+/**
+ * Rerank result item
+ */
+export interface RerankResult {
+    index: number;
+    document: {
+        text: string;
+    };
+    relevance_score: number;
+}
+
+/**
+ * Rerank response interface
+ */
+export interface RerankResponse {
+    id: string;
+    model: string;
+    results: RerankResult[];
+    usage?: {
+        total_tokens: number;
+    };
+}
+
+/**
+ * Embedding request interface
+ */
+export interface EmbeddingRequest {
+    model?: string;
+    input: string | string[];
+}
+
+/**
+ * Embedding data item
+ */
+export interface EmbeddingData {
+    embedding: number[];
+    index: number;
+    object: string;
+}
+
+/**
+ * Embedding response interface
+ */
+export interface EmbeddingResponse {
+    data: EmbeddingData[];
+    model: string;
+    object: string;
+    usage?: {
+        prompt_tokens: number;
+        total_tokens: number;
+    };
+}
+
 // Auth interfaces
 export interface AuthRequest {
     grant_type: 'password' | 'client' | 'refresh';
@@ -1096,13 +1217,74 @@ export type GetClientPayload = {
     data: ClientInterface;
 }
 
+/**
+ * Deprecated
+ */
 export type GetAppBotsPayload = {
     data: DehydratedAppBotInterface[];
     paging?: PagingInterface;
 }
 
+/**
+ * Deprecated
+ */
 export type GetAppBotPayload = {
     data: DehydratedAppBotInterface;
+}
+
+export type GetAppConnectorsPayload = {
+    data: DehydratedAppConnectorInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetAppConnectorPayload = {
+    data: DehydratedAppConnectorInterface;
+}
+
+// Search types
+export interface SearchQueryParams {
+    q?: string;
+    search_types?: string[];
+    search_type?: string;
+    limit?: number;
+    [key: string]: any;
+}
+
+export interface SearchResults {
+    agents?: AgentInterface[];
+    apps?: AppInterface[];
+    tools?: ToolInterface[];
+    models?: ModelInterface[];
+}
+
+export interface SearchPaging {
+    agents?: PagingInterface;
+    apps?: PagingInterface;
+    tools?: PagingInterface;
+    models?: PagingInterface;
+}
+
+export type SearchResponse = {
+    data: SearchResults;
+    paging?: SearchPaging;
+}
+
+export type GetDrivesPayload = {
+    data: DriveInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetDrivePayload = {
+    data: DriveInterface;
+}
+
+export type GetDriveItemsPayload = {
+    data: DriveItemInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetDriveItemPayload = {
+    data: DriveItemInterface;
 }
 
 export type GetWalletsPayload = {
@@ -1265,6 +1447,130 @@ export type GetApiRequestLogsPayload = {
 
 export type GetApiRequestLogPayload = {
     data: ApiRequestLogInterface;
+}
+
+// Message interfaces
+export interface MessageInterface extends BaseEntity {
+    id?: string;
+    log: string;
+    role?: string;
+    content?: string;
+    metadata?: {
+        [key: string]: any;
+    }
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
+// Scope interfaces
+export interface ScopeInterface {
+    id?: string;
+    name: string;
+    description?: string;
+}
+
+// Task interfaces
+export interface TaskInterface extends BaseEntity {
+    id?: string;
+    name?: string;
+    description?: string;
+    status?: string;
+    metadata?: {
+        [key: string]: any;
+    }
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
+export interface PlanInterface extends BaseEntity {
+    id?: string;
+    task: string;
+    name?: string;
+    description?: string;
+    plan?: any;
+    metadata?: {
+        [key: string]: any;
+    }
+    external_id?: string;
+    extensors?: {
+        [key: string]: string;
+    }
+}
+
+// SSO interfaces
+export interface SSORequestInterface {
+    mosaia_user: {
+        id: string;
+    };
+    oauth_account: {
+        type: string;
+        provider: string;
+    };
+}
+
+export interface SSOResponseInterface {
+    token: string;
+    type: string;
+}
+
+// Notification interfaces
+export interface NotificationEmailInterface {
+    to: string;
+    subject: string;
+    text?: string;
+    html?: string;
+}
+
+export interface NotificationResponseInterface {
+    success: boolean;
+    messageId?: string;
+}
+
+// Payload types for new collections
+export type GetLogsPayload = {
+    data: AgentLogInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetLogPayload = {
+    data: AgentLogInterface;
+}
+
+export type GetMessagesPayload = {
+    data: MessageInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetMessagePayload = {
+    data: MessageInterface;
+}
+
+export type GetScopesPayload = {
+    data: {
+        scopes: ScopeInterface[];
+    }
+}
+
+export type GetTasksPayload = {
+    data: TaskInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetTaskPayload = {
+    data: TaskInterface;
+}
+
+export type GetPlansPayload = {
+    data: PlanInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetPlanPayload = {
+    data: PlanInterface;
 }
 
 /**

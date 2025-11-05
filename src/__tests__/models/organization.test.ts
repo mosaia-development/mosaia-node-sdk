@@ -31,9 +31,12 @@ jest.mock('../../models/base', () => ({
       return payload;
     });
     
-    // Set properties from data
+    // Set properties from data (skip getters)
     Object.keys(data).forEach(key => {
-      this[key] = data[key];
+      const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+      if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
+        this[key] = data[key];
+      }
     });
   })
 }));
@@ -64,6 +67,13 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  }))
+}));
+
+// Mock the Image class
+jest.mock('../../functions/image', () => ({
+  Image: jest.fn().mockImplementation(() => ({
+    upload: jest.fn()
   }))
 }));
 
@@ -257,6 +267,49 @@ describe('Organization Model', () => {
       });
 
       expect(inactiveOrg.isActive()).toBe(false);
+    });
+
+    describe('image getter', () => {
+      it('should return Image instance', () => {
+        const { Image } = require('../../functions/image');
+        
+        const image = organization.image;
+
+        expect(Image).toHaveBeenCalled();
+        expect(image).toBeDefined();
+      });
+
+      it('should create Image with correct URI for profile', () => {
+        const { Image } = require('../../functions/image');
+        
+        organization.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', expect.anything());
+      });
+
+      it('should pass image URL from data if available', () => {
+        const orgData: Partial<OrganizationInterface> = {
+          id: '123',
+          name: 'Test Org',
+          image: 'https://example.com/logo.png'
+        };
+        const orgWithImage = new Organization(orgData);
+        // Clear previous calls
+        const { Image } = require('../../functions/image');
+        (Image as jest.Mock).mockClear();
+        
+        orgWithImage.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', 'https://example.com/logo.png');
+      });
+
+      it('should pass empty string if image URL not available', () => {
+        const { Image } = require('../../functions/image');
+        
+        organization.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', '');
+      });
     });
   });
 });

@@ -41,14 +41,38 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # 7. Generate TSDoc documentation
+      # 7. Run tests with coverage
+      - name: Run tests with coverage
+        id: test-run
+        run: |
+          echo "Running test suite with coverage..."
+          echo "Test command: npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json --testTimeout=30000"
+          
+          # Run tests with coverage and JSON output, with increased timeout
+          npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json --testTimeout=30000
+          
+          # Check if tests failed
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully!"
+            echo "📊 Coverage report generated"
+            echo "📋 Test results saved to test-results.json"
+          else
+            echo "❌ Some tests failed!"
+            echo "📊 Coverage report may be incomplete due to test failures"
+            echo "📋 Test results saved to test-results.json for analysis"
+            exit 1
+          fi
+          
+          echo "Tests completed"
+
+      # 8. Generate TSDoc documentation
       - name: Generate TSDoc documentation
         run: |
           echo "Generating TSDoc documentation..."
           npm run docs
           echo "Documentation generated successfully"
 
-      # 7.5. Create documentation index
+      # 9. Create documentation index
       - name: Create documentation index
         run: |
           echo "Creating documentation index..."
@@ -88,7 +112,7 @@ jobs:
           EOF
           echo "Documentation index created successfully"
 
-      # 9. Deploy documentation to GitHub Pages
+      # 10. Deploy documentation to GitHub Pages
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         if: github.ref == 'refs/tags/v*'
@@ -98,7 +122,7 @@ jobs:
           publish_branch: gh-pages
           force_orphan: true
 
-      # 10. Publish to NPM
+      # 11. Publish to NPM
       - name: Publish to NPM
         run: npm publish --access public
         env:

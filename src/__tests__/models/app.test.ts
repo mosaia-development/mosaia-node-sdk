@@ -31,9 +31,12 @@ jest.mock('../../models/base', () => ({
       return payload;
     });
     
-    // Set properties from data
+    // Set properties from data (skip getters)
     Object.keys(data).forEach(key => {
-      this[key] = data[key];
+      const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+      if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
+        this[key] = data[key];
+      }
     });
   })
 }));
@@ -49,6 +52,13 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  }))
+}));
+
+// Mock the Image class
+jest.mock('../../functions/image', () => ({
+  Image: jest.fn().mockImplementation(() => ({
+    upload: jest.fn()
   }))
 }));
 
@@ -194,6 +204,49 @@ describe('App Model', () => {
       });
 
       expect(inactiveApp.isActive()).toBe(false);
+    });
+
+    describe('image getter', () => {
+      it('should return Image instance', () => {
+        const { Image } = require('../../functions/image');
+        
+        const image = app.image;
+
+        expect(Image).toHaveBeenCalled();
+        expect(image).toBeDefined();
+      });
+
+      it('should create Image with correct URI', () => {
+        const { Image } = require('../../functions/image');
+        
+        app.image;
+
+        expect(Image).toHaveBeenCalledWith('/app/123', expect.anything());
+      });
+
+      it('should pass image URL from data if available', () => {
+        const appData: Partial<AppInterface> = {
+          id: '123',
+          name: 'Test App',
+          image: 'https://example.com/image.png'
+        };
+        const appWithImage = new App(appData);
+        // Clear previous calls
+        const { Image } = require('../../functions/image');
+        (Image as jest.Mock).mockClear();
+        
+        appWithImage.image;
+
+        expect(Image).toHaveBeenCalledWith('/app/123', 'https://example.com/image.png');
+      });
+
+      it('should pass empty string if image URL not available', () => {
+        const { Image } = require('../../functions/image');
+        
+        app.image;
+
+        expect(Image).toHaveBeenCalledWith('/app/123', '');
+      });
     });
   });
 });

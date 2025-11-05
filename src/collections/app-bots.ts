@@ -7,6 +7,9 @@ import { AppBot } from '../models';
 import { BaseCollection } from './base-collection';
 
 /**
+ * @deprecated This collection is deprecated and will be removed in a future version.
+ * Please use the Apps collection instead for app-related functionality.
+ * 
  * App Bots API client for the Mosaia SDK
  * 
  * Provides CRUD operations for managing app bots in the Mosaia platform.

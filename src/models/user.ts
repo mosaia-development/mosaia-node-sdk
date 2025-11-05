@@ -9,6 +9,7 @@ import {
     AgentGroups,
     Tools
 } from '../collections';
+import { Image } from '../functions/image';
 
 /**
  * User class for managing platform users
@@ -490,75 +491,20 @@ export default class User extends BaseModel<UserInterface> {
     }
 
     /**
-     * Upload a profile image
+     * Get the image functionality for this user's profile
      * 
-     * This method uploads and sets a profile image for the user. The image
-     * will be used to represent the user across the platform in various
-     * UI elements.
+     * This getter provides access to the user's profile image operations
+     * through the Image class. It allows for profile image uploads and other
+     * image-related operations specific to this user.
      * 
-     * @param file - Image file to upload (supports common formats)
-     * @returns Promise resolving to updated user with image
-     * @throws {Error} When upload fails
-     * @throws {Error} When file format is invalid
-     * @throws {Error} When network errors occur
+     * @returns A new Image instance configured for this user's profile
      * 
      * @example
-     * Basic upload:
      * ```typescript
-     * const file = new File(['...'], 'avatar.jpg', { type: 'image/jpeg' });
-     * await user.uploadProfileImage(file);
-     * console.log('Profile image updated successfully');
-     * ```
-     * 
-     * @example
-     * Upload with validation:
-     * ```typescript
-     * async function updateProfileImage(user: User, file: File) {
-     *   try {
-     *     // Validate file
-     *     if (!file.type.startsWith('image/')) {
-     *       throw new Error('Invalid file type');
-     *     }
-     *     
-     *     if (file.size > 5 * 1024 * 1024) {
-     *       throw new Error('File too large (max 5MB)');
-     *     }
-     *     
-     *     // Upload and update
-     *     const updated = await user.uploadProfileImage(file);
-     *     console.log('Profile updated successfully');
-     *     console.log(`Size: ${file.size} bytes`);
-     *     console.log(`Type: ${file.type}`);
-     *     
-     *     return updated;
-     *   } catch (error) {
-     *     console.error('Profile update failed:', error.message);
-     *     throw error;
-     *   }
-     * }
+     * const updatedUser = await user.image.upload<User, GetUserPayload>(file);
      * ```
      */
-    async uploadProfileImage(file: File): Promise<User> {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const {
-                data,
-                error
-            } = await this.apiClient.POST<GetUserPayload>(`${this.getUri()}/profile/image/upload`, formData);
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            this.update(data as any);
-    
-            return this;
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error((error as any).message);
-            }
-            throw new Error('Unknown error occurred');
-        }
+    get image(): Image {
+        return new Image(`${this.getUri()}/profile`, (this.data as any).image || '');
     }
 }

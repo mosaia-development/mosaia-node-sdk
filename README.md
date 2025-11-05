@@ -6,7 +6,9 @@ TypeScript SDK for constructing 3rd party app integrations on the Mosaia platfor
 
 - **Full TypeScript Support**: Complete type definitions for all API endpoints
 - **Authentication**: OAuth 2.0 and API key authentication with PKCE support
-- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, and more
+- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, Models, Logs, Tasks, Drives, Search, and more
+- **Full CRUD Operations**: Complete Create, Read, Update, Delete support for all resources
+- **Instance Methods**: Model-specific operations like like, fork, chat completions, rerank, embeddings
 - **Built-in Documentation**: Comprehensive TSDoc/JSDoc support with automatic TypeDoc generation
 - **Error Handling**: Standardized error responses and validation
 - **Configuration Management**: Centralized configuration with singleton pattern and environment support
@@ -194,6 +196,10 @@ const newUser = await mosaia.users.create({
   username: 'johndoe',
   description: 'Software Engineer'
 });
+
+// Upload user profile image
+const file = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
+const updatedUser = await user.image.upload(file);
 ```
 
 ### Organizations
@@ -215,6 +221,10 @@ const newOrg = await mosaia.organizations.create({
   longDescription: 'Detailed description of the organization',
   image: 'https://example.com/logo.png'
 });
+
+// Upload organization profile image
+const file = new File(['image data'], 'logo.png', { type: 'image/png' });
+const updatedOrg = await org.image.upload(file);
 ```
 
 ### Agents
@@ -241,11 +251,29 @@ const newAgent = await mosaia.agents.create({
   tags: ['support', 'ai']
 });
 
-// Chat completion with agent
-const completion = await mosaia.agents.chatCompletion('agent-id', {
-  model: 'gpt-4',
+// Chat with agent using model instance
+const response = await agent.chat.completions.create({
   messages: [{ role: 'user', content: 'Hello, how can you help me?' }]
 });
+
+// Like agent
+await agent.like();
+
+// Fork agent
+const forkedAgent = await agent.fork();
+
+// Upload agent image
+const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
+const updatedAgent = await agent.image.upload(file);
+
+// Access agent tasks
+const tasks = await agent.tasks.get();
+const newTask = await agent.tasks.create({ name: 'Task name' });
+
+// Access agent logs
+const logs = await agent.logs.get();
+const log = await agent.logs.get({}, 'log-id');
+const messages = await log.messages.get();
 ```
 
 ### Agent Groups
@@ -265,11 +293,17 @@ const newGroup = await mosaia.agentGroups.create({
   tags: ['support', 'multi-agent']
 });
 
-// Chat completion with agent group
-const completion = await mosaia.agentGroups.chatCompletion('group-id', {
-  model: 'gpt-4',
+// Chat with agent group using model instance
+const response = await group.chat.completions.create({
   messages: [{ role: 'user', content: 'I need help with my account' }]
 });
+
+// Like agent group
+await group.like();
+
+// Upload group image
+const file = new File(['image data'], 'group-logo.png', { type: 'image/png' });
+const updatedGroup = await group.image.upload(file);
 ```
 
 ### Tools
@@ -301,6 +335,13 @@ const newTool = await mosaia.tools.create({
   sourceUrl: 'https://github.com/example/tool',
   tags: ['api', 'integration']
 });
+
+// Like tool
+await tool.like();
+
+// Upload tool image
+const file = new File(['image data'], 'tool-icon.png', { type: 'image/png' });
+const updatedTool = await tool.image.upload(file);
 ```
 
 ### Apps
@@ -328,6 +369,132 @@ const newApp = await mosaia.apps.create({
   tags: ['webhook', 'integration'],
   keywords: ['api', 'automation']
 });
+
+// Like app
+await app.like();
+
+// Upload app image
+const file = new File(['image data'], 'app-logo.png', { type: 'image/png' });
+const updatedApp = await app.image.upload(file);
+```
+
+### Search
+
+```typescript
+// Universal search across multiple resource types
+const results = await mosaia.search.query({
+  q: 'search query',
+  types: ['agent', 'app', 'tool', 'model'],
+  limit: 20
+});
+```
+
+### Drives and Files
+
+```typescript
+// Get all drives
+const drives = await mosaia.drives.get();
+
+// Get drive by ID
+const drive = await mosaia.drives.get({}, 'drive-id');
+
+// Create drive
+const newDrive = await mosaia.drives.create({
+  name: 'My Drive',
+  description: 'Storage drive for files'
+});
+
+// Access drive items
+const items = await drive.items.get();
+
+// Upload files
+const files = [file1, file2];
+const uploadResult = await drive.items.uploadFiles(files);
+```
+
+### Logs and Messages
+
+```typescript
+// Get all logs
+const logs = await mosaia.logs.get();
+
+// Get log by ID
+const log = await mosaia.logs.get({}, 'log-id');
+
+// Access log messages
+const messages = await log.messages.get();
+
+// Create log message
+const newMessage = await log.messages.create({
+  log: 'log-id',
+  role: 'user',
+  content: 'Message content'
+});
+
+// Access log snapshots
+const snapshots = await log.snapshots.get();
+```
+
+### Tasks and Plans
+
+```typescript
+// Get all tasks
+const tasks = await mosaia.tasks.get();
+
+// Get task by ID
+const task = await mosaia.tasks.get({}, 'task-id');
+
+// Create task
+const newTask = await mosaia.tasks.create({
+  name: 'Task name',
+  description: 'Task description'
+});
+
+// Access task plans
+const plans = await task.plans.get();
+
+// Create task plan
+const newPlan = await task.plans.create({
+  task: 'task-id',
+  name: 'Plan name',
+  description: 'Plan description'
+});
+```
+
+### Vector Indexes
+
+```typescript
+// Get all vector indexes
+const indexes = await mosaia.vectorIndexes.get();
+
+// Get vector index by ID
+const index = await mosaia.vectorIndexes.get({}, 'index-id');
+
+// Create vector index
+const newIndex = await mosaia.vectorIndexes.create({
+  name: 'My Index',
+  description: 'Vector index for semantic search'
+});
+```
+
+### Scopes, SSO, and Notifications
+
+```typescript
+// Get permission scopes
+const scopes = await mosaia.scopes.get();
+
+// SSO authentication
+const ssoResult = await mosaia.sso.authenticate({
+  provider: 'google',
+  token: 'oauth-token'
+});
+
+// Send email notification
+const notification = await mosaia.notifications.sendEmail({
+  to: 'user@example.com',
+  subject: 'Welcome',
+  body: 'Welcome to Mosaia!'
+});
 ```
 
 ### Models
@@ -352,6 +519,25 @@ const newModel = await mosaia.models.create({
   temperature: 0.7,
   tags: ['custom', 'gpt-4']
 });
+
+// Chat completion with model
+const response = await model.chat.completions.create({
+  messages: [{ role: 'user', content: 'Hello!' }]
+});
+
+// Rerank documents
+const rerankResult = await model.rerank({
+  query: 'search query',
+  documents: ['doc1', 'doc2', 'doc3']
+});
+
+// Generate embeddings
+const embeddings = await model.embeddings({
+  input: ['text to embed']
+});
+
+// Like model
+await model.like();
 ```
 
 ## Configuration

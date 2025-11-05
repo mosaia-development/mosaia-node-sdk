@@ -31,9 +31,12 @@ jest.mock('../../models/base', () => ({
       return payload;
     });
     
-    // Set properties from data
+    // Set properties from data (skip getters)
     Object.keys(data).forEach(key => {
-      this[key] = data[key];
+      const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+      if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
+        this[key] = data[key];
+      }
     });
   })
 }));
@@ -74,6 +77,13 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  }))
+}));
+
+// Mock the Image class
+jest.mock('../../functions/image', () => ({
+  Image: jest.fn().mockImplementation(() => ({
+    upload: jest.fn()
   }))
 }));
 
@@ -223,43 +233,46 @@ describe('User Model', () => {
     });
   });
 
-  describe('uploadProfileImage', () => {
-    it('should upload profile image successfully', async () => {
-      const mockFile = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
-      const mockResponse = {
-        data: {
+  describe('image getter', () => {
+    it('should return Image instance', () => {
+      const { Image } = require('../../functions/image');
+      
+      const image = user.image;
+
+      expect(Image).toHaveBeenCalled();
+      expect(image).toBeDefined();
+    });
+
+    it('should create Image with correct URI for profile', () => {
+      const { Image } = require('../../functions/image');
+      
+      user.image;
+
+      expect(Image).toHaveBeenCalledWith('/user/123/profile', expect.anything());
+    });
+
+      it('should pass image URL from data if available', () => {
+        const userData: Partial<UserInterface> = {
           id: '123',
           name: 'John Doe',
-          email: 'john@example.com',
-          username: 'johndoe',
-          active: true
-        }
-      };
+          image: 'https://example.com/profile.jpg'
+        };
+        const userWithImage = new User(userData);
+        // Clear previous calls
+        const { Image } = require('../../functions/image');
+        (Image as jest.Mock).mockClear();
+        
+        userWithImage.image;
 
-      mockApiClient.POST.mockResolvedValue(mockResponse);
+        expect(Image).toHaveBeenCalledWith('/user/123/profile', 'https://example.com/profile.jpg');
+      });
 
-      const result = await user.uploadProfileImage(mockFile);
+    it('should pass empty string if image URL not available', () => {
+      const { Image } = require('../../functions/image');
+      
+      user.image;
 
-      expect(mockApiClient.POST).toHaveBeenCalledWith('/user/123/profile/image/upload', expect.any(FormData));
-      expect(result).toBe(user);
-    });
-
-    it('should handle upload errors', async () => {
-      const mockFile = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
-      const uploadError = new Error('Upload failed');
-      mockApiClient.POST.mockRejectedValue(uploadError);
-
-      await expect(user.uploadProfileImage(mockFile)).rejects.toThrow('Upload failed');
-    });
-
-    it('should create FormData with file', async () => {
-      const mockFile = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
-      const mockResponse = { data: { id: '123', name: 'John Doe' } };
-      mockApiClient.POST.mockResolvedValue(mockResponse);
-
-      await user.uploadProfileImage(mockFile);
-
-      expect(mockApiClient.POST).toHaveBeenCalledWith('/user/123/profile/image/upload', expect.any(FormData));
+      expect(Image).toHaveBeenCalledWith('/user/123/profile', '');
     });
   });
 

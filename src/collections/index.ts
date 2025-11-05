@@ -18,21 +18,24 @@
  * - **Models**: Manage AI model configurations
  * - **AppBots**: Handle application-bot integrations
  * - **AgentGroups**: Manage collections of AI agents
+ * - **AppConnectors**: Handle application-connector integrations
  * 
  * @example
  * ```typescript
- * import { Apps, Tools, Agents, Auth } from './collections';
+ * import { Apps, Tools, Agents, Auth, AppConnectors } from './collections';
  * 
  * // Create collection clients
  * const apps = new Apps();
  * const tools = new Tools();
  * const agents = new Agents();
+ * const appConnectors = new AppConnectors();
  * const auth = new MosaiaAuth();
  * 
  * // Use the clients
  * const allApps = await apps.get();
  * const allTools = await tools.get();
  * const allAgents = await agents.get();
+ * const allAppConnectors = await appConnectors.get();
  * ```
  */
 
@@ -47,6 +50,19 @@ import Clients from './clients';
 import Models from './models';
 import AppBots from './app-bots';
 import AgentGroups from './agent-groups';
+import AppConnectors from './app-connectors';
+import Search from './search';
+import Drives from './drives';
+import DriveItems from './drive-items';
+import Logs from './logs';
+import Messages from './messages';
+import Snapshots from './snapshots';
+import Scopes from './scopes';
+import SSO from './sso';
+import Notifications from './notifications';
+import VectorIndexes from './vector-indexes';
+import Tasks from './tasks';
+import Plans from './plans';
 
 /**
  * Agents collection client for managing AI agents
@@ -149,6 +165,16 @@ export { Models };
 export { AppBots };
 
 /**
+ * App Connectors collection client for managing application-connector integrations
+ * 
+ * Provides CRUD operations for application connectors, which allow connecting
+ * external applications with AI agents or agent groups through webhook-style interactions.
+ * 
+ * @see {@link AppConnectors}
+ */
+export { AppConnectors };
+
+/**
  * Agent Groups collection client for managing agent collections
  * 
  * Provides CRUD operations for agent groups, which allow organizing and
@@ -157,3 +183,121 @@ export { AppBots };
  * @see {@link AgentGroups}
  */
 export { AgentGroups };
+
+/**
+ * Search collection client for universal search across resources
+ * 
+ * Provides search functionality across multiple resource types (agents, apps,
+ * tools, models) simultaneously with a single query.
+ * 
+ * @see {@link Search}
+ */
+export { Search };
+
+/**
+ * Drives collection client for managing file storage drives
+ * 
+ * Provides CRUD operations for drives, which are containers for organizing
+ * and managing files and documents, scoped to users or organizations.
+ * 
+ * @see {@link Drives}
+ */
+export { Drives };
+
+/**
+ * Drive Items collection client for managing files and documents in drives
+ * 
+ * Provides CRUD operations for drive items (files and documents) within drives,
+ * including file uploads and metadata management.
+ * 
+ * @see {@link DriveItems}
+ */
+export { DriveItems };
+
+/**
+ * Logs collection client for managing agent logs
+ * 
+ * Provides CRUD operations for agent logs, which track conversations
+ * and interactions with agents.
+ * 
+ * @see {@link Logs}
+ */
+export { Logs };
+
+/**
+ * Messages collection client for managing log messages
+ * 
+ * Provides CRUD operations for log messages, which are associated
+ * with specific logs.
+ * 
+ * @see {@link Messages}
+ */
+export { Messages };
+
+/**
+ * Snapshots collection client for managing log snapshots
+ * 
+ * Provides CRUD operations for log snapshots, which are point-in-time
+ * exports of log data.
+ * 
+ * @see {@link Snapshots}
+ */
+export { Snapshots };
+
+/**
+ * Scopes collection client for managing permission scopes
+ * 
+ * Provides access to permission scopes available in the platform.
+ * 
+ * @see {@link Scopes}
+ */
+export { Scopes };
+
+/**
+ * SSO collection client for single sign-on authentication
+ * 
+ * Provides SSO authentication functionality for OAuth providers.
+ * 
+ * @see {@link SSO}
+ */
+export { SSO };
+
+/**
+ * Notifications collection client for sending email notifications
+ * 
+ * Provides email notification functionality for sending emails
+ * through the platform.
+ * 
+ * @see {@link Notifications}
+ */
+export { Notifications };
+
+
+/**
+ * Vector Indexes collection client for managing vector indexes
+ * 
+ * Provides CRUD operations for vector indexes, which enable
+ * semantic search and similarity matching.
+ * 
+ * @see {@link VectorIndexes}
+ */
+export { VectorIndexes };
+
+/**
+ * Tasks collection client for managing tasks
+ * 
+ * Provides CRUD operations for tasks in the platform.
+ * 
+ * @see {@link Tasks}
+ */
+export { Tasks };
+
+/**
+ * Plans collection client for managing task plans
+ * 
+ * Provides CRUD operations for task plans, which are associated
+ * with specific tasks.
+ * 
+ * @see {@link Plans}
+ */
+export { Plans };

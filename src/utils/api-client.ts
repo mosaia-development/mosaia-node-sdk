@@ -495,8 +495,8 @@ export default class APIClient {
      * });
      * ```
      */
-    async PUT<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        return this.makeRequest<T>('PUT', path, data);
+    async PUT<T>(path: string, data?: object, params?: object): Promise<APIResponse<T> | any> {
+        return this.makeRequest<T>('PUT', path, data, params);
     }
 
     /**

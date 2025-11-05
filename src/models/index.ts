@@ -7,6 +7,7 @@
  * 
  * ## Available Models
  * 
+ * - **AppConnector**: Application connector management
  * - **BaseModel**: Abstract base class providing common functionality for all models
  * - **User**: User account and profile management
  * - **App**: Application container and configuration management
@@ -22,12 +23,21 @@
  * 
  * @example
  * ```typescript
- * import { User, Agent, Organization, Tool } from './models';
+ * import { User, Agent, Organization, Tool, AppConnector } from './models';
  * 
  * // Create model instances
  * const user = new User({
  *   name: 'John Doe',
  *   email: 'john@example.com'
+ * });
+ * 
+ * const appConnector = new AppConnector({
+ *   app: 'app-123',
+ *   response_url: 'https://api.example.com/webhook',
+ *   agent: 'agent-456',
+ *   api_key: 'connector-api-key',
+ *   client: 'client-123',
+ *   response_hook: 'response-hook-456'
  * });
  * 
  * const agent = new Agent({
@@ -54,6 +64,15 @@ import AgentGroup from './agent-group';
 import Tool from './tool';
 import Client from './client';
 import Model from './model';
+import AppConnector from './app-connector';
+import Drive from './drive';
+import DriveItem from './drive-item';
+import Log from './log';
+import Message from './message';
+import Snapshot from './snapshot';
+import VectorIndex from './vector-index';
+import Task from './task';
+import Plan from './plan';
 
 /**
  * Base model class providing common functionality for all models
@@ -98,6 +117,12 @@ export { Organization };
 export { OrgUser };
 
 /**
+ * App Connector model for managing application-connector integrations
+ * @see {@link AppConnector}
+ */
+export { AppConnector };
+
+/**
  * App Bot model for managing application-bot integrations
  * @see {@link AppBot}
  */
@@ -126,3 +151,51 @@ export { Client };
  * @see {@link Model}
  */
 export { Model };
+
+/**
+ * Drive model for managing file storage drives
+ * @see {@link Drive}
+ */
+export { Drive };
+
+/**
+ * DriveItem model for managing files and documents in drives
+ * @see {@link DriveItem}
+ */
+export { DriveItem };
+
+/**
+ * Log model for managing agent logs
+ * @see {@link Log}
+ */
+export { Log };
+
+/**
+ * Message model for managing log messages
+ * @see {@link Message}
+ */
+export { Message };
+
+/**
+ * Snapshot model for managing snapshots
+ * @see {@link Snapshot}
+ */
+export { Snapshot };
+
+/**
+ * VectorIndex model for managing vector indexes
+ * @see {@link VectorIndex}
+ */
+export { VectorIndex };
+
+/**
+ * Task model for managing tasks
+ * @see {@link Task}
+ */
+export { Task };
+
+/**
+ * Plan model for managing task plans
+ * @see {@link Plan}
+ */
+export { Plan };

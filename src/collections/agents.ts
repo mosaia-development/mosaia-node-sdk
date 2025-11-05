@@ -52,6 +52,12 @@ import { BaseCollection } from './base-collection';
  *   max_tokens: 1000,
  *   system_prompt: 'You are a helpful customer support agent.'
  * });
+ * 
+ * // Like an agent (via model instance)
+ * await agent.like();
+ * 
+ * // Fork an agent (via model instance)
+ * const forkedAgent = await agent.fork();
  * ```
  * 
  * @example

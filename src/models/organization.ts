@@ -9,6 +9,7 @@ import {
     OrgUsers,
     Tools
 } from '../collections';
+import { Image } from '../functions/image';
 
 /**
  * Organization class for managing organizational entities
@@ -416,71 +417,20 @@ export default class Organization extends BaseModel<OrganizationInterface> {
     }
 
     /**
-     * Upload organization profile image
+     * Get the image functionality for this organization's profile
      * 
-     * This method uploads a profile image or logo for the organization.
-     * The image will be used to represent the organization in the platform
-     * and in various UI elements.
+     * This getter provides access to the organization's profile image operations
+     * through the Image class. It allows for profile image uploads and other
+     * image-related operations specific to this organization.
      * 
-     * @param file - Image file to upload (supports common formats)
-     * @returns Promise resolving to updated organization with image
-     * @throws {Error} When upload fails
-     * @throws {Error} When file format is invalid
-     * @throws {Error} When network errors occur
+     * @returns A new Image instance configured for this organization's profile
      * 
      * @example
-     * Basic upload:
      * ```typescript
-     * const file = new File(['...'], 'logo.png', { type: 'image/png' });
-     * await org.uploadProfileImage(file);
-     * console.log('Logo uploaded successfully');
-     * ```
-     * 
-     * @example
-     * Upload with validation:
-     * ```typescript
-     * async function updateOrgLogo(org: Organization, file: File) {
-     *   try {
-     *     // Validate file
-     *     if (!file.type.startsWith('image/')) {
-     *       throw new Error('Invalid file type');
-     *     }
-     *     
-     *     // Upload and update
-     *     const updated = await org.uploadProfileImage(file);
-     *     console.log('Logo updated successfully');
-     *     console.log(`Size: ${file.size} bytes`);
-     *     console.log(`Type: ${file.type}`);
-     *     
-     *     return updated;
-     *   } catch (error) {
-     *     console.error('Logo update failed:', error.message);
-     *     throw error;
-     *   }
-     * }
+     * const updatedOrg = await org.image.upload<Organization, GetUserPayload>(file);
      * ```
      */
-    async uploadProfileImage(file: File): Promise<Organization> {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const {
-                data,
-                error
-            } = await this.apiClient.POST<GetUserPayload>(`${this.getUri}/profile/image/upload`, formData);
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            this.update(data as any);
-    
-            return this;
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error((error as any).message);
-            }
-            throw new Error('Unknown error occurred');
-        }
+    get image(): Image {
+        return new Image(`${this.getUri()}/profile`, (this.data as any).image || '');
     }
 }

@@ -1,12 +1,11 @@
 import { Chat } from '../functions/chat';
 import {
     AgentInterface,
-    GetAgentPayload,
-    ChatCompletionRequest,
-    ChatCompletionResponse,
-    APIResponse
+    GetAgentPayload
 } from '../types';
 import { BaseModel } from './base';
+import { Image } from '../functions/image';
+import { Tasks, Logs } from '../collections';
 
 /**
  * Agent class for managing AI agent instances in the Mosaia SDK
@@ -89,54 +88,6 @@ export default class Agent extends BaseModel<AgentInterface> {
     }
 
     /**
-     * Upload an image for the agent
-     * 
-     * Uploads an image file to be associated with the agent for branding
-     * and identification purposes.
-     * 
-     * @param file - Image file to upload (supports common image formats)
-     * @returns Promise that resolves to the updated agent instance
-     * @throws {Error} When upload fails or network errors occur
-     * 
-     * @example
-     * ```typescript
-     * // Upload an agent avatar
-     * const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-     * const file = fileInput.files[0];
-     * 
-     * try {
-     *   await agent.uploadImage(file);
-     *   console.log('Agent image uploaded successfully');
-     * } catch (error) {
-     *   console.error('Upload failed:', error.message);
-     * }
-     * ```
-     */
-    async uploadImage(file: File): Promise<Agent> {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const {
-                data,
-                error
-            } = await this.apiClient.POST<GetAgentPayload>(`${this.getUri()}/image/upload`, formData);
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            this.update(data as any);
-    
-            return this;
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error((error as any).message);
-            }
-            throw new Error('Unknown error occurred');
-        }
-    }
-
-    /**
      * Get the chat functionality for this agent
      * 
      * This getter provides access to the agent's chat capabilities through
@@ -173,5 +124,145 @@ export default class Agent extends BaseModel<AgentInterface> {
      */
     get chat() {
         return new Chat(this.getUri());
+    }
+
+    /**
+     * Get the image functionality for this agent
+     * 
+     * This getter provides access to the agent's image operations through
+     * the Image class. It allows for image uploads and other image-related
+     * operations specific to this agent.
+     * 
+     * @returns A new Image instance configured for this agent
+     * 
+     * @example
+     * ```typescript
+     * const updatedAgent = await agent.image.upload<Agent, GetAgentPayload>(file);
+     * ```
+     */
+    get image(): Image {
+        return new Image(this.getUri(), (this.data as any).image || '');
+    }
+
+    /**
+     * Get the tasks collection for this agent
+     * 
+     * This getter provides access to the agent's tasks collection, allowing
+     * you to manage tasks associated with this agent.
+     * 
+     * @returns Tasks collection for managing agent tasks
+     * 
+     * @example
+     * ```typescript
+     * // Get all tasks for this agent
+     * const tasks = await agent.tasks.get();
+     * 
+     * // Create a new task
+     * const newTask = await agent.tasks.create({
+     *   name: 'Complete analysis',
+     *   description: 'Analyze user feedback'
+     * });
+     * ```
+     */
+    get tasks(): Tasks {
+        return new Tasks(this.getUri());
+    }
+
+    /**
+     * Get the logs collection for this agent
+     * 
+     * This getter provides access to the agent's logs collection, allowing
+     * you to manage conversation logs and interaction history for this agent.
+     * 
+     * @returns Logs collection for managing agent logs
+     * 
+     * @example
+     * ```typescript
+     * // Get all logs for this agent
+     * const logs = await agent.logs.get();
+     * 
+     * // Get a specific log
+     * const log = await agent.logs.get({}, 'log-id');
+     * 
+     * // Access messages within a log
+     * const messages = await log.messages.get();
+     * ```
+     */
+    get logs(): Logs {
+        return new Logs(this.getUri());
+    }
+
+    /**
+     * Like or unlike this agent
+     * 
+     * Toggles the like status of this agent. If the agent is already liked,
+     * it will be unliked, and vice versa.
+     * 
+     * @returns Promise that resolves to the updated agent instance
+     * 
+     * @example
+     * ```typescript
+     * await agent.like();
+     * console.log('Agent liked:', agent.liked);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async like(): Promise<Agent> {
+        try {
+            const response = await this.apiClient.POST<GetAgentPayload>(`${this.getUri()}/like`);
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+            this.update(response.data);
+            return this;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Fork this agent
+     * 
+     * Creates a copy of this agent that can be independently modified.
+     * Useful for creating variations of existing agents.
+     * 
+     * @param options - Optional fork options
+     * @param options.generate_system_message - Whether to generate a new system message
+     * @returns Promise resolving to the forked agent instance
+     * 
+     * @example
+     * ```typescript
+     * // Basic fork
+     * const forkedAgent = await agent.fork();
+     * 
+     * // Fork with system message generation
+     * const forkedAgent = await agent.fork({
+     *   generate_system_message: true
+     * });
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async fork(options?: { generate_system_message?: boolean }): Promise<Agent> {
+        try {
+            let uri = `${this.getUri()}/fork`;
+            if (options?.generate_system_message) {
+                uri += '?generate_system_message=true';
+            }
+            const response = await this.apiClient.POST<GetAgentPayload>(uri);
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+            return new Agent(response.data);
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 }

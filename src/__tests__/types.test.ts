@@ -24,8 +24,6 @@ import {
   OrgPermissionInterface,
   UserPermissionInterface,
   OrgUserInterface,
-  ObjectiveInterface,
-  OfferingInterface,
   SnapshotInterface,
   VectorIndexInterface,
   LikeInterface,
