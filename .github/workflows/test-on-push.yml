@@ -112,18 +112,25 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      # 6. Generate JSDoc documentation (test)
-      - name: Test JSDoc generation
-        id: jsdoc-test
+      # 6. Build TypeScript project (required for TypeDoc)
+      - name: Build TypeScript project
         run: |
-          echo "🔍 Testing JSDoc documentation generation..."
-          echo "Command: npx jsdoc -c jsdoc.conf.json"
+          echo "🔨 Building TypeScript project..."
+          npm run build
+          echo "✅ Build completed"
+
+      # 6.1. Generate TypeDoc documentation (test)
+      - name: Test TypeDoc generation
+        id: typedoc-test
+        run: |
+          echo "🔍 Testing TypeDoc documentation generation..."
+          echo "Command: npx typedoc"
           
-          # Test JSDoc generation by running it and capturing output
+          # Test TypeDoc generation by running it and capturing output
           # We'll clean up the generated files afterwards
-          if npx jsdoc -c jsdoc.conf.json 2>&1; then
-            echo "✅ JSDoc generation test passed!"
-            echo "📚 All JSDoc tags are properly formatted"
+          if npx typedoc 2>&1; then
+            echo "✅ TypeDoc generation test passed!"
+            echo "📚 All TypeDoc comments are properly formatted"
             
             # Clean up generated documentation files
             if [ -d "docs" ]; then
@@ -132,16 +139,17 @@ jobs:
               echo "✅ Documentation files cleaned up"
             fi
           else
-            echo "❌ JSDoc generation test failed!"
+            echo "❌ TypeDoc generation test failed!"
             echo "🔍 Check for missing @returns values, invalid tags, or syntax errors"
             echo "💡 Common issues:"
             echo "   - Missing @returns values"
-            echo "   - Invalid JSDoc syntax"
+            echo "   - Invalid TypeDoc syntax"
             echo "   - Missing parameter descriptions"
+            echo "   - Type errors in TypeScript code"
             exit 1
           fi
           
-          echo "JSDoc test completed"
+          echo "TypeDoc test completed"
 
       # 7. Run tests with coverage
       - name: Run tests with coverage
@@ -167,31 +175,33 @@ jobs:
           
           echo "Tests completed"
 
-      # 7.1. Handle JSDoc test failures
-      - name: Handle JSDoc Test Failures
-        if: failure() && steps.jsdoc-test.outcome == 'failure'
+      # 7.1. Handle TypeDoc test failures
+      - name: Handle TypeDoc Test Failures
+        if: failure() && steps.typedoc-test.outcome == 'failure'
         run: |
-          echo "❌ JSDoc generation test failed!"
-          echo "📋 JSDoc Test Results Summary"
+          echo "❌ TypeDoc generation test failed!"
+          echo "📋 TypeDoc Test Results Summary"
           echo "=============================="
           echo "🚫 Workflow will not proceed to unit tests"
-          echo "🔍 Check the JSDoc test logs above for detailed failure information"
-          echo "💡 Fix the JSDoc issues and re-run the workflow"
+          echo "🔍 Check the TypeDoc test logs above for detailed failure information"
+          echo "💡 Fix the TypeDoc issues and re-run the workflow"
           
           echo ""
-          echo "📊 Common JSDoc Issues:"
+          echo "📊 Common TypeDoc Issues:"
           echo "======================="
           echo "1. Missing @returns values (e.g., '@returns' without description)"
-          echo "2. Invalid JSDoc syntax or malformed tags"
+          echo "2. Invalid TypeDoc syntax or malformed tags"
           echo "3. Missing parameter descriptions"
           echo "4. Incorrect type annotations"
+          echo "5. TypeScript compilation errors"
           
           echo ""
-          echo "🔍 To fix JSDoc issues:"
-          echo "1. Check the 'Test JSDoc generation' step logs above"
-          echo "2. Look for specific error messages about missing @returns values"
-          echo "3. Fix the JSDoc comments in the mentioned files"
-          echo "4. Re-run the workflow to verify fixes"
+          echo "🔍 To fix TypeDoc issues:"
+          echo "1. Check the 'Test TypeDoc generation' step logs above"
+          echo "2. Look for specific error messages about missing @returns values or type errors"
+          echo "3. Fix the TypeDoc comments in the mentioned files"
+          echo "4. Ensure TypeScript code compiles without errors"
+          echo "5. Re-run the workflow to verify fixes"
 
       # 7.2. Handle unit test failures
       - name: Handle Unit Test Failures
@@ -353,12 +363,12 @@ jobs:
           echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
           echo "" >> $GITHUB_STEP_SUMMARY
           
-          # JSDoc test results
-          if [ "${{ steps.jsdoc-test.outcome }}" == "success" ]; then
-            echo "✅ **JSDoc**: Documentation generation test passed" >> $GITHUB_STEP_SUMMARY
+          # TypeDoc test results
+          if [ "${{ steps.typedoc-test.outcome }}" == "success" ]; then
+            echo "✅ **TypeDoc**: Documentation generation test passed" >> $GITHUB_STEP_SUMMARY
           else
-            echo "❌ **JSDoc**: Documentation generation test failed" >> $GITHUB_STEP_SUMMARY
-            echo "💡 **Action Required**: Fix JSDoc issues before running unit tests" >> $GITHUB_STEP_SUMMARY
+            echo "❌ **TypeDoc**: Documentation generation test failed" >> $GITHUB_STEP_SUMMARY
+            echo "💡 **Action Required**: Fix TypeDoc issues before running unit tests" >> $GITHUB_STEP_SUMMARY
           fi
           
           echo "" >> $GITHUB_STEP_SUMMARY
@@ -440,7 +450,7 @@ jobs:
 
       # 12. Notify on failure or low coverage
       - name: Notify on issues
-        if: always() && (steps.jsdoc-test.outcome == 'failure' || steps.test-run.outcome == 'failure' || steps.coverage-check.outputs.coverage_percent < 100)
+        if: always() && (steps.typedoc-test.outcome == 'failure' || steps.test-run.outcome == 'failure' || steps.coverage-check.outputs.coverage_percent < 100)
         uses: actions/github-script@v7
         with:
           script: |
@@ -453,12 +463,12 @@ jobs:
             **Workflow**: [${context.workflow}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
             
             ### Issues Found:
-            ${'${{ steps.jsdoc-test.outcome }}' === 'failure' ? '- ❌ **JSDoc Failed**: Documentation generation test failed' : ''}
+            ${'${{ steps.typedoc-test.outcome }}' === 'failure' ? '- ❌ **TypeDoc Failed**: Documentation generation test failed' : ''}
             ${'${{ steps.test-run.outcome }}' === 'failure' ? '- ❌ **Tests Failed**: Some tests are failing' : ''}
             ${parseFloat('${{ steps.coverage-check.outputs.coverage_percent }}') < 100 ? `- ⚠️ **Low Coverage**: Current coverage is ${{ steps.coverage-check.outputs.coverage_percent }}% (target: 100%)` : ''}
             
             ### Required Actions:
-            ${'${{ steps.jsdoc-test.outcome }}' === 'failure' ? '- [ ] Fix JSDoc issues (missing @returns values, invalid syntax)' : ''}
+            ${'${{ steps.typedoc-test.outcome }}' === 'failure' ? '- [ ] Fix TypeDoc issues (missing @returns values, invalid syntax, TypeScript errors)' : ''}
             ${'${{ steps.test-run.outcome }}' === 'failure' ? '- [ ] Fix failing tests' : ''}
             ${parseFloat('${{ steps.coverage-check.outputs.coverage_percent }}') < 100 ? '- [ ] Improve test coverage to 100%' : ''}
             - [ ] Re-run tests to verify fixes
@@ -494,16 +504,16 @@ jobs:
       - name: Final status
         if: always()
         run: |
-          if [ "${{ steps.jsdoc-test.outcome }}" == "success" ] && [ "${{ steps.test-run.outcome }}" == "success" ]; then
+          if [ "${{ steps.typedoc-test.outcome }}" == "success" ] && [ "${{ steps.test-run.outcome }}" == "success" ]; then
             if [ "${{ steps.coverage-check.outputs.coverage_percent }}" == "100" ]; then
-              echo "🎉 All checks passed! JSDoc, tests successful and 100% coverage achieved."
+              echo "🎉 All checks passed! TypeDoc, tests successful and 100% coverage achieved."
             else
-              echo "✅ JSDoc and tests passed but coverage is below 100% (${{ steps.coverage-check.outputs.coverage_percent }}%)"
+              echo "✅ TypeDoc and tests passed but coverage is below 100% (${{ steps.coverage-check.outputs.coverage_percent }}%)"
             fi
           else
-            if [ "${{ steps.jsdoc-test.outcome }}" != "success" ]; then
-              echo "❌ JSDoc generation test failed. Please check the logs above for details."
-              echo "💡 Fix JSDoc issues before running unit tests."
+            if [ "${{ steps.typedoc-test.outcome }}" != "success" ]; then
+              echo "❌ TypeDoc generation test failed. Please check the logs above for details."
+              echo "💡 Fix TypeDoc issues before running unit tests."
             fi
             if [ "${{ steps.test-run.outcome }}" != "success" ]; then
               echo "❌ Unit tests failed. Please check the logs above for details."
