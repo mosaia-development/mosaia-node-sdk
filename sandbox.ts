@@ -44,9 +44,71 @@ const authentication = async () => {
         mosaia.config = authConfig;
 
         const session = await mosaia.session();
-        console.log('session:', session);
-        
+        // console.log('session:', session);
+        console.log('session user:', session.user);
+        console.log('session orgUser:', session.orgUser);
+        console.log('session org:', session.org);
+        console.log('session client:', session.client);
+        console.log('session permissions:', session.permissions);
         return mosaia;
+    } catch (error) {
+        console.error('❌ Error testing SDK:', error);
+        if ((error as any).message) {
+            console.error('Error message:', (error as any).message);
+        }
+        process.exit(1);
+    }
+}
+
+async function getAllLogs(mosaia: Mosaia.MosaiaClient) {
+    const logsResponse = await mosaia.logs.get();
+    if (!logsResponse) {
+        console.log('No logs found');
+        return;
+    }
+    const { data, paging } = logsResponse;
+    console.log('log data:', data);
+    console.log('log paging:', paging);
+    return data;
+}
+
+async function searchAgents(mosaia: Mosaia.MosaiaClient, query: Mosaia.QueryParams) {
+    const agentsResponse = await mosaia.agents.get(query);
+    if (!agentsResponse) {
+        console.log('No agents found');
+        return;
+    }
+    const { data, paging } = agentsResponse;
+
+    console.log('agent data:', data);
+    console.log('agent paging:', paging);
+    return data;
+}
+
+async function chatWithAgent(agent: Mosaia.AgentInterface, message: string) {
+    try {
+        const res = await agent?.chat.completions.create({
+            messages: [
+                { role: "user", content: message }
+            ],
+            tools: [
+                {
+                    type: "function",
+                    function: {
+                        name: "get_weather",
+                        description: "Get the weather for a given city",
+                        parameters: {
+                            type: "object",
+                            properties: {
+                                city: { type: "string", description: "The city to get the weather for" }
+                            },
+                            required: ["city"]
+                        }
+                    }
+                }
+            ]
+        });
+        return res.choices[0].message;
     } catch (error) {
         console.error('❌ Error testing SDK:', error);
         if ((error as any).message) {
@@ -59,38 +121,20 @@ const authentication = async () => {
 async function testSDK() {
     const mosaia = await authentication();
 
-    const agentsResponse = await mosaia.agents.get({q: "cafe"});
-    if (!agentsResponse) {
-        console.log('No agents found');
-        return;
-    }
-    
-    const { data, paging } = agentsResponse;
-    console.log(data);
-    console.log(paging);
+    const logs = await getAllLogs(mosaia);
+    console.log('--------------------------------');
+    console.log('logs:', logs);
+    const agents = await searchAgents(mosaia, {q: "cafe"});
+    console.log('--------------------------------');
+    console.log('agents:', agents);
+    if (agents && agents.length > 0) {
+        const agent = agents![0];
 
-    if (Array.isArray(data) && data.length > 0) {
-        const firstAgent = data![0];
-        console.log('firstAgent:', (firstAgent as any).name);
-        console.log('firstAgent:', (firstAgent as any).description);
-
-        try {
-            console.log(firstAgent);
-            
-            const res = await firstAgent?.chat.completions.create({
-                messages: [
-                    { role: "user", content: "Hello, who are you?" }
-                ]
-            });
-    
-            console.log(res.choices[0].message);
-        } catch (error) {
-            console.error('❌ Error testing SDK:', error);
-            if ((error as any).message) {
-                console.error('Error message:', (error as any).message);
-            }
-            process.exit(1);
-        }
+        console.log('agent name:', agent.name);
+        console.log('agent short description:', agent.data.short_description);
+        const chat = await chatWithAgent(agent as unknown as Mosaia.AgentInterface, "Hello, What is the the weather in Tokyo?");
+        console.log('--------------------------------');
+        console.log('chat with agent:', chat);
     }
 
     // const { user } = await mosaia.session();
