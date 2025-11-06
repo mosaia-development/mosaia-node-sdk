@@ -47,7 +47,9 @@ const oauth = mosaia.oauth({
 
 ### Online Documentation
 
-📚 **Live Documentation**: [View the latest API documentation](https://mosaia-development.github.io/mosaia-node-sdk/)
+📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/vLATEST_VERSION/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
+
+> **Note**: Latest version: **vLATEST_VERSION**. The link is automatically updated on each release.
 
 The documentation is automatically generated and deployed on every version release, providing:
 - **Complete API Reference**: All classes, methods, and types with detailed descriptions
