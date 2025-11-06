@@ -1,196 +1,669 @@
-# @mosaia/mosaia-node-sdk
-[![Publish to NPM](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml/badge.svg)](https://github.com/mosaia-development/mosaia-node-sdk/actions/workflows/deploy.yml)
-![GitHub all releases](https://img.shields.io/github/commit-activity/m/mosaia-development/mosaia-node-sdk)
-![GitHub contributors](https://img.shields.io/github/contributors-anon/mosaia-development/mosaia-node-sdk)
-![NPM Downloads](https://img.shields.io/npm/dm/%40mosaia%2Fmosaia-node-sdk)
+# Mosaia Node.js SDK
 
-## Mosaia's TypeScript SDK for interfacing with the Mosaia Core platform
+TypeScript SDK for constructing 3rd party app integrations on the Mosaia platform.
 
-## Current Features
-- Get and manage Mosaia Apps
-- Manage agent and group bots
-- Agent inference
+## Features
 
-## Getting Started
-### Installation
-Run any of the following commands to install the SDK using choice of package manager
-##### NPM
-```shell
-npm i @mosaia/mosaia-node-sdk
-```
-##### PNPM
-```shell
-pnpm add @mosaia/mosaia-node-sdk
-```
-##### YARN
-```shell
-yarn add @mosaia/mosaia-node-sdk
+- **Full TypeScript Support**: Complete type definitions for all API endpoints
+- **Authentication**: OAuth 2.0 and API key authentication with PKCE support
+- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, Models, Logs, Tasks, Drives, Search, and more
+- **Full CRUD Operations**: Complete Create, Read, Update, Delete support for all resources
+- **Instance Methods**: Model-specific operations like like, fork, chat completions, rerank, embeddings
+- **Built-in Documentation**: Comprehensive TSDoc/JSDoc support with automatic TypeDoc generation
+- **Error Handling**: Standardized error responses and validation
+- **Configuration Management**: Centralized configuration with singleton pattern and environment support
+- **GitHub Pages Integration**: Automatic documentation deployment on version releases
+- **Development Tools**: Complete development workflow with testing, building, and documentation generation
+
+## Installation
+
+```bash
+npm install @mosaia/mosaia-node-sdk
 ```
 
-### Implementation
-##### In Node.js or NextJS
-To use the TypeScript definition files within a Node.js or NextJS project, simply import @mosaia/mosaia-node-sdk as you normally would.
-In a TypeScript file:
-```typescript
-// import entire SDK
-import Mosaia from '@mosaia/mosaia-node-sdk';
-// import SDK with type references
-import Mosaia, { AppInterface } from '@mosaia/mosaia-node-sdk';
-```
-In a JavaScript file:
-```javascript
-// import entire SDK
-const Mosaia = require('@mosaia/mosaia-node-sdk');
-```
-##### Create a Mosaia instance
-In a TypeScript file:
-```typescript
-const {
-    MOSAIA_CORE_URL,
-    MOSAIA_CORE_VERSION,
-    MOSAIA_API_KEY,
-    MOSAIA_FRONTEND_URL,
-    MOSAIA_CLIENT_ID,
-    MOSAIA_CLIENT_SECRET
-} = process.env;
-// Apply API configs 
-const mosaia = new Mosaia({
-    apiKey: MOSAIA_API_KEY as string,
-    version: MOSAIA_CORE_VERSION as string,
-    baseURL: MOSAIA_CORE_URL as string,
-    frontendURL: MOSAIA_FRONTEND_URL as string,
-    clientId: MOSAIA_CLIENT_ID as string,
-    clientSecret: MOSAIA_CLIENT_SECRET as string
-});
-```
-In a JavaScript file:
-```javascript
-const {
-    MOSAIA_CORE_URL,
-    MOSAIA_CORE_VERSION,
-    MOSAIA_API_KEY,
-    MOSAIA_FRONTEND_URL,
-    MOSAIA_CLIENT_ID,
-    MOSAIA_CLIENT_SECRET
-} = process.env;
-// Apply API configs 
-const mosaia = new Mosaia({
-    apiKey: MOSAIA_API_KEY,
-    version: MOSAIA_CORE_VERSION,
-    baseURL: MOSAIA_CORE_URL,
-    frontendURL: MOSAIA_FRONTEND_URL,
-    clientId: MOSAIA_CLIENT_ID,
-    clientSecret: MOSAIA_CLIENT_SECRET
-});
-```
-##### Get the app by ID
-In a TypeScript file:
-```typescript
-// get by app ID
-const { MOSAIA_APP_ID } = process.env;
-const app = await mosaia.apps.get({ id: MOSAIA_APP_ID as string } as AppInterface);
-```
-In a JavaScript file:
-```javascript
-// get by app ID
-const { MOSAIA_APP_ID } = process.env;
-const app = await mosaia.apps.get({ id: MOSAIA_APP_ID });
-```
-##### Create an app bot
-In a TypeScript file or JavaScript file
-```typescript
-// get by app ID
-const coreBot = await app.bots.create({
-    response_url: `<optional webhook URL for async agent calls>`,
-    user: `<optional user ID reference>`,
-    org: `<optional org ID reference>`,
-    agent: `<optional agent ID reference>`,
-    agent_group: `<optional agent_group ID reference>`,
-    external_id: `<optional external ID reference>`
-});
-```
-##### OAuth Authentication
-The SDK supports OAuth2 Authorization Code flow with PKCE for secure authentication. Here's how to implement it:
+## Quick Start
 
-In a TypeScript file:
 ```typescript
-// Initialize Mosaia with client ID and client secret
-const mosaia = new Mosaia({
-    clientId: MOSAIA_CLIENT_ID as string,
-    clientSecret: MOSAIA_CLIENT_SECRET as string,
-    version: MOSAIA_CORE_VERSION as string,
-    baseURL: MOSAIA_CORE_URL as string,
-    frontendURL: MOSAIA_FRONTEND_URL as string
+import * as Mosaia from '@mosaia/mosaia-node-sdk';
+
+// Initialize the SDK
+const mosaia = new Mosaia.MosaiaClient({
+  apiKey: 'your-api-key',
+  apiURL: 'https://api.mosaia.ai',
+  clientId: 'your-client-id'
 });
 
-// Create OAuth instance
+// Get all users
+const users = await mosaia.users.get();
+
+// Create an OAuth instance
 const oauth = mosaia.oauth({
-    redirectUri: 'https://your-app.com/callback',
-    scopes: ['agent:read', 'agent:write'] // Optional scopes
+  redirectUri: 'https://your-app.com/callback',
+  scopes: ['read', 'write']
+});
+```
+
+## Documentation
+
+### Online Documentation
+
+📚 **Live Documentation**: [View the latest API documentation](https://mosaia-development.github.io/mosaia-node-sdk/)
+
+The documentation is automatically generated and deployed on every version release, providing:
+- **Complete API Reference**: All classes, methods, and types with detailed descriptions
+- **Interactive Examples**: Code examples for every API endpoint
+- **Type Definitions**: Full TypeScript interface documentation
+- **Search and Navigation**: Easy-to-use search and category-based navigation
+- **Version Information**: Documentation specific to each SDK version
+
+### Local Documentation Generation
+
+Generate comprehensive API documentation locally using TypeDoc:
+
+```bash
+# Generate documentation
+npm run docs
+
+# Build and generate documentation
+npm run docs:build
+
+# Watch for changes and regenerate documentation
+npm run docs:watch
+```
+
+The generated documentation will be available in the `docs/` folder and includes:
+
+- **HTML Documentation**: Complete API reference with search and navigation
+- **Type Definitions**: Generated TypeScript declaration files
+- **Examples**: Code examples from `@example` tags
+- **Categories**: Grouped APIs based on `@category` tags
+- **Cross-references**: Links between related classes and methods
+
+### Writing Documentation
+
+The SDK supports comprehensive TSDoc and JSDoc comment formats with full TypeDoc integration. All source files include detailed documentation with examples, parameter descriptions, and return type information.
+
+#### TSDoc Example
+
+```typescript
+/**
+ * Creates a new user in the system
+ * 
+ * @param userData - The user data to create
+ * @param userData.email - User's email address
+ * @param userData.firstName - User's first name
+ * @param userData.lastName - User's last name
+ * @returns Promise that resolves to the created user
+ * 
+ * @example
+ * ```typescript
+ * const user = await createUser({
+ *   email: 'john@example.com',
+ *   firstName: 'John',
+ *   lastName: 'Doe'
+ * });
+ * ```
+ * 
+ * @throws {ValidationError} When user data is invalid
+ * @throws {AuthenticationError} When API key is invalid
+ */
+async function createUser(userData: UserData): Promise<User> {
+  // Implementation
+}
+```
+
+## API Reference
+
+### Configuration Management
+
+The SDK provides a robust configuration management system with singleton pattern:
+
+```typescript
+import { ConfigurationManager } from '@mosaia/mosaia-node-sdk';
+
+// Get the singleton configuration manager
+const configManager = ConfigurationManager.getInstance();
+
+// Initialize with user configuration
+configManager.initialize({
+  apiKey: 'your-api-key',
+  apiURL: 'https://api.mosaia.ai',
+  version: '1',
+  clientId: 'your-client-id'
+});
+
+// Update configuration at runtime
+configManager.updateConfig('apiKey', 'new-api-key');
+configManager.updateConfig('version', '2');
+
+// Get read-only configuration
+const readOnlyConfig = configManager.getReadOnlyConfig();
+```
+
+### Authentication
+
+#### OAuth 2.0 with PKCE Support
+
+```typescript
+// Create OAuth instance with PKCE
+const oauth = mosaia.oauth({
+  redirectUri: 'https://your-app.com/callback',
+  scopes: ['read', 'write']
 });
 
 // Get authorization URL and code verifier
 const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
 
-// Redirect user to the authorization URL
-// After user authorizes, they will be redirected to your callback URL with a code
+// Redirect user to authorization URL
+// After user authorizes, exchange code for tokens
+const newConfig = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
-// Exchange the code for tokens
-const tokens = await oauth.exchangeCodeForToken(code, codeVerifier);
-
-// Use the access token
-const { access_token, refresh_token } = tokens;
-
-// Refresh the access token when it expires
-const newTokens = await oauth.refreshToken(refresh_token);
+// Create new authenticated instance
+const authenticatedMosaia = new Mosaia.MosaiaClient(newConfig);
 ```
 
-In a JavaScript file:
-```javascript
-// Initialize Mosaia with client ID and client secret
-const mosaia = new Mosaia({
-    clientId: MOSAIA_CLIENT_ID,
-    clientSecret: MOSAIA_CLIENT_SECRET,
-    version: MOSAIA_CORE_VERSION,
-    baseURL: MOSAIA_CORE_URL,
-    frontendURL: MOSAIA_FRONTEND_URL
+#### API Key Authentication
+
+```typescript
+// Initialize with API key
+const mosaia = new Mosaia.MosaiaClient({
+  apiKey: 'your-api-key'
 });
 
-// Create OAuth instance
-const oauth = mosaia.oauth({
-    redirectUri: 'https://your-app.com/callback',
-    scopes: ['agent:read', 'agent:write'] // Optional scopes
-});
-
-// Get authorization URL and code verifier
-const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
-
-// Redirect user to the authorization URL
-// After user authorizes, they will be redirected to your callback URL with a code
-
-// Exchange the code for tokens
-const tokens = await oauth.exchangeCodeForToken(code, codeVerifier);
-
-// Use the access token
-const { access_token, refresh_token } = tokens;
-
-// Refresh the access token when it expires
-const newTokens = await oauth.refreshToken(refresh_token);
+// Update API key at runtime
+mosaia.apiKey = 'new-api-key';
 ```
+
+### Users
+
+```typescript
+// Get all users with pagination and filtering
+const users = await mosaia.users.get({
+  limit: 10,
+  offset: 0,
+  q: 'john',
+  tags: ['admin'],
+  active: true
+});
+
+// Get user by ID
+const user = await mosaia.users.get({}, 'user-id');
+
+// Create user
+const newUser = await mosaia.users.create({
+  email: 'john@example.com',
+  name: 'John Doe',
+  username: 'johndoe',
+  description: 'Software Engineer'
+});
+
+// Upload user profile image
+const file = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
+const updatedUser = await user.image.upload(file);
+```
+
+### Organizations
+
+```typescript
+// Get all organizations
+const orgs = await mosaia.organizations.get({
+  limit: 20,
+  q: 'technology'
+});
+
+// Get organization by ID
+const org = await mosaia.organizations.get({}, 'org-id');
+
+// Create organization
+const newOrg = await mosaia.organizations.create({
+  name: 'My Organization',
+  shortDescription: 'A great organization',
+  longDescription: 'Detailed description of the organization',
+  image: 'https://example.com/logo.png'
+});
+
+// Upload organization profile image
+const file = new File(['image data'], 'logo.png', { type: 'image/png' });
+const updatedOrg = await org.image.upload(file);
+```
+
+### Agents
+
+```typescript
+// Get all agents
+const agents = await mosaia.agents.get({
+  tags: ['support', 'automation'],
+  active: true
+});
+
+// Get agent by ID
+const agent = await mosaia.agents.get({}, 'agent-id');
+
+// Create agent
+const newAgent = await mosaia.agents.create({
+  name: 'My Agent',
+  shortDescription: 'A helpful AI agent',
+  longDescription: 'Detailed description of the agent capabilities',
+  model: 'gpt-4',
+  temperature: 0.7,
+  maxTokens: 1000,
+  systemPrompt: 'You are a helpful assistant.',
+  tags: ['support', 'ai']
+});
+
+// Chat with agent using model instance
+const response = await agent.chat.completions.create({
+  messages: [{ role: 'user', content: 'Hello, how can you help me?' }]
+});
+
+// Like agent
+await agent.like();
+
+// Fork agent
+const forkedAgent = await agent.fork();
+
+// Upload agent image
+const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
+const updatedAgent = await agent.image.upload(file);
+
+// Access agent tasks
+const tasks = await agent.tasks.get();
+const newTask = await agent.tasks.create({ name: 'Task name' });
+
+// Access agent logs
+const logs = await agent.logs.get();
+const log = await agent.logs.get({}, 'log-id');
+const messages = await log.messages.get();
+```
+
+### Agent Groups
+
+```typescript
+// Get all agent groups
+const groups = await mosaia.agentGroups.get();
+
+// Get agent group by ID
+const group = await mosaia.agentGroups.get({}, 'group-id');
+
+// Create agent group
+const newGroup = await mosaia.agentGroups.create({
+  name: 'Support Team',
+  shortDescription: 'Multi-agent support system',
+  agents: ['agent-1', 'agent-2', 'agent-3'],
+  tags: ['support', 'multi-agent']
+});
+
+// Chat with agent group using model instance
+const response = await group.chat.completions.create({
+  messages: [{ role: 'user', content: 'I need help with my account' }]
+});
+
+// Like agent group
+await group.like();
+
+// Upload group image
+const file = new File(['image data'], 'group-logo.png', { type: 'image/png' });
+const updatedGroup = await group.image.upload(file);
+```
+
+### Tools
+
+```typescript
+// Get all tools
+const tools = await mosaia.tools.get({
+  tags: ['api', 'integration'],
+  public: true
+});
+
+// Get tool by ID
+const tool = await mosaia.tools.get({}, 'tool-id');
+
+// Create tool
+const newTool = await mosaia.tools.create({
+  name: 'My Tool',
+  friendlyName: 'My Custom Tool',
+  shortDescription: 'A useful tool for API integration',
+  toolSchema: JSON.stringify({
+    type: 'object',
+    properties: {
+      input: { type: 'string' },
+      options: { type: 'object' }
+    },
+    required: ['input']
+  }),
+  requiredEnvironmentVariables: ['API_KEY', 'BASE_URL'],
+  sourceUrl: 'https://github.com/example/tool',
+  tags: ['api', 'integration']
+});
+
+// Like tool
+await tool.like();
+
+// Upload tool image
+const file = new File(['image data'], 'tool-icon.png', { type: 'image/png' });
+const updatedTool = await tool.image.upload(file);
+```
+
+### Apps
+
+```typescript
+// Get all apps
+const apps = await mosaia.apps.get({
+  org: 'org-id',
+  tags: ['webhook', 'integration']
+});
+
+// Get app by ID
+const app = await mosaia.apps.get({}, 'app-id');
+
+// Create app
+const newApp = await mosaia.apps.create({
+  name: 'My App',
+  shortDescription: 'A great application',
+  longDescription: 'Detailed description of the application',
+  externalAppUrl: 'https://my-app.com',
+  externalApiKey: 'app-api-key',
+  externalHeaders: {
+    'X-Custom-Header': 'custom-value'
+  },
+  tags: ['webhook', 'integration'],
+  keywords: ['api', 'automation']
+});
+
+// Like app
+await app.like();
+
+// Upload app image
+const file = new File(['image data'], 'app-logo.png', { type: 'image/png' });
+const updatedApp = await app.image.upload(file);
+```
+
+### Search
+
+```typescript
+// Universal search across multiple resource types
+const results = await mosaia.search.query({
+  q: 'search query',
+  types: ['agent', 'app', 'tool', 'model'],
+  limit: 20
+});
+```
+
+### Drives and Files
+
+```typescript
+// Get all drives
+const drives = await mosaia.drives.get();
+
+// Get drive by ID
+const drive = await mosaia.drives.get({}, 'drive-id');
+
+// Create drive
+const newDrive = await mosaia.drives.create({
+  name: 'My Drive',
+  description: 'Storage drive for files'
+});
+
+// Access drive items
+const items = await drive.items.get();
+
+// Upload files
+const files = [file1, file2];
+const uploadResult = await drive.items.uploadFiles(files);
+```
+
+### Logs and Messages
+
+```typescript
+// Get all logs
+const logs = await mosaia.logs.get();
+
+// Get log by ID
+const log = await mosaia.logs.get({}, 'log-id');
+
+// Access log messages
+const messages = await log.messages.get();
+
+// Create log message
+const newMessage = await log.messages.create({
+  log: 'log-id',
+  role: 'user',
+  content: 'Message content'
+});
+
+// Access log snapshots
+const snapshots = await log.snapshots.get();
+```
+
+### Tasks and Plans
+
+```typescript
+// Get all tasks
+const tasks = await mosaia.tasks.get();
+
+// Get task by ID
+const task = await mosaia.tasks.get({}, 'task-id');
+
+// Create task
+const newTask = await mosaia.tasks.create({
+  name: 'Task name',
+  description: 'Task description'
+});
+
+// Access task plans
+const plans = await task.plans.get();
+
+// Create task plan
+const newPlan = await task.plans.create({
+  task: 'task-id',
+  name: 'Plan name',
+  description: 'Plan description'
+});
+```
+
+### Vector Indexes
+
+```typescript
+// Get all vector indexes
+const indexes = await mosaia.vectorIndexes.get();
+
+// Get vector index by ID
+const index = await mosaia.vectorIndexes.get({}, 'index-id');
+
+// Create vector index
+const newIndex = await mosaia.vectorIndexes.create({
+  name: 'My Index',
+  description: 'Vector index for semantic search'
+});
+```
+
+### Scopes, SSO, and Notifications
+
+```typescript
+// Get permission scopes
+const scopes = await mosaia.scopes.get();
+
+// SSO authentication
+const ssoResult = await mosaia.sso.authenticate({
+  provider: 'google',
+  token: 'oauth-token'
+});
+
+// Send email notification
+const notification = await mosaia.notifications.sendEmail({
+  to: 'user@example.com',
+  subject: 'Welcome',
+  body: 'Welcome to Mosaia!'
+});
+```
+
+### Models
+
+```typescript
+// Get all models
+const models = await mosaia.models.get({
+  provider: 'openai',
+  active: true
+});
+
+// Get model by ID
+const model = await mosaia.models.get({}, 'model-id');
+
+// Create model
+const newModel = await mosaia.models.create({
+  name: 'My Custom Model',
+  shortDescription: 'Custom AI model configuration',
+  provider: 'openai',
+  modelId: 'gpt-4',
+  maxTokens: 4000,
+  temperature: 0.7,
+  tags: ['custom', 'gpt-4']
+});
+
+// Chat completion with model
+const response = await model.chat.completions.create({
+  messages: [{ role: 'user', content: 'Hello!' }]
+});
+
+// Rerank documents
+const rerankResult = await model.rerank({
+  query: 'search query',
+  documents: ['doc1', 'doc2', 'doc3']
+});
+
+// Generate embeddings
+const embeddings = await model.embeddings({
+  input: ['text to embed']
+});
+
+// Like model
+await model.like();
+```
+
+## Configuration
+
+The SDK supports comprehensive configuration options with runtime updates:
+
+```typescript
+const config: MosaiaConfig = {
+  // Authentication
+  apiKey: 'your-api-key',
+  clientId: 'your-client-id',
+  clientSecret: 'your-client-secret',
+  
+  // API Settings
+  apiURL: 'https://api.mosaia.ai',
+  version: '1',
+  
+  // Context
+  user: 'user-id',
+  org: 'org-id',
+  
+  // Debugging
+  verbose: true,
+  
+  // Session (for OAuth)
+  session: {
+    accessToken: 'token',
+    refreshToken: 'refresh-token',
+    authType: 'oauth',
+    sub: 'user-123',
+    iat: '1640995200',
+    exp: '1640998800'
+  }
+};
+
+// Runtime configuration updates
+mosaia.apiKey = 'new-api-key';
+mosaia.version = '2';
+mosaia.apiURL = 'https://api-staging.mosaia.ai';
+mosaia.clientId = 'new-client-id';
+mosaia.clientSecret = 'new-client-secret';
+```
+
+## Error Handling
+
+The SDK provides comprehensive error handling with standardized error responses:
+
+```typescript
+try {
+  const users = await mosaia.users.get();
+} catch (error) {
+  if (error.code === 'AUTHENTICATION_ERROR') {
+    // Handle authentication errors
+    console.error('Authentication failed:', error.message);
+  } else if (error.code === 'VALIDATION_ERROR') {
+    // Handle validation errors
+    console.error('Validation failed:', error.message);
+  } else if (error.code === 'RATE_LIMIT_ERROR') {
+    // Handle rate limiting
+    console.error('Rate limit exceeded:', error.message);
+  } else {
+    // Handle other errors
+    console.error('Unexpected error:', error.message);
+  }
+}
+```
+
+## Development
+
+### Setup
+
+```bash
+# Install dependencies
+npm install
+
+# Build the project
+npm run build
+
+# Run tests
+npm test
+
+# Generate documentation
+npm run docs
+```
+
+### Scripts
+
+- `npm run build` - Build the TypeScript project
+- `npm run test` - Run all tests
+- `npm run test:watch` - Run tests in watch mode
+- `npm run test:coverage` - Run tests with coverage
+- `npm run test:runner` - Run integration tests
+- `npm run test:all` - Run all tests with coverage
+- `npm run docs` - Generate API documentation
+- `npm run docs:build` - Build and generate documentation
+- `npm run docs:watch` - Watch for changes and regenerate documentation
+
+### CI/CD Pipeline
+
+The project includes a comprehensive GitHub Actions workflow that:
+
+1. **Builds** the TypeScript project
+2. **Generates** comprehensive TSDoc documentation
+3. **Deploys** documentation to GitHub Pages
+4. **Publishes** the package to NPM
+
+The workflow triggers on version tags (e.g., `v1.0.0`) and automatically:
+- Updates package.json version
+- Generates and deploys documentation
+- Publishes to NPM registry
 
 ## Contributing
-Want to contribute? Great!
 
-We welcome community contributions and pull requests. See [CONTRIBUTING.md][contributing] for information on how to set up a development environment and submit code.
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for contribution guidelines.
+
+### Documentation Standards
+
+When contributing, please follow the established TSDoc standards:
+
+- Use `@param` for parameter documentation
+- Use `@returns` for return value documentation
+- Use `@throws` for error conditions
+- Use `@example` for usage examples
+- Use `@template` for generic type parameters
+- Include comprehensive examples for all public APIs
 
 ## License
 
-[Apache license][license]
-
-**Free Software, Hell Yeah!**
-
-[issues]: https://github.com/mosaia-development/mosaia-node-sdk/issues
-[pr]: https://github.com/mosaia-development/mosaia-node-sdk/pulls
-[license]: https://github.com/mosaia-development/mosaia-node-sdk/blob/main/LICENSE
-[contributing]: https://github.com/mosaia-development/mosaia-node-sdk/blob/main/CONTRIBUTING.md
-[cla]: http://en.wikipedia.org/wiki/Contributor_License_Agreement
+Apache-2.0 License - see [LICENSE](./LICENSE) for details.

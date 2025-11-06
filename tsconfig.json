@@ -3,12 +3,16 @@
         "target": "es6",
         "module": "commonjs",
         "declaration": true,
+        "declarationMap": true,
         "outDir": "./dist",
         "strict": true,
         "esModuleInterop": true,
         "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true
+        "forceConsistentCasingInFileNames": true,
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "sourceMap": true
     },
     "include": ["src"],
-    "exclude": ["node_modules", "dist"]
+    "exclude": ["node_modules", "dist", "docs", "**/__tests__/**"]
 }
