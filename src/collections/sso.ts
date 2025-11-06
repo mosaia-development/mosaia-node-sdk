@@ -41,12 +41,11 @@ export default class SSO {
      * Authenticates a user using an external OAuth provider account.
      * Returns a token that can be used for subsequent API requests.
      * 
-     * @param request - SSO authentication request
-     * @param request.mosaia_user - User information
-     * @param request.mosaia_user.id - Mosaia user ID
-     * @param request.oauth_account - OAuth account information
-     * @param request.oauth_account.type - OAuth account type (e.g., 'oauth')
-     * @param request.oauth_account.provider - OAuth provider (e.g., 'google', 'github')
+     * @param request - SSO authentication request object containing:
+     *   - `mosaia_user`: User information object with `id` property
+     *   - `oauth_account`: OAuth account information object with:
+     *     - `type`: OAuth account type (e.g., 'oauth')
+     *     - `provider`: OAuth provider name (e.g., 'google', 'github')
      * @returns Promise resolving to SSO response with authentication token
      * 
      * @example

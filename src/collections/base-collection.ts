@@ -326,8 +326,8 @@ export abstract class BaseCollection<
      * cannot be undone.
      * 
      * @param id - The entity ID to delete
-     * @param params - Optional query parameters (e.g., force deletion flags)
-     * @param params.force - Force deletion even if entity has dependencies
+     * @param params - Optional query parameters object. Can include:
+     *   - `force`: Force deletion even if entity has dependencies (boolean)
      * @returns Promise that resolves when deletion is successful
      * 
      * @example

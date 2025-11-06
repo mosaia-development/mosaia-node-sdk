@@ -127,9 +127,14 @@ export default class MosaiaAuth {
      * 
      * @param email - The user's email address
      * @param password - The user's password
-     * @param clientId - The OAuth client ID for the application
      * @returns Promise that resolves to a configured Mosaia client instance
+     * 
+     * @remarks
+     * The `clientId` is automatically retrieved from the configuration.
+     * Ensure the configuration has a `clientId` set before calling this method.
+     * 
      * @throws {Error} When authentication fails or network errors occur
+     * @throws {Error} When clientId is not found in configuration
      * 
      * @example
      * ```typescript

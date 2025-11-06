@@ -1,5 +1,5 @@
 /**
- * @fileoverview Main entry point for the Mosaia Node.js SDK
+ * Main entry point for the Mosaia Node.js SDK
  * 
  * This module provides the primary interface for interacting with the Mosaia API.
  * It exports the main MosaiaClient class, all collection classes for API operations,
@@ -106,8 +106,10 @@ class MosaiaClient {
      * @param config.version - API version (defaults to '1')
      * @param config.clientId - Client ID for OAuth flows (required for OAuth)
      * @param config.clientSecret - Client secret for client credentials flow (optional)
-     * @param config.user - User ID for user-scoped operations (optional)
-     * @param config.org - Organization ID for org-scoped operations (optional)
+     * 
+     * Additional optional configuration properties:
+     * - `config.user` - User ID for user-scoped operations (optional)
+     * - `config.org` - Organization ID for org-scoped operations (optional)
      * 
      * @example
      * ```typescript
