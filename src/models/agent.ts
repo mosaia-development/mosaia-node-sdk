@@ -42,7 +42,7 @@ import { Tasks, Logs } from '../collections';
  * 
  * // Upload an agent avatar
  * const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
- * await agent.uploadImage(file);
+ * await agent.image.upload(file);
  * ```
  * 
  * @example

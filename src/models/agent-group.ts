@@ -41,7 +41,7 @@ import { Image } from '../functions/image';
  * 
  * // Add branding
  * const logo = new File(['...'], 'team-logo.png', { type: 'image/png' });
- * await supportTeam.uploadImage(logo);
+ * await supportTeam.image.upload(logo);
  * ```
  * 
  * @example
