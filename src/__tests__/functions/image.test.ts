@@ -1,6 +1,38 @@
 import { Image } from '../../functions/image';
 import { GetAppPayload, GetAgentPayload } from '../../types';
 
+// Mock File API for Node.js test environment
+class MockFile {
+  name: string;
+  size: number;
+  type: string;
+  data: string;
+
+  constructor(data: string[], name: string, options?: { type?: string }) {
+    this.data = data.join('');
+    this.name = name;
+    this.size = this.data.length;
+    this.type = options?.type || '';
+  }
+}
+
+// Mock FormData API for Node.js test environment
+class MockFormData {
+  private data: Map<string, any> = new Map();
+
+  append(key: string, value: any): void {
+    this.data.set(key, value);
+  }
+
+  get(key: string): any {
+    return this.data.get(key);
+  }
+}
+
+// Set globals
+global.File = MockFile as any;
+global.FormData = MockFormData as any;
+
 // Mock the APIClient
 jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
