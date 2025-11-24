@@ -169,7 +169,8 @@ export abstract class BaseCollection<
     // Implementation
     async get(params?: QueryParams, id?: string): Promise<BatchAPIResponse<M> | M | null> {
         try {
-            let uri = this.uri;
+            let baseUri = this.uri;
+            let uri = baseUri
             if (id) uri = `${uri}/${id}`;
             
             const response = await this.apiClient.GET<GetPayload>(uri, params);
@@ -187,14 +188,14 @@ export abstract class BaseCollection<
             // Handle array response (list of entities)
             if (Array.isArray(data)) {
                 return {
-                    data: data.map((item) => new this.ModelClass(item, uri)),
+                    data: data.map((item) => new this.ModelClass(item, baseUri)),
                     paging
                 };
             }
             
             // Handle single entity response
             if (data) {
-                return new this.ModelClass(data, uri);
+                return new this.ModelClass(data, baseUri);
             }
             
             return null;
