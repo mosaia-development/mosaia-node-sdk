@@ -64,6 +64,7 @@ describe('DriveItems', () => {
       expect(typeof driveItems.uploadFile).toBe('function');
       expect(typeof driveItems.uploadFiles).toBe('function');
       expect(typeof driveItems.getUploadStatus).toBe('function');
+      expect(typeof driveItems.markUploadFailed).toBe('function');
     });
 
     it('should initialize with correct URI and DriveItem model', () => {
@@ -80,9 +81,27 @@ describe('DriveItems', () => {
     it('should upload a single file successfully', async () => {
       const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
       const mockResponse = {
-        jobId: 'job-123',
-        message: 'File upload job created',
-        statusUrl: '/drive/drive-123/item/upload/job-123'
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'job-123',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 12,
+          started_at: new Date()
+        },
+        files: [{
+          fileId: 'file-123',
+          filename: 'test.txt',
+          presignedUrl: 'https://s3.example.com/upload',
+          mimeType: 'text/plain',
+          size: 12,
+          path: '/test.txt',
+          expiresIn: 900,
+          expiresAt: new Date(),
+          failedUrl: '/drive/drive-123/item/file-123/failed'
+        }],
+        statusUrl: '/drive/drive-123/item/upload/job-123',
+        instructions: {}
       };
 
       mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
@@ -94,14 +113,23 @@ describe('DriveItems', () => {
         expect.any(FormData)
       );
       expect(result).toEqual(mockResponse);
-      expect(result.jobId).toBe('job-123');
+      expect(result.uploadJob.id).toBe('job-123');
     });
 
     it('should upload file with path option', async () => {
       const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
       const mockResponse = {
-        jobId: 'job-456',
-        message: 'File upload job created'
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'job-456',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 12,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/job-456',
+        instructions: {}
       };
 
       mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
@@ -115,6 +143,62 @@ describe('DriveItems', () => {
       expect(result).toEqual(mockResponse);
     });
 
+    it('should upload file with relativePath option', async () => {
+      const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
+      const mockResponse = {
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'job-789',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 12,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/job-789',
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFile(mockFile, {
+        path: '/uploads',
+        relativePath: 'folder/test.txt'
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalledWith(
+        '/drive/drive-123/item',
+        expect.any(FormData)
+      );
+      expect(result.uploadJob.id).toBe('job-789');
+    });
+
+    it('should upload file with preserveStructure option', async () => {
+      const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
+      const mockResponse = {
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'job-preserve',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 12,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/job-preserve',
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFile(mockFile, {
+        preserveStructure: true
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalled();
+      expect(result.uploadJob.id).toBe('job-preserve');
+    });
+
     it('should handle upload errors', async () => {
       const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
       const error = new Error('Upload failed');
@@ -126,8 +210,17 @@ describe('DriveItems', () => {
     it('should handle response without data property', async () => {
       const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
       const mockResponse = {
-        jobId: 'job-789',
-        message: 'File upload job created'
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'job-789',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 12,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/job-789',
+        instructions: {}
       };
 
       mockAPIClient.POST.mockResolvedValue(mockResponse);
@@ -145,8 +238,17 @@ describe('DriveItems', () => {
         new File(['file2'], 'file2.txt', { type: 'text/plain' })
       ];
       const mockResponse = {
-        jobId: 'batch-job-123',
-        message: 'Batch upload job created'
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'batch-job-123',
+          status: 'PENDING',
+          total_files: 2,
+          total_size: 10,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/batch-job-123',
+        instructions: {}
       };
 
       mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
@@ -158,10 +260,117 @@ describe('DriveItems', () => {
         expect.any(FormData)
       );
       expect(result).toEqual(mockResponse);
+      expect(result.uploadJob.id).toBe('batch-job-123');
     });
 
-    it('should throw error when no files provided', async () => {
-      await expect(driveItems.uploadFiles([])).rejects.toThrow('At least one file is required for upload');
+    it('should upload files with preserveStructure option', async () => {
+      const mockFiles = [
+        new File(['file1'], 'file1.txt', { type: 'text/plain' }),
+        new File(['file2'], 'file2.txt', { type: 'text/plain' })
+      ];
+      const mockResponse = {
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'batch-preserve-123',
+          status: 'PENDING',
+          total_files: 2,
+          total_size: 10,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/batch-preserve-123',
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFiles(mockFiles, {
+        path: '/documents',
+        preserveStructure: true
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalledWith(
+        '/drive/drive-123/item',
+        expect.any(FormData)
+      );
+      expect(result.uploadJob.id).toBe('batch-preserve-123');
+    });
+
+    it('should upload files with relativePaths array', async () => {
+      const mockFiles = [
+        new File(['file1'], 'file1.txt', { type: 'text/plain' }),
+        new File(['file2'], 'file2.txt', { type: 'text/plain' })
+      ];
+      const mockResponse = {
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'batch-paths-123',
+          status: 'PENDING',
+          total_files: 2,
+          total_size: 10,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/batch-paths-123',
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFiles(mockFiles, {
+        path: '/uploads',
+        relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
+        preserveStructure: true
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalled();
+      expect(result.uploadJob.id).toBe('batch-paths-123');
+    });
+
+    it('should upload files with relativePaths as JSON string', async () => {
+      const mockFiles = [
+        new File(['file1'], 'file1.txt', { type: 'text/plain' })
+      ];
+      const mockResponse = {
+        message: 'Batch upload initiated',
+        uploadJob: {
+          id: 'batch-json-123',
+          status: 'PENDING',
+          total_files: 1,
+          total_size: 5,
+          started_at: new Date()
+        },
+        files: [],
+        statusUrl: '/drive/drive-123/item/upload/batch-json-123',
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFiles(mockFiles, {
+        relativePaths: JSON.stringify(['folder1/file1.txt'])
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalled();
+      expect(result.uploadJob.id).toBe('batch-json-123');
+    });
+
+    it('should handle metadata-only upload (no files)', async () => {
+      const mockResponse = {
+        id: 'item-123',
+        name: 'document.pdf',
+        path: '/documents'
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.uploadFiles([], {
+        path: '/documents'
+      });
+
+      // Should not throw error for empty files array
+      expect(mockAPIClient.POST).toHaveBeenCalled();
+      expect(result).toEqual(mockResponse);
     });
 
     it('should handle upload errors', async () => {
@@ -289,6 +498,97 @@ describe('DriveItems', () => {
       jest.spyOn(driveItems, 'create').mockResolvedValue(mockResponse);
 
       const result = await driveItems.create(itemData);
+
+      expect(result).toEqual(mockResponse);
+    });
+  });
+
+  describe('markUploadFailed method', () => {
+    it('should mark file upload as failed successfully', async () => {
+      const mockResponse = {
+        fileId: 'file-123',
+        status: 'FAILED',
+        upload_status: 'FAILED',
+        upload_error: 'Upload failed'
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.markUploadFailed('file-123', {
+        error: 'Upload failed'
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalledWith(
+        '/drive/drive-123/item/file-123/failed',
+        { error: 'Upload failed' }
+      );
+      expect(result).toEqual(mockResponse);
+      expect(result.upload_status).toBe('FAILED');
+    });
+
+    it('should handle error message as errorMessage property', async () => {
+      const mockResponse = {
+        fileId: 'file-123',
+        status: 'FAILED',
+        upload_status: 'FAILED',
+        upload_error: 'Network timeout'
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.markUploadFailed('file-123', {
+        errorMessage: 'Network timeout'
+      });
+
+      expect(mockAPIClient.POST).toHaveBeenCalledWith(
+        '/drive/drive-123/item/file-123/failed',
+        { errorMessage: 'Network timeout' }
+      );
+      expect(result.upload_error).toBe('Network timeout');
+    });
+
+    it('should use default error message when none provided', async () => {
+      const mockResponse = {
+        fileId: 'file-123',
+        status: 'FAILED',
+        upload_status: 'FAILED',
+        upload_error: 'Upload failed'
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+
+      const result = await driveItems.markUploadFailed('file-123');
+
+      expect(mockAPIClient.POST).toHaveBeenCalledWith(
+        '/drive/drive-123/item/file-123/failed',
+        { error: 'Upload failed' }
+      );
+      expect(result.upload_status).toBe('FAILED');
+    });
+
+    it('should throw error when file ID is missing', async () => {
+      await expect(driveItems.markUploadFailed('')).rejects.toThrow('File ID is required');
+    });
+
+    it('should handle API errors', async () => {
+      const error = new Error('File not found');
+      mockAPIClient.POST.mockRejectedValue(error);
+
+      await expect(driveItems.markUploadFailed('nonexistent-file')).rejects.toThrow('File not found');
+    });
+
+    it('should handle response without data property', async () => {
+      const mockResponse = {
+        fileId: 'file-123',
+        status: 'FAILED',
+        upload_status: 'FAILED'
+      };
+
+      mockAPIClient.POST.mockResolvedValue(mockResponse);
+
+      const result = await driveItems.markUploadFailed('file-123', {
+        error: 'Test error'
+      });
 
       expect(result).toEqual(mockResponse);
     });

@@ -76,16 +76,18 @@ export default class DriveItems extends BaseCollection<
     }
 
     /**
-     * Upload files to the drive
+     * Upload files to the drive using presigned URLs
      * 
-     * Uploads one or more files to the drive. This method supports both
-     * single file and batch file uploads. For large files (>100MB), files
-     * are processed asynchronously via multipart upload.
+     * Uploads one or more files to the drive using presigned URLs for direct S3 uploads.
+     * This method supports batch file uploads and directory uploads with structure preservation.
+     * The backend returns presigned URLs that you can use to upload files directly to S3.
      * 
-     * @param files - Array of File objects to upload
+     * @param files - Array of File objects to upload (required for file uploads)
      * @param options - Optional upload options
-     * @param options.path - Optional path within the drive (defaults to '/')
-     * @returns Promise resolving to upload job information
+     * @param options.path - Base path where files should be uploaded (defaults to '/')
+     * @param options.relativePaths - Array of relative paths for directory structure preservation
+     * @param options.preserveStructure - Boolean flag to enable/disable structure preservation (default: true if relativePaths provided)
+     * @returns Promise resolving to upload job information with presigned URLs
      * 
      * @example
      * ```typescript
@@ -97,33 +99,91 @@ export default class DriveItems extends BaseCollection<
      *   path: '/documents'
      * });
      * 
-     * console.log('Upload job ID:', result.jobId);
+     * console.log('Upload job ID:', result.uploadJob.id);
+     * // Upload each file to S3 using presignedUrl
+     * for (const fileInfo of result.files) {
+     *   await fetch(fileInfo.presignedUrl, {
+     *     method: 'PUT',
+     *     body: file
+     *   });
+     * }
      * ```
      * 
      * @example
      * ```typescript
-     * // Batch file upload
+     * // Batch file upload with directory structure
      * const files = Array.from(fileInput.files);
      * const result = await items.uploadFiles(files, {
-     *   path: '/uploads'
+     *   path: '/uploads',
+     *   relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
+     *   preserveStructure: true
      * });
      * ```
      * 
-     * @throws {Error} When upload fails or no files provided
+     * @throws {Error} When upload fails
      */
-    async uploadFiles(files: File[], options?: { path?: string }): Promise<{ jobId: string; message: string; statusUrl?: string }> {
+    async uploadFiles(
+        files: File[], 
+        options?: { 
+            path?: string;
+            relativePaths?: string[] | string;
+            preserveStructure?: boolean;
+        }
+    ): Promise<{
+        message: string;
+        uploadJob: {
+            id: string;
+            status: string;
+            total_files: number;
+            total_size: number;
+            started_at: Date;
+        };
+        files: Array<{
+            fileId: string;
+            filename: string;
+            presignedUrl: string;
+            mimeType: string;
+            size: number;
+            path: string;
+            expiresIn: number;
+            expiresAt: Date;
+            failedUrl: string;
+        }>;
+        statusUrl: string;
+        instructions: {
+            step1: string;
+            step2: string;
+            step3: string;
+            step4: string;
+        };
+    }> {
         try {
-            if (!files || files.length === 0) {
-                throw new Error('At least one file is required for upload');
+            const formData = new FormData();
+            
+            // Append files if provided
+            if (files && files.length > 0) {
+                files.forEach(file => {
+                    formData.append('files', file);
+                });
             }
 
-            const formData = new FormData();
-            files.forEach(file => {
-                formData.append('files', file);
-            });
-            
+            // Append path if provided
             if (options?.path) {
                 formData.append('path', options.path);
+            }
+
+            // Append relativePaths if provided (can be array or JSON string)
+            if (options?.relativePaths) {
+                if (Array.isArray(options.relativePaths)) {
+                    formData.append('relativePaths', JSON.stringify(options.relativePaths));
+                } else {
+                    formData.append('relativePaths', options.relativePaths);
+                }
+            }
+
+            // Append preserveStructure flag
+            if (options?.preserveStructure !== undefined) {
+                formData.append('preserveStructure', options.preserveStructure.toString());
             }
 
             const response = await this.apiClient.POST<any>(this.uri, formData);
@@ -139,13 +199,14 @@ export default class DriveItems extends BaseCollection<
     /**
      * Upload a single file to the drive
      * 
-     * Convenience method for uploading a single file. For large files (>100MB),
-     * the upload is processed asynchronously via multipart upload.
+     * Convenience method for uploading a single file using presigned URLs for direct S3 upload.
      * 
      * @param file - File object to upload
      * @param options - Optional upload options
      * @param options.path - Optional path within the drive (defaults to '/')
-     * @returns Promise resolving to upload job information
+     * @param options.relativePath - Optional relative path for the file
+     * @param options.preserveStructure - Boolean flag to enable/disable structure preservation
+     * @returns Promise resolving to upload job information with presigned URL
      * 
      * @example
      * ```typescript
@@ -153,17 +214,60 @@ export default class DriveItems extends BaseCollection<
      * const file = fileInput.files[0];
      * 
      * const result = await items.uploadFile(file, {
-     *   path: '/documents'
+     *   path: '/documents',
+     *   relativePath: 'folder/file.txt'
      * });
      * 
-     * console.log('Upload job ID:', result.jobId);
-     * console.log('Status URL:', result.statusUrl);
+     * console.log('Upload job ID:', result.uploadJob.id);
+     * // Upload file to S3 using presignedUrl
+     * const fileInfo = result.files[0];
+     * await fetch(fileInfo.presignedUrl, {
+     *   method: 'PUT',
+     *   body: file
+     * });
      * ```
      * 
      * @throws {Error} When upload fails
      */
-    async uploadFile(file: File, options?: { path?: string }): Promise<{ jobId: string; message: string; statusUrl?: string }> {
-        return this.uploadFiles([file], options);
+    async uploadFile(
+        file: File, 
+        options?: { 
+            path?: string;
+            relativePath?: string;
+            preserveStructure?: boolean;
+        }
+    ): Promise<{
+        message: string;
+        uploadJob: {
+            id: string;
+            status: string;
+            total_files: number;
+            total_size: number;
+            started_at: Date;
+        };
+        files: Array<{
+            fileId: string;
+            filename: string;
+            presignedUrl: string;
+            mimeType: string;
+            size: number;
+            path: string;
+            expiresIn: number;
+            expiresAt: Date;
+            failedUrl: string;
+        }>;
+        statusUrl: string;
+        instructions: {
+            step1: string;
+            step2: string;
+            step3: string;
+            step4: string;
+        };
+    }> {
+        return this.uploadFiles([file], {
+            ...options,
+            relativePaths: options?.relativePath ? [options.relativePath] : undefined
+        });
     }
 
     /**
@@ -179,7 +283,7 @@ export default class DriveItems extends BaseCollection<
      * const result = await items.uploadFile(file);
      * 
      * // Check upload status
-     * const status = await items.getUploadStatus(result.jobId);
+     * const status = await items.getUploadStatus(result.uploadJob.id);
      * console.log('Upload progress:', status.progress.percentage + '%');
      * console.log('Status:', status.status);
      * ```
@@ -208,6 +312,71 @@ export default class DriveItems extends BaseCollection<
     }> {
         try {
             const response = await this.apiClient.GET<any>(`${this.uri}/upload/${jobId}`);
+            return response.data || response as any;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Mark a file upload as failed
+     * 
+     * Marks a file upload as failed if the client-side upload to S3 fails.
+     * This method should be called if the upload to the presigned URL fails.
+     * 
+     * @param fileId - The file ID of the upload to mark as failed
+     * @param error - Optional error message or object describing the failure
+     * @returns Promise resolving to the file status after marking as failed
+     * 
+     * @example
+     * ```typescript
+     * try {
+     *   const result = await items.uploadFile(file);
+     *   const fileInfo = result.files[0];
+     *   
+     *   // Try to upload to S3
+     *   const uploadResponse = await fetch(fileInfo.presignedUrl, {
+     *     method: 'PUT',
+     *     body: file
+     *   });
+     *   
+     *   if (!uploadResponse.ok) {
+     *     // Mark as failed if S3 upload fails
+     *     await items.markUploadFailed(fileInfo.fileId, {
+     *       error: `Upload failed: ${uploadResponse.statusText}`
+     *     });
+     *   }
+     * } catch (error) {
+     *   // Mark as failed if there's an exception
+     *   await items.markUploadFailed(fileInfo.fileId, {
+     *     error: error.message
+     *   });
+     * }
+     * ```
+     * 
+     * @throws {Error} When file not found or API request fails
+     */
+    async markUploadFailed(
+        fileId: string, 
+        error?: { error?: string; errorMessage?: string }
+    ): Promise<{
+        fileId: string;
+        status: string;
+        upload_status: string;
+        upload_error?: string;
+    }> {
+        try {
+            if (!fileId) {
+                throw new Error('File ID is required');
+            }
+
+            const response = await this.apiClient.POST<any>(
+                `${this.uri}/${fileId}/failed`,
+                error || { error: 'Upload failed' }
+            );
             return response.data || response as any;
         } catch (error) {
             if ((error as any).message) {

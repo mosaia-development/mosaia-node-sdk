@@ -321,6 +321,42 @@ describe('APIClient', () => {
       expect(result).toEqual(mockResponse);
     });
 
+    it('should handle FormData without stringifying', async () => {
+      const formData = new FormData();
+      formData.append('file', new File(['test'], 'test.txt', { type: 'text/plain' }));
+      formData.append('path', '/documents');
+
+      const mockResponse = {
+        meta: { status: 201, message: 'Created' },
+        data: { success: true },
+        error: null
+      };
+
+      mockFetch.mockResolvedValueOnce({
+        ok: true,
+        status: 201,
+        headers: new Headers({ 'content-type': 'application/json' }),
+        json: jest.fn().mockResolvedValueOnce(mockResponse)
+      } as any);
+
+      const result = await apiClient.POST('/upload', formData);
+
+      const fetchCall = mockFetch.mock.calls[mockFetch.mock.calls.length - 1];
+      const requestOptions = fetchCall[1] as RequestInit;
+      
+      // Body should be FormData, not a string
+      expect(requestOptions?.body).toBe(formData);
+      expect(typeof requestOptions?.body).not.toBe('string');
+      
+      // Should not have Content-Type header (browser will set it with boundary)
+      if (requestOptions?.headers) {
+        const headers = requestOptions.headers as Record<string, string>;
+        expect(headers).not.toHaveProperty('Content-Type');
+      }
+      
+      expect(result).toEqual(mockResponse);
+    });
+
     it('should handle POST errors', async () => {
       const postData = { name: 'Invalid Item' };
       const errorResponse = {
