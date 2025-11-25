@@ -20,7 +20,12 @@
 - ✅ **Model Model**: Added `rerank()`, `embeddings()`, and `like()` methods (chat via model.chat getter)
 - ✅ **Search Collection**: Added universal search across agents, apps, tools, and models
 - ✅ **Drive Collection**: Added drive management with full CRUD operations
-- ✅ **DriveItems Collection**: Added file/document management with upload functionality
+- ✅ **DriveItems Collection**: Added file/document management with:
+  - ✅ Full CRUD operations for drive items
+  - ✅ Presigned URL-based file uploads (`uploadFile()`, `uploadFiles()`)
+  - ✅ Upload job status tracking (`getUploadStatus()`)
+  - ✅ Upload failure handling (`markUploadFailed()`)
+  - ✅ Directory structure preservation support
 - ✅ **Logs Collection**: Added log management with full CRUD operations
 - ✅ **Messages Collection**: Added log message management (renamed from LogMessages)
 - ✅ **Snapshots Collection**: Added log snapshot management (renamed from LogSnapshots)
@@ -194,11 +199,12 @@
 - ✅ `PUT /drive/:id` - Update drive (via collection.update())
 - ✅ `DELETE /drive/:id` - Delete drive (via collection.delete())
 - ✅ `GET /drive/:id/item` - List drive items (via `drive.items.get()`)
-- ✅ `POST /drive/:id/item` - Create drive item (via `drive.items.create()`)
+- ✅ `POST /drive/:id/item` - Create drive item or upload files with presigned URLs (via `drive.items.create()`, `drive.items.uploadFile()`, or `drive.items.uploadFiles()`)
 - ✅ `GET /drive/:id/item/:itemId` - Get drive item (via `drive.items.get()`)
 - ✅ `PUT /drive/:id/item/:itemId` - Update drive item (via `drive.items.update()`)
 - ✅ `DELETE /drive/:id/item/:itemId` - Delete drive item (via `drive.items.delete()`)
-- ✅ `POST /drive/:id/item/upload` - Upload files (via `drive.items.uploadFiles()`)
+- ✅ `GET /drive/:id/item/upload/:jobId` - Get upload job status (via `drive.items.getUploadStatus()`)
+- ✅ `POST /drive/:id/item/:fileId/failed` - Mark upload as failed (via `drive.items.markUploadFailed()`)
 - ⚠️ Nested routes: `/user/:id/drive`, `/org/:id/drive` - Can be accessed via URI parameter
 
 #### 15. **Logs** (`Logs`)
@@ -436,7 +442,7 @@
 | **Image Retrieval** | None | All Resources | ❌ Missing |
 | **Like/Fork** | Agents, Groups, Apps, Tools, Models (via model instances) | - | ✅ Complete |
 | **Search** | Universal search across resources | - | ✅ Complete |
-| **Drive Management** | Full CRUD for drives and drive items | User/Org scoped routes | ✅ Complete |
+| **Drive Management** | Full CRUD for drives and drive items, presigned URL uploads, status tracking | User/Org scoped routes | ✅ Complete |
 | **Log Management** | Full CRUD for logs, messages, and snapshots | Nested routes | ✅ Complete |
 | **Task Management** | Full CRUD for tasks and plans | Nested routes | ✅ Complete |
 | **Vector Indexes** | Full CRUD for vector indexes | Nested routes | ✅ Complete |

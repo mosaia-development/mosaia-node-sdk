@@ -254,7 +254,19 @@ export default class APIClient {
         };
 
         if (data && method !== 'GET') {
-            requestOptions.body = JSON.stringify(data);
+            // Handle FormData differently - don't stringify and let browser/Node set Content-Type with boundary
+            const isFormData = 
+                (typeof FormData !== 'undefined' && data instanceof FormData) ||
+                (data && typeof data === 'object' && 'append' in data && typeof (data as any).append === 'function');
+            
+            if (isFormData) {
+                requestOptions.body = data as any;
+                // Remove Content-Type header to let fetch API set it with boundary for multipart/form-data
+                const { 'Content-Type': _, ...headersWithoutContentType } = this.headers;
+                requestOptions.headers = headersWithoutContentType;
+            } else {
+                requestOptions.body = JSON.stringify(data);
+            }
         }        
 
         // Log request if verbose mode is enabled
