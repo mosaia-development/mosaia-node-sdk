@@ -77,6 +77,26 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  })),
+  AccessPolicies: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  UserPermissions: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  Meters: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  Wallets: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
   }))
 }));
 
@@ -273,6 +293,82 @@ describe('User Model', () => {
       user.image;
 
       expect(Image).toHaveBeenCalledWith('/user/123/profile', '');
+    });
+  });
+
+  describe('policies getter', () => {
+    it('should return AccessPolicies instance', () => {
+      const { AccessPolicies } = require('../../collections');
+      
+      const policies = user.policies;
+
+      expect(AccessPolicies).toHaveBeenCalled();
+      expect(policies).toBeDefined();
+    });
+
+    it('should create AccessPolicies with correct URI', () => {
+      const { AccessPolicies } = require('../../collections');
+      
+      user.policies;
+
+      expect(AccessPolicies).toHaveBeenCalledWith('/user/123');
+    });
+  });
+
+  describe('permissions getter', () => {
+    it('should return UserPermissions instance', () => {
+      const { UserPermissions } = require('../../collections');
+      
+      const permissions = user.permissions;
+
+      expect(UserPermissions).toHaveBeenCalled();
+      expect(permissions).toBeDefined();
+    });
+
+    it('should create UserPermissions with correct URI', () => {
+      const { UserPermissions } = require('../../collections');
+      
+      user.permissions;
+
+      expect(UserPermissions).toHaveBeenCalledWith('/user/123');
+    });
+  });
+
+  describe('meters getter', () => {
+    it('should return Meters instance', () => {
+      const { Meters } = require('../../collections');
+      
+      const meters = user.meters;
+
+      expect(Meters).toHaveBeenCalled();
+      expect(meters).toBeDefined();
+    });
+
+    it('should create Meters with correct URI', () => {
+      const { Meters } = require('../../collections');
+      
+      user.meters;
+
+      expect(Meters).toHaveBeenCalledWith('/user/123');
+    });
+  });
+
+  describe('wallets getter', () => {
+    it('should return Wallets instance', () => {
+      const { Wallets } = require('../../collections');
+      
+      const wallets = user.wallets;
+
+      expect(Wallets).toHaveBeenCalled();
+      expect(wallets).toBeDefined();
+    });
+
+    it('should create Wallets with correct URI', () => {
+      const { Wallets } = require('../../collections');
+      
+      user.wallets;
+
+      expect(Wallets).toHaveBeenCalledWith('/user/123');
     });
   });
 

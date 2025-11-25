@@ -8,6 +8,7 @@
  * ## Available Models
  * 
  * - **AppConnector**: Application connector management
+ * - **AppWebhook**: Application webhook configuration management
  * - **BaseModel**: Abstract base class providing common functionality for all models
  * - **User**: User account and profile management
  * - **App**: Application container and configuration management
@@ -15,7 +16,6 @@
  * - **Agent**: AI agent configuration and operations
  * - **Organization**: Organization structure and settings
  * - **OrgUser**: User-organization relationship management
- * - **AppBot**: Application-bot integration management
  * - **AgentGroup**: AI agent collection and coordination
  * - **Tool**: External integration and utility management
  * - **Client**: OAuth client application management
@@ -23,7 +23,7 @@
  * 
  * @example
  * ```typescript
- * import { User, Agent, Organization, Tool, AppConnector } from './models';
+ * import { User, Agent, Organization, Tool, AppConnector, AppWebhook } from './models';
  * 
  * // Create model instances
  * const user = new User({
@@ -59,12 +59,12 @@ import Session from './session';
 import User from './user';
 import Organization from './organization';
 import OrgUser from './org-user';
-import AppBot from './app-bot';
 import AgentGroup from './agent-group';
 import Tool from './tool';
 import Client from './client';
 import Model from './model';
 import AppConnector from './app-connector';
+import AppWebhook from './app-webhook';
 import Drive from './drive';
 import DriveItem from './drive-item';
 import Log from './log';
@@ -73,6 +73,11 @@ import Snapshot from './snapshot';
 import VectorIndex from './vector-index';
 import Task from './task';
 import Plan from './plan';
+import AccessPolicy from './access-policy';
+import OrgPermission from './org-permission';
+import UserPermission from './user-permission';
+import Meter from './meter';
+import Wallet from './wallet';
 
 /**
  * Base model class providing common functionality for all models
@@ -123,10 +128,10 @@ export { OrgUser };
 export { AppConnector };
 
 /**
- * App Bot model for managing application-bot integrations
- * @see {@link AppBot}
+ * App Webhook model for managing application webhook configurations
+ * @see {@link AppWebhook}
  */
-export { AppBot };
+export { AppWebhook };
 
 /**
  * Agent Group model for managing AI agent collections
@@ -199,3 +204,33 @@ export { Task };
  * @see {@link Plan}
  */
 export { Plan };
+
+/**
+ * AccessPolicy model for managing IAM access control policies
+ * @see {@link AccessPolicy}
+ */
+export { AccessPolicy };
+
+/**
+ * OrgPermission model for managing organization-level permissions
+ * @see {@link OrgPermission}
+ */
+export { OrgPermission };
+
+/**
+ * UserPermission model for managing user-level permissions
+ * @see {@link UserPermission}
+ */
+export { UserPermission };
+
+/**
+ * Meter model for managing usage meters and billing
+ * @see {@link Meter}
+ */
+export { Meter };
+
+/**
+ * Wallet model for managing digital wallets and payment balances
+ * @see {@link Wallet}
+ */
+export { Wallet };

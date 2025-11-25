@@ -17,7 +17,6 @@
 import {
     Apps,
     Tools,
-    AppBots,
     Users,
     Organizations,
     OrgUsers,
@@ -25,6 +24,8 @@ import {
     AgentGroups,
     Models,
     Clients,
+    AppConnectors,
+    AppWebhooks,
     MosaiaAuth,
     Search,
     Drives,
@@ -568,6 +569,63 @@ class MosaiaClient {
     }
 
     /**
+     * Access to App Connectors API
+     * 
+     * Manage app connectors, which are specialized integrations that connect
+     * applications with AI agents or agent groups through webhook-style interactions.
+     * 
+     * @returns {AppConnectors} App Connectors API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all app connectors
+     * const connectors = await mosaia.appConnectors.get();
+     * 
+     * // Get a specific app connector
+     * const connector = await mosaia.appConnectors.get({}, 'connector-id');
+     * 
+     * // Create a new app connector
+     * const newConnector = await mosaia.appConnectors.create({
+     *   app: 'app-id',
+     *   response_url: 'https://myapp.com/webhook',
+     *   agent: 'agent-id'
+     * });
+     * ```
+     */
+    get appConnectors() {
+        return new AppConnectors();
+    }
+
+    /**
+     * Access to App Webhooks API
+     * 
+     * Manage app webhooks, which enable external systems to receive notifications
+     * about application events through webhook-style interactions.
+     * 
+     * @returns {AppWebhooks} App Webhooks API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all app webhooks
+     * const webhooks = await mosaia.appWebhooks.get();
+     * 
+     * // Get a specific app webhook
+     * const webhook = await mosaia.appWebhooks.get({}, 'webhook-id');
+     * 
+     * // Create a new app webhook
+     * const newWebhook = await mosaia.appWebhooks.create({
+     *   app: 'app-id',
+     *   url: 'https://myapp.com/webhook',
+     *   events: ['REQUEST'],
+     *   secret: 'webhook-secret-key'
+     * });
+     * ```
+     */
+    get appWebhooks() {
+        return new AppWebhooks();
+    }
+
+    /**
      * Access to Search API
      * 
      * Perform universal search across multiple resource types (agents, apps, tools, models)
@@ -867,7 +925,8 @@ export { OrgUsers } from './collections';
 export { AgentGroups } from './collections';
 export { Models } from './collections';
 export { Clients } from './collections';
-export { AppBots } from './collections';
+export { AppConnectors } from './collections';
+export { AppWebhooks } from './collections';
 export { MosaiaAuth } from './collections';
 export { Search } from './collections';
 export { Drives } from './collections';
@@ -888,7 +947,8 @@ export { Agent } from './models';
 export { App } from './models';
 export { Organization } from './models';
 export { OrgUser } from './models';
-export { AppBot } from './models';
+export { AppConnector } from './models';
+export { AppWebhook } from './models';
 export { AgentGroup } from './models';
 export { Tool } from './models';
 export { Client } from './models';

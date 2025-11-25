@@ -7,7 +7,11 @@ import {
     AgentGroups,
     Models,
     OrgUsers,
-    Tools
+    Tools,
+    AccessPolicies,
+    OrgPermissions,
+    Meters,
+    Wallets
 } from '../collections';
 import { Image } from '../functions/image';
 
@@ -432,5 +436,87 @@ export default class Organization extends BaseModel<OrganizationInterface> {
      */
     get image(): Image {
         return new Image(`${this.getUri()}/profile`, (this.data as any).image || '');
+    }
+
+    /**
+     * Get the organization's access policies
+     * 
+     * This getter provides access to the organization's access control policies
+     * through the AccessPolicies collection. It enables management of IAM policies
+     * that define fine-grained permissions for resources and actions.
+     * 
+     * @returns AccessPolicies collection for managing access control policies
+     * 
+     * @example
+     * ```typescript
+     * const policies = await org.policies.get();
+     * const policy = await org.policies.create({
+     *   name: 'Admin Access',
+     *   effect: 'allow',
+     *   actions: ['users:read', 'users:write'],
+     *   resources: ['users', 'organizations']
+     * });
+     * ```
+     */
+    get policies(): AccessPolicies {
+        return new AccessPolicies(this.getUri());
+    }
+
+    /**
+     * Get the organization's permissions
+     * 
+     * This getter provides access to the organization's permissions through
+     * the OrgPermissions collection. It enables management of permissions that
+     * associate users, agents, or clients with access policies.
+     * 
+     * @returns OrgPermissions collection for managing organization permissions
+     * 
+     * @example
+     * ```typescript
+     * const permissions = await org.permissions.get();
+     * const permission = await org.permissions.create({
+     *   user: 'user-id',
+     *   policy: 'policy-id'
+     * });
+     * ```
+     */
+    get permissions(): OrgPermissions {
+        return new OrgPermissions(this.getUri());
+    }
+
+    /**
+     * Get the organization's usage meters
+     * 
+     * This getter provides access to the organization's usage meters through
+     * the Meters collection. It enables tracking of service consumption and
+     * associated costs for billing purposes.
+     * 
+     * @returns Meters collection for managing usage meters
+     * 
+     * @example
+     * ```typescript
+     * const meters = await org.meters.get();
+     * ```
+     */
+    get meters(): Meters {
+        return new Meters(this.getUri());
+    }
+
+    /**
+     * Get the organization's wallet
+     * 
+     * This getter provides access to the organization's wallet through
+     * the Wallets collection. It enables management of balances, payment
+     * methods, and financial transactions.
+     * 
+     * @returns Wallets collection for managing the organization wallet
+     * 
+     * @example
+     * ```typescript
+     * const wallet = await org.wallets.get();
+     * ```
+     */
+    get wallets(): Wallets {
+        return new Wallets(this.getUri());
     }
 }

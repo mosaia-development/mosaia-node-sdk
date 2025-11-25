@@ -16,8 +16,6 @@ import {
   AgentGroupInterface,
   ModelInterface,
   ClientInterface,
-  AppBotInterface,
-  DehydratedAppBotInterface,
   WalletInterface,
   MeterInterface,
   AccessPolicyInterface,
@@ -488,47 +486,6 @@ describe('OAuthErrorResponse', () => {
 
     expect(errorResponse.error).toBe('invalid_grant');
     expect(errorResponse.error_description).toBe('The authorization code has expired');
-  });
-});
-
-describe('AppBotInterface', () => {
-  it('should have app bot properties', () => {
-    const appBot: AppBotInterface = {
-      id: 'app-bot-123',
-      app: 'app-456',
-      response_url: 'https://webhook.example.com/callback',
-      org: 'org-789',
-      agent: 'agent-123',
-      agent_group: 'group-456',
-      api_key: 'bot-api-key',
-      api_key_partial: 'bot-***-key',
-      active: true,
-      tags: ['webhook', 'integration'],
-      extensors: {
-        webhook_secret: 'secret-123'
-      },
-      external_id: 'ext-app-bot-123'
-    };
-
-    expect(appBot.app).toBe('app-456');
-    expect(appBot.response_url).toBe('https://webhook.example.com/callback');
-    expect(appBot.api_key_partial).toBe('bot-***-key');
-  });
-});
-
-describe('DehydratedAppBotInterface', () => {
-  it('should have dehydrated app bot properties', () => {
-    const dehydratedAppBot: DehydratedAppBotInterface = {
-      id: 'app-bot-123',
-      app: 'app-456', // This is now a string instead of AppInterface
-      response_url: 'https://webhook.example.com/callback',
-      org: 'org-789',
-      agent: 'agent-123',
-      active: true
-    };
-
-    expect(dehydratedAppBot.app).toBe('app-456');
-    expect(typeof dehydratedAppBot.app).toBe('string');
   });
 });
 

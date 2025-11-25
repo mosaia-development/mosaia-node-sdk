@@ -2,8 +2,7 @@ import { AppInterface, GetAppPayload } from '../types';
 import { BaseModel } from './base';
 import {
     AppConnectors,
-    AppBots,
-    // AppWebhooks
+    AppWebhooks
 } from '../collections';
 import { Image } from '../functions/image';
 
@@ -148,17 +147,35 @@ export default class App extends BaseModel<AppInterface> {
     }
 
     /**
-     * Get the app's bots
+     * Get the app's webhooks
      * 
-     * DEPRECATED: This collection is deprecated and will be removed in a future version.
-     * Please use the App Connectors collection instead for app-related functionality.
+     * This getter provides access to the app's webhooks through
+     * the AppWebhooks collection. It enables management of all webhooks within
+     * the app for receiving notifications about application events.
      * 
-     * This getter provides access to the app's bots through
-     * the AppBots collection. It enables management of all bots within
-     * the app.
+     * @returns AppWebhooks collection for managing webhooks
+     * 
+     * @example
+     * List webhooks:
+     * ```typescript
+     * const webhooks = await app.webhooks.get();
+     * webhooks.forEach(webhook => {
+     *   console.log(`Webhook URL: ${webhook.url}`);
+     * });
+     * ```
+     * 
+     * @example
+     * Create webhook:
+     * ```typescript
+     * const webhook = await app.webhooks.create({
+     *   url: 'https://myapp.com/webhook',
+     *   events: ['REQUEST'],
+     *   secret: 'webhook-secret-key'
+     * });
+     * ```
      */
-    get bots(): AppBots {
-        return new AppBots(this.getUri());
+    get webhooks(): AppWebhooks {
+        return new AppWebhooks(this.getUri());
     }
 
     /**
