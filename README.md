@@ -406,12 +406,85 @@ const newDrive = await mosaia.drives.create({
   description: 'Storage drive for files'
 });
 
+// Update drive
+await mosaia.drives.update('drive-id', {
+  name: 'Updated Drive Name'
+});
+
+// Delete drive
+await mosaia.drives.delete('drive-id');
+
 // Access drive items
 const items = await drive.items.get();
 
-// Upload files
-const files = [file1, file2];
-const uploadResult = await drive.items.uploadFiles(files);
+// Get specific drive item
+const item = await drive.items.get({}, 'item-id');
+
+// Create metadata-only drive item
+const newItem = await drive.items.create({
+  name: 'document.pdf',
+  path: '/documents',
+  size: 1024
+});
+
+// Upload single file with presigned URL
+const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+const file = fileInput.files[0];
+
+const uploadResult = await drive.items.uploadFile(file, {
+  path: '/documents',
+  relativePath: 'folder/file.txt'
+});
+
+// Upload to S3 using presigned URL
+const fileInfo = uploadResult.files[0];
+const uploadResponse = await fetch(fileInfo.presignedUrl, {
+  method: 'PUT',
+  body: file,
+  headers: {
+    'Content-Type': fileInfo.mimeType
+  }
+});
+
+if (!uploadResponse.ok) {
+  // Mark upload as failed if S3 upload fails
+  await drive.items.markUploadFailed(fileInfo.fileId, {
+    error: `Upload failed: ${uploadResponse.statusText}`
+  });
+}
+
+// Check upload job status
+const status = await drive.items.getUploadStatus(uploadResult.uploadJob.id);
+console.log('Upload progress:', status.progress.percentage + '%');
+
+// Batch file upload with directory structure preservation
+const files = Array.from(fileInput.files);
+const batchResult = await drive.items.uploadFiles(files, {
+  path: '/uploads',
+  relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
+  preserveStructure: true
+});
+
+// Upload all files to S3
+for (let i = 0; i < files.length; i++) {
+  const fileInfo = batchResult.files[i];
+  await fetch(fileInfo.presignedUrl, {
+    method: 'PUT',
+    body: files[i],
+    headers: {
+      'Content-Type': fileInfo.mimeType
+    }
+  });
+}
+
+// Update drive item metadata
+await drive.items.update('item-id', {
+  name: 'updated-name.pdf',
+  description: 'Updated description'
+});
+
+// Delete drive item
+await drive.items.delete('item-id');
 ```
 
 ### Logs and Messages
