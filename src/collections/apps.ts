@@ -16,8 +16,6 @@ import { BaseCollection } from './base-collection';
  * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve applications with filtering and pagination
  * - Create new applications with custom configurations
- * - Update existing application settings and properties
- * - Delete applications
  * - Manage application integrations and external connections
  * - Handle application-specific metadata and configurations
  * 
@@ -42,6 +40,9 @@ import { BaseCollection } from './base-collection';
  *   external_app_url: 'https://support.example.com',
  *   external_api_key: 'external-api-key'
  * });
+ * 
+ * // Like an app (via model instance)
+ * await app.like();
  * ```
  * 
  * @extends BaseCollection<AppInterface, App, GetAppsPayload, GetAppPayload>

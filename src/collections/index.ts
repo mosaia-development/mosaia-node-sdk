@@ -16,23 +16,28 @@
  * - **Tools**: Manage external integrations and utilities
  * - **Clients**: Manage OAuth client applications
  * - **Models**: Manage AI model configurations
- * - **AppBots**: Handle application-bot integrations
  * - **AgentGroups**: Manage collections of AI agents
+ * - **AppConnectors**: Handle application-connector integrations
+ * - **AppWebhooks**: Handle application webhook configurations
  * 
  * @example
  * ```typescript
- * import { Apps, Tools, Agents, Auth } from './collections';
+ * import { Apps, Tools, Agents, Auth, AppConnectors, AppWebhooks } from './collections';
  * 
  * // Create collection clients
  * const apps = new Apps();
  * const tools = new Tools();
  * const agents = new Agents();
+ * const appConnectors = new AppConnectors();
+ * const appWebhooks = new AppWebhooks();
  * const auth = new MosaiaAuth();
  * 
  * // Use the clients
  * const allApps = await apps.get();
  * const allTools = await tools.get();
  * const allAgents = await agents.get();
+ * const allAppConnectors = await appConnectors.get();
+ * const allAppWebhooks = await appWebhooks.get();
  * ```
  */
 
@@ -45,8 +50,26 @@ import OrgUsers from './org-users';
 import Tools from './tools';
 import Clients from './clients';
 import Models from './models';
-import AppBots from './app-bots';
 import AgentGroups from './agent-groups';
+import AppConnectors from './app-connectors';
+import AppWebhooks from './app-webhooks';
+import Search from './search';
+import Drives from './drives';
+import DriveItems from './drive-items';
+import Logs from './logs';
+import Messages from './messages';
+import Snapshots from './snapshots';
+import Scopes from './scopes';
+import SSO from './sso';
+import Notifications from './notifications';
+import VectorIndexes from './vector-indexes';
+import Tasks from './tasks';
+import Plans from './plans';
+import AccessPolicies from './access-policies';
+import OrgPermissions from './org-permissions';
+import UserPermissions from './user-permissions';
+import Meters from './meters';
+import Wallets from './wallets';
 
 /**
  * Agents collection client for managing AI agents
@@ -139,14 +162,24 @@ export { Clients };
 export { Models };
 
 /**
- * App Bots collection client for managing application-bot integrations
+ * App Connectors collection client for managing application-connector integrations
  * 
- * Provides CRUD operations for app bots, which are specialized integrations
- * that connect applications with AI agents through webhook-style interactions.
+ * Provides CRUD operations for application connectors, which allow connecting
+ * external applications with AI agents or agent groups through webhook-style interactions.
  * 
- * @see {@link AppBots}
+ * @see {@link AppConnectors}
  */
-export { AppBots };
+export { AppConnectors };
+
+/**
+ * App Webhooks collection client for managing application webhook configurations
+ * 
+ * Provides CRUD operations for application webhooks, which enable external systems
+ * to receive notifications about application events through webhook-style interactions.
+ * 
+ * @see {@link AppWebhooks}
+ */
+export { AppWebhooks };
 
 /**
  * Agent Groups collection client for managing agent collections
@@ -157,3 +190,171 @@ export { AppBots };
  * @see {@link AgentGroups}
  */
 export { AgentGroups };
+
+/**
+ * Search collection client for universal search across resources
+ * 
+ * Provides search functionality across multiple resource types (agents, apps,
+ * tools, models) simultaneously with a single query.
+ * 
+ * @see {@link Search}
+ */
+export { Search };
+
+/**
+ * Drives collection client for managing file storage drives
+ * 
+ * Provides CRUD operations for drives, which are containers for organizing
+ * and managing files and documents, scoped to users or organizations.
+ * 
+ * @see {@link Drives}
+ */
+export { Drives };
+
+/**
+ * Drive Items collection client for managing files and documents in drives
+ * 
+ * Provides CRUD operations for drive items (files and documents) within drives,
+ * including file uploads and metadata management.
+ * 
+ * @see {@link DriveItems}
+ */
+export { DriveItems };
+
+/**
+ * Logs collection client for managing agent logs
+ * 
+ * Provides CRUD operations for agent logs, which track conversations
+ * and interactions with agents.
+ * 
+ * @see {@link Logs}
+ */
+export { Logs };
+
+/**
+ * Messages collection client for managing log messages
+ * 
+ * Provides CRUD operations for log messages, which are associated
+ * with specific logs.
+ * 
+ * @see {@link Messages}
+ */
+export { Messages };
+
+/**
+ * Snapshots collection client for managing log snapshots
+ * 
+ * Provides CRUD operations for log snapshots, which are point-in-time
+ * exports of log data.
+ * 
+ * @see {@link Snapshots}
+ */
+export { Snapshots };
+
+/**
+ * Scopes collection client for managing permission scopes
+ * 
+ * Provides access to permission scopes available in the platform.
+ * 
+ * @see {@link Scopes}
+ */
+export { Scopes };
+
+/**
+ * SSO collection client for single sign-on authentication
+ * 
+ * Provides SSO authentication functionality for OAuth providers.
+ * 
+ * @see {@link SSO}
+ */
+export { SSO };
+
+/**
+ * Notifications collection client for sending email notifications
+ * 
+ * Provides email notification functionality for sending emails
+ * through the platform.
+ * 
+ * @see {@link Notifications}
+ */
+export { Notifications };
+
+
+/**
+ * Vector Indexes collection client for managing vector indexes
+ * 
+ * Provides CRUD operations for vector indexes, which enable
+ * semantic search and similarity matching.
+ * 
+ * @see {@link VectorIndexes}
+ */
+export { VectorIndexes };
+
+/**
+ * Tasks collection client for managing tasks
+ * 
+ * Provides CRUD operations for tasks in the platform.
+ * 
+ * @see {@link Tasks}
+ */
+export { Tasks };
+
+/**
+ * Plans collection client for managing task plans
+ * 
+ * Provides CRUD operations for task plans, which are associated
+ * with specific tasks.
+ * 
+ * @see {@link Plans}
+ */
+export { Plans };
+
+/**
+ * Access Policies collection client for managing IAM access control policies
+ * 
+ * Provides CRUD operations for access control policies, which define
+ * fine-grained permissions for resources and actions.
+ * 
+ * @see {@link AccessPolicies}
+ */
+export { AccessPolicies };
+
+/**
+ * Org Permissions collection client for managing organization-level permissions
+ * 
+ * Provides CRUD operations for organization-level permissions, which associate
+ * users, agents, or clients with access policies within an organization.
+ * 
+ * @see {@link OrgPermissions}
+ */
+export { OrgPermissions };
+
+/**
+ * User Permissions collection client for managing user-level permissions
+ * 
+ * Provides CRUD operations for user-level permissions, which associate
+ * clients with access policies for a specific user.
+ * 
+ * @see {@link UserPermissions}
+ */
+export { UserPermissions };
+
+/**
+ * Meters collection client for managing usage meters and billing
+ * 
+ * Provides CRUD operations for usage meters, which track service consumption
+ * and associated costs for billing and resource management purposes.
+ * 
+ * @see {@link Meters}
+ */
+export { Meters };
+
+/**
+ * Wallets collection client for managing digital wallets and payment balances
+ * 
+ * Provides CRUD operations for digital wallets, which manage user and organization
+ * balances, payment methods, and financial transactions.
+ * 
+ * @see {@link Wallets}
+ */
+export { Wallets };

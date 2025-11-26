@@ -1,5 +1,5 @@
 /**
- * @fileoverview Main entry point for the Mosaia Node.js SDK
+ * Main entry point for the Mosaia Node.js SDK
  * 
  * This module provides the primary interface for interacting with the Mosaia API.
  * It exports the main MosaiaClient class, all collection classes for API operations,
@@ -17,7 +17,6 @@
 import {
     Apps,
     Tools,
-    AppBots,
     Users,
     Organizations,
     OrgUsers,
@@ -25,7 +24,18 @@ import {
     AgentGroups,
     Models,
     Clients,
-    MosaiaAuth
+    AppConnectors,
+    AppWebhooks,
+    MosaiaAuth,
+    Search,
+    Drives,
+    Logs,
+    Scopes,
+    SSO,
+    Notifications,
+    Snapshots,
+    VectorIndexes,
+    Tasks
 } from './collections';
 import { Session } from './models';
 import APIClient from './utils/api-client';
@@ -97,8 +107,10 @@ class MosaiaClient {
      * @param config.version - API version (defaults to '1')
      * @param config.clientId - Client ID for OAuth flows (required for OAuth)
      * @param config.clientSecret - Client secret for client credentials flow (optional)
-     * @param config.user - User ID for user-scoped operations (optional)
-     * @param config.org - Organization ID for org-scoped operations (optional)
+     * 
+     * Additional optional configuration properties:
+     * - `config.user` - User ID for user-scoped operations (optional)
+     * - `config.org` - Organization ID for org-scoped operations (optional)
      * 
      * @example
      * ```typescript
@@ -557,6 +569,267 @@ class MosaiaClient {
     }
 
     /**
+     * Access to App Connectors API
+     * 
+     * Manage app connectors, which are specialized integrations that connect
+     * applications with AI agents or agent groups through webhook-style interactions.
+     * 
+     * @returns {AppConnectors} App Connectors API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all app connectors
+     * const connectors = await mosaia.appConnectors.get();
+     * 
+     * // Get a specific app connector
+     * const connector = await mosaia.appConnectors.get({}, 'connector-id');
+     * 
+     * // Create a new app connector
+     * const newConnector = await mosaia.appConnectors.create({
+     *   app: 'app-id',
+     *   response_url: 'https://myapp.com/webhook',
+     *   agent: 'agent-id'
+     * });
+     * ```
+     */
+    get appConnectors() {
+        return new AppConnectors();
+    }
+
+    /**
+     * Access to App Webhooks API
+     * 
+     * Manage app webhooks, which enable external systems to receive notifications
+     * about application events through webhook-style interactions.
+     * 
+     * @returns {AppWebhooks} App Webhooks API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all app webhooks
+     * const webhooks = await mosaia.appWebhooks.get();
+     * 
+     * // Get a specific app webhook
+     * const webhook = await mosaia.appWebhooks.get({}, 'webhook-id');
+     * 
+     * // Create a new app webhook
+     * const newWebhook = await mosaia.appWebhooks.create({
+     *   app: 'app-id',
+     *   url: 'https://myapp.com/webhook',
+     *   events: ['REQUEST'],
+     *   secret: 'webhook-secret-key'
+     * });
+     * ```
+     */
+    get appWebhooks() {
+        return new AppWebhooks();
+    }
+
+    /**
+     * Access to Search API
+     * 
+     * Perform universal search across multiple resource types (agents, apps, tools, models)
+     * with a single query.
+     * 
+     * @returns {Search} Search API client
+     * 
+     * @example
+     * ```typescript
+     * // Search across all resource types
+     * const results = await mosaia.search.query({
+     *   q: 'customer support',
+     *   limit: 10
+     * });
+     * 
+     * // Access results by type
+     * console.log('Agents:', results.data.agents);
+     * console.log('Apps:', results.data.apps);
+     * console.log('Tools:', results.data.tools);
+     * console.log('Models:', results.data.models);
+     * ```
+     * 
+     * @example
+     * ```typescript
+     * // Search specific resource types
+     * const results = await mosaia.search.query({
+     *   q: 'AI assistant',
+     *   search_types: ['agent', 'app'],
+     *   limit: 5
+     * });
+     * ```
+     */
+    get search() {
+        return new Search();
+    }
+
+    /**
+     * Access to Drives API
+     * 
+     * Manage drives, which are containers for organizing and managing files
+     * and documents, scoped to users or organizations.
+     * 
+     * @returns {Drives} Drives API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all drives
+     * const drives = await mosaia.drives.get();
+     * 
+     * // Get a specific drive
+     * const drive = await mosaia.drives.get({}, 'drive-id');
+     * 
+     * // Create a new drive
+     * const newDrive = await mosaia.drives.create({
+     *   name: 'My Documents',
+     *   description: 'Personal document storage'
+     * });
+     * 
+     * // Access drive items
+     * const items = await drive.items.get();
+     * ```
+     */
+    get drives() {
+        return new Drives();
+    }
+
+    /**
+     * Access to Logs API
+     * 
+     * Manage agent logs, which track conversations and interactions with agents.
+     * 
+     * @returns {Logs} Logs API client
+     * 
+     * @example
+     * ```typescript
+     * // Get all logs
+     * const logs = await mosaia.logs.get();
+     * 
+     * // Get a specific log
+     * const log = await mosaia.logs.get({}, 'log-id');
+     * 
+     * // Access log messages and snapshots
+     * const messages = await log.messages.get();
+     * const snapshots = await log.snapshots.get();
+     * ```
+     */
+    get logs() {
+        return new Logs();
+    }
+
+    /**
+     * Access to Scopes API
+     * 
+     * Get permission scopes available in the platform.
+     * 
+     * @returns {Scopes} Scopes API client
+     * 
+     * @example
+     * ```typescript
+     * const result = await mosaia.scopes.get();
+     * console.log('Available scopes:', result.data.scopes);
+     * ```
+     */
+    get scopes() {
+        return new Scopes();
+    }
+
+    /**
+     * Access to SSO API
+     * 
+     * Authenticate using single sign-on with OAuth providers.
+     * 
+     * @returns {SSO} SSO API client
+     * 
+     * @example
+     * ```typescript
+     * const result = await mosaia.sso.authenticate({
+     *   mosaia_user: { id: 'user-id' },
+     *   oauth_account: {
+     *     type: 'oauth',
+     *     provider: 'google'
+     *   }
+     * });
+     * ```
+     */
+    get sso() {
+        return new SSO();
+    }
+
+    /**
+     * Access to Notifications API
+     * 
+     * Send email notifications through the platform.
+     * 
+     * @returns {Notifications} Notifications API client
+     * 
+     * @example
+     * ```typescript
+     * await mosaia.notifications.sendEmail({
+     *   to: 'user@example.com',
+     *   subject: 'Welcome!',
+     *   text: 'Welcome to our platform!'
+     * });
+     * ```
+     */
+    get notifications() {
+        return new Notifications();
+    }
+
+    /**
+     * Access to Snapshots API
+     * 
+     * Manage snapshots, which are point-in-time captures of data.
+     * 
+     * @returns {Snapshots} Snapshots API client
+     * 
+     * @example
+     * ```typescript
+     * const snapshots = await mosaia.snapshots.get();
+     * ```
+     */
+    get snapshots() {
+        return new Snapshots();
+    }
+
+    /**
+     * Access to Vector Indexes API
+     * 
+     * Manage vector indexes for semantic search and similarity matching.
+     * 
+     * @returns {VectorIndexes} Vector Indexes API client
+     * 
+     * @example
+     * ```typescript
+     * const indexes = await mosaia.vectorIndexes.get();
+     * ```
+     */
+    get vectorIndexes() {
+        return new VectorIndexes();
+    }
+
+    /**
+     * Access to Tasks API
+     * 
+     * Manage tasks in the platform.
+     * 
+     * @returns {Tasks} Tasks API client
+     * 
+     * @example
+     * ```typescript
+     * const tasks = await mosaia.tasks.get();
+     * 
+     * // Get a specific task
+     * const task = await mosaia.tasks.get({}, 'task-id');
+     * 
+     * // Access task plans
+     * const plans = await task.plans.get();
+     * ```
+     */
+    get tasks() {
+        return new Tasks();
+    }
+
+    /**
      * Creates a new OAuth instance for handling OAuth2 Authorization Code flow with PKCE
      * 
      * This method creates an OAuth client that supports the PKCE (Proof Key for Code Exchange)
@@ -652,8 +925,21 @@ export { OrgUsers } from './collections';
 export { AgentGroups } from './collections';
 export { Models } from './collections';
 export { Clients } from './collections';
-export { AppBots } from './collections';
+export { AppConnectors } from './collections';
+export { AppWebhooks } from './collections';
 export { MosaiaAuth } from './collections';
+export { Search } from './collections';
+export { Drives } from './collections';
+export { DriveItems } from './collections';
+export { Logs } from './collections';
+export { Messages } from './collections';
+export { Snapshots } from './collections';
+export { Scopes } from './collections';
+export { SSO } from './collections';
+export { Notifications } from './collections';
+export { VectorIndexes } from './collections';
+export { Tasks } from './collections';
+export { Plans } from './collections';
 
 // Model Classes
 export { User } from './models';
@@ -661,13 +947,22 @@ export { Agent } from './models';
 export { App } from './models';
 export { Organization } from './models';
 export { OrgUser } from './models';
-export { AppBot } from './models';
+export { AppConnector } from './models';
+export { AppWebhook } from './models';
 export { AgentGroup } from './models';
 export { Tool } from './models';
 export { Client } from './models';
 export { Model } from './models';
 export { Session } from './models';
 export { BaseModel } from './models';
+export { Drive } from './models';
+export { DriveItem } from './models';
+export { Log } from './models';
+export { Message } from './models';
+export { Snapshot } from './models';
+export { VectorIndex } from './models';
+export { Task } from './models';
+export { Plan } from './models';
 
 // Auth Classes
 export { OAuth } from './auth/oauth';

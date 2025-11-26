@@ -1,0 +1,213 @@
+#!/bin/bash
+
+# Deploy versioned documentation to GitHub Pages
+# Usage: ./deploy-docs.sh <version> <docs-dir> <branch>
+
+set -e
+
+VERSION="$1"
+DOCS_DIR="$2"
+BRANCH="${3:-gh-pages}"
+
+if [ -z "$VERSION" ] || [ -z "$DOCS_DIR" ]; then
+    echo "Usage: $0 <version> <docs-dir> [branch]"
+    exit 1
+fi
+
+echo "🚀 Deploying documentation for version: $VERSION"
+echo "📁 Source directory: $DOCS_DIR"
+echo "🌿 Target branch: $BRANCH"
+
+# Checkout gh-pages branch
+git fetch origin "$BRANCH:$BRANCH" || true
+git checkout "$BRANCH" || git checkout -b "$BRANCH"
+
+# Create versioned directory
+VERSION_DIR="v$VERSION"
+mkdir -p "$VERSION_DIR"
+
+# Copy documentation files
+echo "📋 Copying documentation files to $VERSION_DIR/"
+cp -r "$DOCS_DIR"/* "$VERSION_DIR/"
+
+# Generate or update index.html
+echo "📝 Generating index page..."
+cat > index.html << 'INDEX_EOF'
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mosaia Node.js SDK Documentation</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+        }
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+        .section {
+            margin: 30px 0;
+        }
+        .section h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.5em;
+            border-bottom: 2px solid #667eea;
+            padding-bottom: 8px;
+        }
+        .version-list {
+            list-style: none;
+        }
+        .version-item {
+            margin: 10px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        .version-item:hover {
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+        }
+        .version-item a {
+            text-decoration: none;
+            color: #667eea;
+            font-weight: 600;
+            font-size: 1.1em;
+            display: block;
+        }
+        .version-item a:hover {
+            color: #764ba2;
+        }
+        .version-meta {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8em;
+            font-weight: 600;
+            margin-left: 10px;
+        }
+        .badge-latest {
+            background: #28a745;
+            color: white;
+        }
+        .badge-dev {
+            background: #ffc107;
+            color: #333;
+        }
+        .links {
+            margin-top: 30px;
+            padding-top: 30px;
+            border-top: 1px solid #e0e0e0;
+        }
+        .links a {
+            display: inline-block;
+            margin: 5px 10px 5px 0;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            transition: background 0.2s;
+        }
+        .links a:hover {
+            background: #764ba2;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e0e0e0;
+            color: #666;
+            font-size: 0.9em;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Mosaia Node.js SDK</h1>
+        <p class="subtitle">TypeScript SDK Documentation</p>
+        
+        <div class="section">
+            <h2>📚 Available Versions</h2>
+            <ul class="version-list" id="version-list">
+                <li class="version-item">
+                    <a href="./development/">Development (Latest)</a>
+                    <span class="version-meta">Latest development build - may be unstable</span>
+                    <span class="badge badge-dev">DEV</span>
+                </li>
+INDEX_EOF
+
+# Find all version directories and add them to the list
+for dir in v*/; do
+    if [ -d "$dir" ]; then
+        ver=$(basename "$dir" | sed 's/^v//')
+        echo "                <li class=\"version-item\">" >> index.html
+        echo "                    <a href=\"./$dir\">Version $ver</a>" >> index.html
+        echo "                    <span class=\"version-meta\">Stable release</span>" >> index.html
+        echo "                    <span class=\"badge badge-latest\">v$ver</span>" >> index.html
+        echo "                </li>" >> index.html
+    fi
+done
+
+cat >> index.html << 'INDEX_EOF'
+            </ul>
+        </div>
+        
+        <div class="links">
+            <a href="https://github.com/mosaia-development/mosaia-node-sdk">GitHub Repository</a>
+            <a href="https://www.npmjs.com/package/@mosaia/mosaia-node-sdk">NPM Package</a>
+        </div>
+        
+        <div class="footer">
+            <p>Documentation is automatically generated from source code using TypeDoc.</p>
+            <p>Select a version above to view its documentation.</p>
+        </div>
+    </div>
+</body>
+</html>
+INDEX_EOF
+
+echo "✅ Index page generated with all versions"
+
+# Stage changes
+git add "$VERSION_DIR" index.html
+
+# Commit
+git config user.name "github-actions[bot]"
+git config user.email "github-actions[bot]@users.noreply.github.com"
+git commit -m "docs: Deploy documentation for version $VERSION" || echo "No changes to commit"
+
+# Push
+git push origin "$BRANCH"
+
+echo "✅ Documentation deployed successfully!"
+

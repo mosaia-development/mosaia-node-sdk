@@ -31,9 +31,12 @@ jest.mock('../../models/base', () => ({
       return payload;
     });
     
-    // Set properties from data
+    // Set properties from data (skip getters)
     Object.keys(data).forEach(key => {
-      this[key] = data[key];
+      const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+      if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
+        this[key] = data[key];
+      }
     });
   })
 }));
@@ -64,6 +67,33 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  })),
+  AccessPolicies: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  OrgPermissions: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  Meters: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  Wallets: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  }))
+}));
+
+// Mock the Image class
+jest.mock('../../functions/image', () => ({
+  Image: jest.fn().mockImplementation(() => ({
+    upload: jest.fn()
   }))
 }));
 
@@ -257,6 +287,125 @@ describe('Organization Model', () => {
       });
 
       expect(inactiveOrg.isActive()).toBe(false);
+    });
+
+    describe('image getter', () => {
+      it('should return Image instance', () => {
+        const { Image } = require('../../functions/image');
+        
+        const image = organization.image;
+
+        expect(Image).toHaveBeenCalled();
+        expect(image).toBeDefined();
+      });
+
+      it('should create Image with correct URI for profile', () => {
+        const { Image } = require('../../functions/image');
+        
+        organization.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', expect.anything());
+      });
+
+      it('should pass image URL from data if available', () => {
+        const orgData: Partial<OrganizationInterface> = {
+          id: '123',
+          name: 'Test Org',
+          image: 'https://example.com/logo.png'
+        };
+        const orgWithImage = new Organization(orgData);
+        // Clear previous calls
+        const { Image } = require('../../functions/image');
+        (Image as jest.Mock).mockClear();
+        
+        orgWithImage.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', 'https://example.com/logo.png');
+      });
+
+      it('should pass empty string if image URL not available', () => {
+        const { Image } = require('../../functions/image');
+        
+        organization.image;
+
+        expect(Image).toHaveBeenCalledWith('/org/123/profile', '');
+      });
+    });
+
+    describe('policies getter', () => {
+      it('should return AccessPolicies instance', () => {
+        const { AccessPolicies } = require('../../collections');
+        
+        const policies = organization.policies;
+
+        expect(AccessPolicies).toHaveBeenCalled();
+        expect(policies).toBeDefined();
+      });
+
+      it('should create AccessPolicies with correct URI', () => {
+        const { AccessPolicies } = require('../../collections');
+        
+        organization.policies;
+
+        expect(AccessPolicies).toHaveBeenCalledWith('/org/123');
+      });
+    });
+
+    describe('permissions getter', () => {
+      it('should return OrgPermissions instance', () => {
+        const { OrgPermissions } = require('../../collections');
+        
+        const permissions = organization.permissions;
+
+        expect(OrgPermissions).toHaveBeenCalled();
+        expect(permissions).toBeDefined();
+      });
+
+      it('should create OrgPermissions with correct URI', () => {
+        const { OrgPermissions } = require('../../collections');
+        
+        organization.permissions;
+
+        expect(OrgPermissions).toHaveBeenCalledWith('/org/123');
+      });
+    });
+
+    describe('meters getter', () => {
+      it('should return Meters instance', () => {
+        const { Meters } = require('../../collections');
+        
+        const meters = organization.meters;
+
+        expect(Meters).toHaveBeenCalled();
+        expect(meters).toBeDefined();
+      });
+
+      it('should create Meters with correct URI', () => {
+        const { Meters } = require('../../collections');
+        
+        organization.meters;
+
+        expect(Meters).toHaveBeenCalledWith('/org/123');
+      });
+    });
+
+    describe('wallets getter', () => {
+      it('should return Wallets instance', () => {
+        const { Wallets } = require('../../collections');
+        
+        const wallets = organization.wallets;
+
+        expect(Wallets).toHaveBeenCalled();
+        expect(wallets).toBeDefined();
+      });
+
+      it('should create Wallets with correct URI', () => {
+        const { Wallets } = require('../../collections');
+        
+        organization.wallets;
+
+        expect(Wallets).toHaveBeenCalledWith('/org/123');
+      });
     });
   });
 });

@@ -169,7 +169,8 @@ export abstract class BaseCollection<
     // Implementation
     async get(params?: QueryParams, id?: string): Promise<BatchAPIResponse<M> | M | null> {
         try {
-            let uri = this.uri;
+            let baseUri = this.uri;
+            let uri = baseUri
             if (id) uri = `${uri}/${id}`;
             
             const response = await this.apiClient.GET<GetPayload>(uri, params);
@@ -187,14 +188,14 @@ export abstract class BaseCollection<
             // Handle array response (list of entities)
             if (Array.isArray(data)) {
                 return {
-                    data: data.map((item) => new this.ModelClass(item, uri)),
+                    data: data.map((item) => new this.ModelClass(item, baseUri)),
                     paging
                 };
             }
             
             // Handle single entity response
             if (data) {
-                return new this.ModelClass(data, uri);
+                return new this.ModelClass(data, baseUri);
             }
             
             return null;
@@ -256,6 +257,102 @@ export abstract class BaseCollection<
             const { data } = response;
             
             return new this.ModelClass(data);
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Update an existing entity
+     * 
+     * This method updates an existing entity in the system. Only the fields
+     * provided in the update data will be updated.
+     * 
+     * @param id - The entity ID to update
+     * @param updates - Partial entity data for the update (only provided fields will be updated)
+     * @param params - Optional query parameters for the request
+     * @returns Promise resolving to the updated model instance
+     * 
+     * @example
+     * Update user's email:
+     * ```typescript
+     * const updatedUser = await users.update('user-id', {
+     *   email: 'newemail@example.com'
+     * });
+     * ```
+     * 
+     * @example
+     * Update multiple fields:
+     * ```typescript
+     * const updatedAgent = await agents.update('agent-id', {
+     *   name: 'Updated Agent Name',
+     *   shortDescription: 'Updated description',
+     *   active: false
+     * });
+     * ```
+     * 
+     * @throws {Error} When API request fails or response is invalid
+     * @throws {Error} When entity ID is not provided
+     */
+    async update(id: string, updates: Partial<T>, params?: QueryParams): Promise<M> {
+        try {
+            if (!id) {
+                throw new Error('Entity ID is required for update');
+            }
+
+            const response = await this.apiClient.PUT<CreatePayload>(`${this.uri}/${id}`, updates, params);
+
+            // Handle the case where response might be undefined or null
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+            const { data } = response;
+            
+            return new this.ModelClass(data, `${this.uri}/${id}`);
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
+
+    /**
+     * Delete an entity
+     * 
+     * This method permanently deletes an entity from the system. This action
+     * cannot be undone.
+     * 
+     * @param id - The entity ID to delete
+     * @param params - Optional query parameters object. Can include:
+     *   - `force`: Force deletion even if entity has dependencies (boolean)
+     * @returns Promise that resolves when deletion is successful
+     * 
+     * @example
+     * Basic deletion:
+     * ```typescript
+     * await users.delete('user-id');
+     * ```
+     * 
+     * @example
+     * Force delete:
+     * ```typescript
+     * await organizations.delete('org-id', { force: true });
+     * ```
+     * 
+     * @throws {Error} When API request fails or entity not found
+     * @throws {Error} When entity ID is not provided
+     */
+    async delete(id: string, params?: QueryParams): Promise<void> {
+        try {
+            if (!id) {
+                throw new Error('Entity ID is required for deletion');
+            }
+
+            await this.apiClient.DELETE<void>(`${this.uri}/${id}`, params);
         } catch (error) {
             if ((error as any).message) {
                 throw new Error(String((error as any).message || 'Unknown error'));

@@ -1,7 +1,7 @@
 import {
     ModelInterface,
     GetModelsPayload,
-    GetModelPayload,
+    GetModelPayload
 } from '../types';
 import { Model } from '../models';
 import { BaseCollection } from './base-collection';
@@ -16,8 +16,6 @@ import { BaseCollection } from './base-collection';
  * This class inherits from BaseCollection and provides the following functionality:
  * - Retrieve AI models with filtering and pagination
  * - Create new model configurations
- * - Update existing model settings and properties
- * - Delete models
  * - Manage model providers and configurations
  * - Handle model-specific parameters and metadata
  * 
@@ -42,6 +40,24 @@ import { BaseCollection } from './base-collection';
  *   model_id: 'gpt-4',
  *   max_tokens: 4000,
  *   temperature: 0.7
+ * });
+ * 
+ * // Chat completion with a model (via model instance)
+ * const chatResponse = await model.chat.completions.create({
+ *   messages: [
+ *     { role: 'user', content: 'Hello!' }
+ *   ]
+ * });
+ * 
+ * // Rerank documents (via model instance)
+ * const rerankResponse = await model.rerank({
+ *   query: 'What is AI?',
+ *   documents: ['Document 1...', 'Document 2...']
+ * });
+ * 
+ * // Generate embeddings (via model instance)
+ * const embeddingResponse = await model.embeddings({
+ *   input: 'Text to embed'
  * });
  * ```
  * 

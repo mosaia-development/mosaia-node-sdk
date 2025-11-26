@@ -41,64 +41,131 @@ jobs:
       - name: Build project
         run: npm run build
 
-      # 7. Generate TSDoc documentation
+      # 7. Run tests with coverage
+      - name: Run tests with coverage
+        id: test-run
+        run: |
+          echo "Running test suite with coverage..."
+          echo "Test command: npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json --testTimeout=30000"
+          
+          # Run tests with coverage and JSON output, with increased timeout
+          npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json --testTimeout=30000
+          
+          # Check if tests failed
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully!"
+            echo "📊 Coverage report generated"
+            echo "📋 Test results saved to test-results.json"
+          else
+            echo "❌ Some tests failed!"
+            echo "📊 Coverage report may be incomplete due to test failures"
+            echo "📋 Test results saved to test-results.json for analysis"
+            exit 1
+          fi
+          
+          echo "Tests completed"
+
+      # 8. Generate TSDoc documentation
       - name: Generate TSDoc documentation
         run: |
           echo "Generating TSDoc documentation..."
           npm run docs
           echo "Documentation generated successfully"
+          
+          # Verify that TypeDoc generated the index.html file
+          if [ ! -f "docs/index.html" ]; then
+            echo "❌ Error: TypeDoc did not generate docs/index.html"
+            exit 1
+          fi
+          echo "✅ TypeDoc documentation generated successfully in docs/ folder"
 
-      # 7.5. Create documentation index
-      - name: Create documentation index
+      # 9. Checkout gh-pages branch to preserve existing versions
+      - name: Checkout gh-pages branch
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      # 9.1. Initialize gh-pages if it doesn't exist
+      - name: Initialize gh-pages if needed
+        if: failure()
         run: |
-          echo "Creating documentation index..."
-          cat > docs/index.html << 'EOF'
-          <!DOCTYPE html>
-          <html lang="en">
-          <head>
-              <meta charset="UTF-8">
-              <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <title>Mosaia Node.js SDK Documentation</title>
-              <style>
-                  body { font-family: Arial, sans-serif; margin: 40px; line-height: 1.6; }
-                  .container { max-width: 800px; margin: 0 auto; }
-                  h1 { color: #333; border-bottom: 2px solid #007acc; padding-bottom: 10px; }
-                  .version { background: #f0f0f0; padding: 10px; border-radius: 5px; margin: 20px 0; }
-                  .links { margin: 20px 0; }
-                  .links a { display: inline-block; margin: 5px 10px 5px 0; padding: 10px 15px; background: #007acc; color: white; text-decoration: none; border-radius: 5px; }
-                  .links a:hover { background: #005a9e; }
-              </style>
-          </head>
-          <body>
-              <div class="container">
-                  <h1>Mosaia Node.js SDK Documentation</h1>
-                  <div class="version">
-                      <strong>Version:</strong> ${{ env.version }}
-                  </div>
-                  <p>Welcome to the Mosaia Node.js SDK documentation. This SDK provides comprehensive access to the Mosaia platform through a unified TypeScript interface.</p>
-                  <div class="links">
-                      <a href="./modules.html">API Reference</a>
-                      <a href="https://github.com/mosaia-development/mosaia-node-sdk">GitHub Repository</a>
-                      <a href="https://www.npmjs.com/package/@mosaia/mosaia-node-sdk">NPM Package</a>
-                  </div>
-                  <p>The documentation is automatically generated from the source code using TypeDoc. For the most up-to-date information, please refer to the GitHub repository.</p>
-              </div>
-          </body>
-          </html>
-          EOF
-          echo "Documentation index created successfully"
+          mkdir -p gh-pages
+          cd gh-pages
+          git init
+          git checkout -b gh-pages || true
+          echo "✅ Initialized gh-pages directory"
 
-      # 9. Deploy documentation to GitHub Pages
+      # 10. Prepare versioned documentation
+      - name: Prepare versioned documentation
+        run: |
+          VERSION=${{ env.version }}
+          echo "Preparing documentation for version: $VERSION"
+          
+          # Create versioned directory in gh-pages workspace
+          VERSION_DIR="gh-pages/v$VERSION"
+          mkdir -p "$VERSION_DIR"
+          
+          # Copy documentation files
+          cp -r docs/* "$VERSION_DIR/"
+          
+          echo "✅ Versioned documentation prepared in $VERSION_DIR/"
+
+      # 11. Generate documentation index page
+      - name: Generate documentation index
+        run: |
+          chmod +x scripts/generate-docs-index.sh
+          ./scripts/generate-docs-index.sh gh-pages
+
+      # 12. Deploy versioned documentation to GitHub Pages
+      # Note: GitHub Pages must be configured to serve from the 'gh-pages' branch
+      # Settings > Pages > Source: Deploy from a branch > Branch: gh-pages / (root)
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
-        if: github.ref == 'refs/tags/v*'
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./docs
+          publish_dir: ./gh-pages
           publish_branch: gh-pages
-          force_orphan: true
+          keep_files: false
+          force_orphan: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'
 
-      # 10. Publish to NPM
+      # 13. Update README with latest version link
+      - name: Checkout main branch for README update
+        uses: actions/checkout@v3
+        with:
+          ref: main
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: main-branch
+
+      - name: Update README with latest version
+        run: |
+          VERSION=${{ env.version }}
+          echo "Updating README.md with version $VERSION"
+          
+          cd main-branch
+          
+          # Update the README.md to replace LATEST_VERSION placeholder with actual version
+          sed -i "s|vLATEST_VERSION|v$VERSION|g" README.md
+          sed -i "s|Latest version: \*\*vLATEST_VERSION\*\*|Latest version: **v$VERSION**|g" README.md
+          
+          # Check if README was modified
+          if git diff --quiet README.md; then
+            echo "No changes to README.md"
+          else
+            echo "README.md updated with version $VERSION"
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add README.md
+            git commit -m "docs: Update README with latest release version v$VERSION"
+            git push origin main || echo "Failed to push README update"
+          fi
+
+      # 14. Publish to NPM
       - name: Publish to NPM
         run: npm publish --access public
         env:

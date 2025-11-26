@@ -6,7 +6,9 @@ TypeScript SDK for constructing 3rd party app integrations on the Mosaia platfor
 
 - **Full TypeScript Support**: Complete type definitions for all API endpoints
 - **Authentication**: OAuth 2.0 and API key authentication with PKCE support
-- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, and more
+- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, App Connectors, App Webhooks, Models, Logs, Tasks, Drives, Search, IAM (Access Policies, Permissions), Billing (Meters, Wallets), and more
+- **Full CRUD Operations**: Complete Create, Read, Update, Delete support for all resources
+- **Instance Methods**: Model-specific operations like like, fork, chat completions, rerank, embeddings
 - **Built-in Documentation**: Comprehensive TSDoc/JSDoc support with automatic TypeDoc generation
 - **Error Handling**: Standardized error responses and validation
 - **Configuration Management**: Centralized configuration with singleton pattern and environment support
@@ -45,7 +47,9 @@ const oauth = mosaia.oauth({
 
 ### Online Documentation
 
-📚 **Live Documentation**: [View the latest API documentation](https://mosaia-development.github.io/mosaia-node-sdk/)
+📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/vLATEST_VERSION/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
+
+> **Note**: Latest version: **vLATEST_VERSION**. The link is automatically updated on each release.
 
 The documentation is automatically generated and deployed on every version release, providing:
 - **Complete API Reference**: All classes, methods, and types with detailed descriptions
@@ -194,6 +198,34 @@ const newUser = await mosaia.users.create({
   username: 'johndoe',
   description: 'Software Engineer'
 });
+
+// Upload user profile image
+const file = new File(['image data'], 'profile.jpg', { type: 'image/jpeg' });
+const updatedUser = await user.image.upload(file);
+
+// Access user IAM policies
+const policies = await user.policies.get();
+
+// Access user permissions
+const permissions = await user.permissions.get();
+const newPermission = await user.permissions.create({
+  client: 'client-id',
+  policy: 'policy-id'
+});
+
+// Access user usage meters
+const meters = await user.meters.get();
+const newMeter = await user.meters.create({
+  type: 'api_calls',
+  value: 500
+});
+
+// Access user wallets
+const wallet = await user.wallets.get();
+const newWallet = await user.wallets.create({
+  balance: 100.00,
+  currency: 'USD'
+});
 ```
 
 ### Organizations
@@ -214,6 +246,181 @@ const newOrg = await mosaia.organizations.create({
   shortDescription: 'A great organization',
   longDescription: 'Detailed description of the organization',
   image: 'https://example.com/logo.png'
+});
+
+// Upload organization profile image
+const file = new File(['image data'], 'logo.png', { type: 'image/png' });
+const updatedOrg = await org.image.upload(file);
+
+// Access organization IAM policies
+const policies = await org.policies.get();
+const newPolicy = await org.policies.create({
+  name: 'Admin Access',
+  effect: 'allow',
+  actions: ['*'],
+  resources: ['*']
+});
+
+// Access organization permissions
+const permissions = await org.permissions.get();
+const newPermission = await org.permissions.create({
+  user: 'user-id',
+  policy: 'policy-id'
+});
+
+// Access organization usage meters
+const meters = await org.meters.get();
+const newMeter = await org.meters.create({
+  type: 'api_calls',
+  value: 1000,
+  metadata: { service: 'ai-completion' }
+});
+
+// Access organization wallets
+const wallet = await org.wallets.get();
+const newWallet = await org.wallets.create({
+  balance: 1000.00,
+  currency: 'USD'
+});
+```
+
+### IAM & Access Control
+
+#### Access Policies
+
+```typescript
+// Get all access policies
+const policies = await mosaia.accessPolicies.get({
+  effect: 'allow',
+  active: true
+});
+
+// Get access policy by ID
+const policy = await mosaia.accessPolicies.get({}, 'policy-id');
+
+// Create access policy
+const newPolicy = await mosaia.accessPolicies.create({
+  name: 'Admin Access',
+  effect: 'allow',
+  actions: ['users:read', 'users:write', 'organizations:read'],
+  resources: ['users', 'organizations'],
+  conditions: {
+    time: { between: ['09:00', '17:00'] }
+  }
+});
+
+// Access via organization
+const orgPolicies = await org.policies.get();
+```
+
+#### Organization Permissions
+
+```typescript
+// Get all organization permissions
+const permissions = await mosaia.orgPermissions.get({
+  org: 'org-id',
+  user: 'user-id'
+});
+
+// Get permission by ID
+const permission = await mosaia.orgPermissions.get({}, 'permission-id');
+
+// Create organization permission
+const newPermission = await mosaia.orgPermissions.create({
+  org: 'org-id',
+  user: 'user-id',
+  policy: 'policy-id'
+});
+
+// Or via organization instance
+const orgPermissions = await org.permissions.get();
+const newOrgPermission = await org.permissions.create({
+  user: 'user-id',
+  policy: 'policy-id'
+});
+```
+
+#### User Permissions
+
+```typescript
+// Get all user permissions
+const permissions = await user.permissions.get();
+
+// Create user permission
+const newPermission = await user.permissions.create({
+  client: 'client-id',
+  policy: 'policy-id'
+});
+```
+
+### Billing & Usage
+
+#### Usage Meters
+
+```typescript
+// Get all usage meters
+const meters = await mosaia.meters.get({
+  type: 'api_calls',
+  org: 'org-id'
+});
+
+// Get meter by ID
+const meter = await mosaia.meters.get({}, 'meter-id');
+
+// Create usage meter
+const newMeter = await mosaia.meters.create({
+  org: 'org-id',
+  type: 'api_calls',
+  value: 1000,
+  metadata: {
+    service: 'ai-completion',
+    model: 'gpt-4'
+  }
+});
+
+// Access via organization
+const orgMeters = await org.meters.get();
+const newOrgMeter = await org.meters.create({
+  type: 'storage',
+  value: 5000
+});
+
+// Access via user
+const userMeters = await user.meters.get();
+const newUserMeter = await user.meters.create({
+  type: 'api_calls',
+  value: 500
+});
+```
+
+#### Wallets
+
+```typescript
+// Get wallet
+const wallet = await mosaia.wallets.get({
+  org: 'org-id'
+});
+
+// Create wallet
+const newWallet = await mosaia.wallets.create({
+  org: 'org-id',
+  balance: 1000.00,
+  currency: 'USD',
+  external_id: 'stripe_customer_123'
+});
+
+// Access via organization
+const orgWallet = await org.wallets.get();
+const newOrgWallet = await org.wallets.create({
+  balance: 5000.00,
+  currency: 'USD'
+});
+
+// Access via user
+const userWallet = await user.wallets.get();
+const newUserWallet = await user.wallets.create({
+  balance: 100.00,
+  currency: 'USD'
 });
 ```
 
@@ -241,11 +448,29 @@ const newAgent = await mosaia.agents.create({
   tags: ['support', 'ai']
 });
 
-// Chat completion with agent
-const completion = await mosaia.agents.chatCompletion('agent-id', {
-  model: 'gpt-4',
+// Chat with agent using model instance
+const response = await agent.chat.completions.create({
   messages: [{ role: 'user', content: 'Hello, how can you help me?' }]
 });
+
+// Like agent
+await agent.like();
+
+// Fork agent
+const forkedAgent = await agent.fork();
+
+// Upload agent image
+const file = new File(['image data'], 'agent-avatar.png', { type: 'image/png' });
+const updatedAgent = await agent.image.upload(file);
+
+// Access agent tasks
+const tasks = await agent.tasks.get();
+const newTask = await agent.tasks.create({ name: 'Task name' });
+
+// Access agent logs
+const logs = await agent.logs.get();
+const log = await agent.logs.get({}, 'log-id');
+const messages = await log.messages.get();
 ```
 
 ### Agent Groups
@@ -265,11 +490,17 @@ const newGroup = await mosaia.agentGroups.create({
   tags: ['support', 'multi-agent']
 });
 
-// Chat completion with agent group
-const completion = await mosaia.agentGroups.chatCompletion('group-id', {
-  model: 'gpt-4',
+// Chat with agent group using model instance
+const response = await group.chat.completions.create({
   messages: [{ role: 'user', content: 'I need help with my account' }]
 });
+
+// Like agent group
+await group.like();
+
+// Upload group image
+const file = new File(['image data'], 'group-logo.png', { type: 'image/png' });
+const updatedGroup = await group.image.upload(file);
 ```
 
 ### Tools
@@ -301,6 +532,13 @@ const newTool = await mosaia.tools.create({
   sourceUrl: 'https://github.com/example/tool',
   tags: ['api', 'integration']
 });
+
+// Like tool
+await tool.like();
+
+// Upload tool image
+const file = new File(['image data'], 'tool-icon.png', { type: 'image/png' });
+const updatedTool = await tool.image.upload(file);
 ```
 
 ### Apps
@@ -328,6 +566,270 @@ const newApp = await mosaia.apps.create({
   tags: ['webhook', 'integration'],
   keywords: ['api', 'automation']
 });
+
+// Like app
+await app.like();
+
+// Upload app image
+const file = new File(['image data'], 'app-logo.png', { type: 'image/png' });
+const updatedApp = await app.image.upload(file);
+
+// Access app connectors
+const connectors = await app.connectors.get();
+const newConnector = await app.connectors.create({
+  response_url: 'https://myapp.com/webhook',
+  agent: 'agent-id'
+});
+
+// Access app webhooks
+const webhooks = await app.webhooks.get();
+const newWebhook = await app.webhooks.create({
+  url: 'https://myapp.com/webhook',
+  events: ['REQUEST'],
+  secret: 'webhook-secret-key'
+});
+```
+
+### App Connectors
+
+```typescript
+// Get all app connectors
+const connectors = await mosaia.appConnectors.get({
+  app: 'app-id',
+  active: true
+});
+
+// Get app connector by ID
+const connector = await mosaia.appConnectors.get({}, 'connector-id');
+
+// Create app connector
+const newConnector = await mosaia.appConnectors.create({
+  app: 'app-id',
+  response_url: 'https://myapp.com/webhook',
+  agent: 'agent-id',
+  agent_group: 'group-id',
+  client: 'client-id',
+  tags: ['integration', 'webhook']
+});
+```
+
+### App Webhooks
+
+```typescript
+// Get all app webhooks
+const webhooks = await mosaia.appWebhooks.get({
+  app: 'app-id',
+  active: true
+});
+
+// Get app webhook by ID
+const webhook = await mosaia.appWebhooks.get({}, 'webhook-id');
+
+// Create app webhook
+const newWebhook = await mosaia.appWebhooks.create({
+  app: 'app-id',
+  url: 'https://myapp.com/webhook',
+  events: ['REQUEST'],
+  secret: 'webhook-secret-key',
+  active: true,
+  external_id: 'ext-webhook-123',
+  extensors: {
+    environment: 'production',
+    team: 'engineering'
+  }
+});
+```
+
+### Search
+
+```typescript
+// Universal search across multiple resource types
+const results = await mosaia.search.query({
+  q: 'search query',
+  types: ['agent', 'app', 'tool', 'model'],
+  limit: 20
+});
+```
+
+### Drives and Files
+
+```typescript
+// Get all drives
+const drives = await mosaia.drives.get();
+
+// Get drive by ID
+const drive = await mosaia.drives.get({}, 'drive-id');
+
+// Create drive
+const newDrive = await mosaia.drives.create({
+  name: 'My Drive',
+  description: 'Storage drive for files'
+});
+
+// Update drive
+await mosaia.drives.update('drive-id', {
+  name: 'Updated Drive Name'
+});
+
+// Delete drive
+await mosaia.drives.delete('drive-id');
+
+// Access drive items
+const items = await drive.items.get();
+
+// Get specific drive item
+const item = await drive.items.get({}, 'item-id');
+
+// Create metadata-only drive item
+const newItem = await drive.items.create({
+  name: 'document.pdf',
+  path: '/documents',
+  size: 1024
+});
+
+// Upload single file with presigned URL
+const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+const file = fileInput.files[0];
+
+const uploadResult = await drive.items.uploadFile(file, {
+  path: '/documents',
+  relativePath: 'folder/file.txt'
+});
+
+// Upload to S3 using presigned URL
+const fileInfo = uploadResult.files[0];
+const uploadResponse = await fetch(fileInfo.presignedUrl, {
+  method: 'PUT',
+  body: file,
+  headers: {
+    'Content-Type': fileInfo.mimeType
+  }
+});
+
+if (!uploadResponse.ok) {
+  // Mark upload as failed if S3 upload fails
+  await drive.items.markUploadFailed(fileInfo.fileId, {
+    error: `Upload failed: ${uploadResponse.statusText}`
+  });
+}
+
+// Check upload job status
+const status = await drive.items.getUploadStatus(uploadResult.uploadJob.id);
+console.log('Upload progress:', status.progress.percentage + '%');
+
+// Batch file upload with directory structure preservation
+const files = Array.from(fileInput.files);
+const batchResult = await drive.items.uploadFiles(files, {
+  path: '/uploads',
+  relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
+  preserveStructure: true
+});
+
+// Upload all files to S3
+for (let i = 0; i < files.length; i++) {
+  const fileInfo = batchResult.files[i];
+  await fetch(fileInfo.presignedUrl, {
+    method: 'PUT',
+    body: files[i],
+    headers: {
+      'Content-Type': fileInfo.mimeType
+    }
+  });
+}
+
+// Update drive item metadata
+await drive.items.update('item-id', {
+  name: 'updated-name.pdf',
+  description: 'Updated description'
+});
+
+// Delete drive item
+await drive.items.delete('item-id');
+```
+
+### Logs and Messages
+
+```typescript
+// Get all logs
+const logs = await mosaia.logs.get();
+
+// Get log by ID
+const log = await mosaia.logs.get({}, 'log-id');
+
+// Access log messages
+const messages = await log.messages.get();
+
+// Create log message
+const newMessage = await log.messages.create({
+  log: 'log-id',
+  role: 'user',
+  content: 'Message content'
+});
+
+// Access log snapshots
+const snapshots = await log.snapshots.get();
+```
+
+### Tasks and Plans
+
+```typescript
+// Get all tasks
+const tasks = await mosaia.tasks.get();
+
+// Get task by ID
+const task = await mosaia.tasks.get({}, 'task-id');
+
+// Create task
+const newTask = await mosaia.tasks.create({
+  name: 'Task name',
+  description: 'Task description'
+});
+
+// Access task plans
+const plans = await task.plans.get();
+
+// Create task plan
+const newPlan = await task.plans.create({
+  task: 'task-id',
+  name: 'Plan name',
+  description: 'Plan description'
+});
+```
+
+### Vector Indexes
+
+```typescript
+// Get all vector indexes
+const indexes = await mosaia.vectorIndexes.get();
+
+// Get vector index by ID
+const index = await mosaia.vectorIndexes.get({}, 'index-id');
+
+// Create vector index
+const newIndex = await mosaia.vectorIndexes.create({
+  name: 'My Index',
+  description: 'Vector index for semantic search'
+});
+```
+
+### Scopes, SSO, and Notifications
+
+```typescript
+// Get permission scopes
+const scopes = await mosaia.scopes.get();
+
+// SSO authentication
+const ssoResult = await mosaia.sso.authenticate({
+  provider: 'google',
+  token: 'oauth-token'
+});
+
+// Send email notification
+const notification = await mosaia.notifications.sendEmail({
+  to: 'user@example.com',
+  subject: 'Welcome',
+  body: 'Welcome to Mosaia!'
+});
 ```
 
 ### Models
@@ -352,6 +854,25 @@ const newModel = await mosaia.models.create({
   temperature: 0.7,
   tags: ['custom', 'gpt-4']
 });
+
+// Chat completion with model
+const response = await model.chat.completions.create({
+  messages: [{ role: 'user', content: 'Hello!' }]
+});
+
+// Rerank documents
+const rerankResult = await model.rerank({
+  query: 'search query',
+  documents: ['doc1', 'doc2', 'doc3']
+});
+
+// Generate embeddings
+const embeddings = await model.embeddings({
+  input: ['text to embed']
+});
+
+// Like model
+await model.like();
 ```
 
 ## Configuration

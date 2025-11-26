@@ -39,6 +39,15 @@ import { BaseCollection } from './base-collection';
  *   short_description: 'A group of AI agents for customer support',
  *   agents: ['agent-1', 'agent-2']
  * });
+ * 
+ * // Chat completion with a group (via model instance)
+ * const groupInstance = await agentGroups.get({}, 'group-id');
+ * const response = await groupInstance.chat.completions.create({
+ *   messages: [
+ *     { role: 'user', content: 'Hello, how can you help me?' }
+ *   ],
+ *   temperature: 0.7
+ * });
  * ```
  * 
  * @extends BaseCollection<AgentGroupInterface, AgentGroup, GetAgentGroupsPayload, GetAgentGroupPayload>

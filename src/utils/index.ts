@@ -213,6 +213,8 @@ export function queryGenerator(params: any = {}): string {
 
 /**
  * Type for standardized failure responses
+ * 
+ * @category Utilities
  */
 export type FailureResponse = {
     data: null;
@@ -221,6 +223,10 @@ export type FailureResponse = {
 
 /**
  * Type for standardized success responses
+ * 
+ * @template T - The type of data in the success response
+ * 
+ * @category Utilities
  */
 export type SuccessResponse<T = any> = {
     data: T;

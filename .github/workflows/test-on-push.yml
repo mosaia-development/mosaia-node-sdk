@@ -1,0 +1,595 @@
+name: Test and Coverage on Push
+
+on:
+  push:
+    branches:
+      - main
+      - development
+      - 'feature/**'
+      - 'hotfix/**'
+      - 'release/**'
+    paths-ignore:
+      # Documentation and non-code files
+      - '**.md'
+      - 'docs/**'
+      - 'examples/**'
+      - 'scripts/**'
+      
+      # Generated files and build artifacts
+      - 'coverage/**'
+      - '.nyc_output/**'
+      - 'node_modules/**'
+      - '*.log'
+      
+      # Note: .github/** is intentionally NOT ignored to allow workflow changes to trigger tests
+  
+  # Manual trigger for testing
+  workflow_dispatch:
+    inputs:
+      test_type:
+        description: 'Type of test to run'
+        required: false
+        default: 'full'
+        type: choice
+        options:
+          - full
+          - quick
+          - coverage-only
+
+permissions:
+  issues: write
+  contents: write
+
+jobs:
+  test-and-coverage:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # 0. Debug workflow trigger
+      - name: Debug workflow trigger
+        run: |
+          echo "🔍 Workflow Debug Information"
+          echo "============================="
+          echo "Event: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "Actor: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Workflow: ${{ github.workflow }}"
+          echo "Triggered by: ${{ github.event.head_commit.message || 'Manual trigger' }}"
+          echo "============================="
+
+      # 1. Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # 2. Set up Node.js
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.17.0'
+          cache: 'npm'
+
+      # 3. Install system dependencies
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc lcov
+
+      # 3.5. Ensure required labels exist
+      - name: Ensure required labels exist
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const labels = [
+              { name: 'test-issues', color: 'd73a4a', description: 'Issues related to test failures or coverage' },
+              { name: 'automated', color: '0366d6', description: 'Automatically created issues' },
+              { name: 'needs-attention', color: 'fbca04', description: 'Issues that need immediate attention' }
+            ];
+            
+            for (const label of labels) {
+              try {
+                await github.rest.issues.createLabel({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name: label.name,
+                  color: label.color,
+                  description: label.description
+                });
+                console.log(`Created label: ${label.name}`);
+              } catch (error) {
+                if (error.status === 422) {
+                  console.log(`Label ${label.name} already exists`);
+                } else {
+                  console.log(`Error with label ${label.name}:`, error.message);
+                }
+              }
+            }
+
+      # 5. Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 6. Build TypeScript project (required for TypeDoc)
+      - name: Build TypeScript project
+        run: |
+          echo "🔨 Building TypeScript project..."
+          npm run build
+          echo "✅ Build completed"
+
+      # 6.1. Generate TypeDoc documentation (test)
+      - name: Test TypeDoc generation
+        id: typedoc-test
+        run: |
+          echo "🔍 Testing TypeDoc documentation generation..."
+          echo "Command: npx typedoc"
+          
+          # Test TypeDoc generation by running it and capturing output
+          # We'll clean up the generated files afterwards
+          if npx typedoc 2>&1; then
+            echo "✅ TypeDoc generation test passed!"
+            echo "📚 All TypeDoc comments are properly formatted"
+            
+            # Clean up generated documentation files
+            if [ -d "docs" ]; then
+              echo "🧹 Cleaning up generated documentation files..."
+              rm -rf docs/*
+              echo "✅ Documentation files cleaned up"
+            fi
+          else
+            echo "❌ TypeDoc generation test failed!"
+            echo "🔍 Check for missing @returns values, invalid tags, or syntax errors"
+            echo "💡 Common issues:"
+            echo "   - Missing @returns values"
+            echo "   - Invalid TypeDoc syntax"
+            echo "   - Missing parameter descriptions"
+            echo "   - Type errors in TypeScript code"
+            exit 1
+          fi
+          
+          echo "TypeDoc test completed"
+
+      # 7. Run tests with coverage
+      - name: Run tests with coverage
+        id: test-run
+        run: |
+          echo "Running test suite with coverage..."
+          echo "Test command: npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json"
+          
+          # Run tests with coverage and JSON output
+          npx jest --coverage --watchAll=false --ci --verbose --json --outputFile=test-results.json || exit_code=$?
+          
+          # Check if tests failed
+          if [ $? -eq 0 ]; then
+            echo "✅ All tests passed successfully!"
+            echo "📊 Coverage report generated"
+            echo "📋 Test results saved to test-results.json"
+          else
+            echo "❌ Some tests failed!"
+            echo "📊 Coverage report may be incomplete due to test failures"
+            echo "📋 Test results saved to test-results.json for analysis"
+            exit 1
+          fi
+          
+          echo "Tests completed"
+
+      # 7.1. Handle TypeDoc test failures
+      - name: Handle TypeDoc Test Failures
+        if: failure() && steps.typedoc-test.outcome == 'failure'
+        run: |
+          echo "❌ TypeDoc generation test failed!"
+          echo "📋 TypeDoc Test Results Summary"
+          echo "=============================="
+          echo "🚫 Workflow will not proceed to unit tests"
+          echo "🔍 Check the TypeDoc test logs above for detailed failure information"
+          echo "💡 Fix the TypeDoc issues and re-run the workflow"
+          
+          echo ""
+          echo "📊 Common TypeDoc Issues:"
+          echo "======================="
+          echo "1. Missing @returns values (e.g., '@returns' without description)"
+          echo "2. Invalid TypeDoc syntax or malformed tags"
+          echo "3. Missing parameter descriptions"
+          echo "4. Incorrect type annotations"
+          echo "5. TypeScript compilation errors"
+          
+          echo ""
+          echo "🔍 To fix TypeDoc issues:"
+          echo "1. Check the 'Test TypeDoc generation' step logs above"
+          echo "2. Look for specific error messages about missing @returns values or type errors"
+          echo "3. Fix the TypeDoc comments in the mentioned files"
+          echo "4. Ensure TypeScript code compiles without errors"
+          echo "5. Re-run the workflow to verify fixes"
+
+      # 7.2. Handle unit test failures
+      - name: Handle Unit Test Failures
+        if: failure() && steps.test-run.outcome == 'failure'
+        run: |
+          echo "❌ Unit test execution failed!"
+          echo "📋 Test Results Summary"
+          echo "========================"
+          echo "🚫 Workflow will not proceed to coverage analysis"
+          echo "🔍 Check the test logs above for detailed failure information"
+          echo "💡 Fix the failing tests and re-run the workflow"
+          
+          # Try to extract test failure summary from Jest output
+          echo ""
+          echo "📊 Test Failure Analysis:"
+          echo "=========================="
+          
+          # Look for Jest test results in the logs
+          if [ -f "test-results.json" ]; then
+            echo "📋 Detailed test results available in test-results.json"
+            cat test-results.json | jq -r '.testResults[] | "\(.name): \(.status) (\(.assertionResults | length) tests)"' 2>/dev/null || echo "Could not parse test results"
+          fi
+          
+          echo ""
+          echo "🔍 To see detailed test failures:"
+          echo "1. Click on the 'Run tests with coverage' step above"
+          echo "2. Look for lines starting with '❌ FAIL' or '✕'"
+          echo "3. Each failure shows the test suite name and specific test case"
+          echo "4. Full error details and stack traces are shown below each failure"
+
+      # 7. Coverage report status
+      - name: Coverage report status
+        if: success() # Only show coverage if tests passed
+        run: |
+          echo "📊 Checking coverage report status..."
+          if [ -d "coverage" ]; then
+            echo "✅ Coverage directory found"
+            ls -la coverage/
+          else
+            echo "⚠️ No coverage directory found"
+          fi
+
+      # 8. Upload test results (always upload, even on failure)
+      - name: Upload test results
+        if: always() # Always upload test results for analysis
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: |
+            test-results.json
+          retention-days: 30
+
+      # 9. Upload coverage reports to GitHub
+      - name: Upload coverage reports
+        if: success() # Only upload coverage if tests passed
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-reports
+          path: |
+            coverage/
+            .nyc_output/
+          retention-days: 30
+
+      # 10. Check coverage percentage
+      - name: Check coverage percentage
+        if: success() # Only check coverage if tests passed
+        id: coverage-check
+        run: |
+          echo "📊 Analyzing coverage reports..."
+          
+          if [ -f "coverage/lcov.info" ]; then
+            echo "📈 LCOV coverage file found"
+            
+            # Extract coverage percentages from lcov.info using proper parsing
+            if command -v lcov >/dev/null 2>&1; then
+              # Use lcov tool if available
+              COVERAGE_SUMMARY=$(lcov --summary coverage/lcov.info 2>/dev/null | grep "lines" | head -1)
+              if [ -n "$COVERAGE_SUMMARY" ]; then
+                COVERAGE_PERCENT=$(echo "$COVERAGE_SUMMARY" | grep -o '[0-9.]*%' | head -1 | sed 's/%//')
+                echo "coverage_percent=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+                echo "📊 Coverage: $COVERAGE_PERCENT% (from lcov tool)"
+              else
+                echo "coverage_percent=0" >> $GITHUB_OUTPUT
+                echo "⚠️ Could not parse lcov coverage"
+              fi
+            else
+              # Fallback: parse lcov.info manually for line coverage
+              TOTAL_LINES=$(grep -c "^LF:" coverage/lcov.info 2>/dev/null || echo "0")
+              COVERED_LINES=$(grep -c "^LH:" coverage/lcov.info 2>/dev/null || echo "0")
+              
+              if [ "$TOTAL_LINES" -gt 0 ] && [ "$COVERED_LINES" -ge 0 ]; then
+                COVERAGE_PERCENT=$(echo "scale=1; $COVERED_LINES * 100 / $TOTAL_LINES" | bc -l 2>/dev/null || echo "0")
+                echo "coverage_percent=$COVERAGE_PERCENT" >> $GITHUB_OUTPUT
+                echo "📊 Coverage: $COVERAGE_PERCENT% (lines: $COVERED_LINES/$TOTAL_LINES)"
+              else
+                echo "coverage_percent=0" >> $GITHUB_OUTPUT
+                echo "⚠️ Could not calculate line coverage"
+              fi
+            fi
+          else
+            echo "coverage_percent=0" >> $GITHUB_OUTPUT
+            echo "⚠️ No coverage file found"
+          fi
+          
+          # Also check for Jest coverage summary if available
+          if [ -f "coverage/coverage-summary.json" ]; then
+            echo "📊 Jest coverage summary found"
+            if command -v jq >/dev/null 2>&1; then
+              JEST_COVERAGE=$(jq -r '.total.lines.pct' coverage/coverage-summary.json 2>/dev/null)
+              if [ "$JEST_COVERAGE" != "null" ] && [ "$JEST_COVERAGE" != "" ]; then
+                echo "📊 Jest Coverage: $JEST_COVERAGE%"
+                # Use Jest coverage if it's available and higher
+                if [ -n "$JEST_COVERAGE" ] && (( $(echo "$JEST_COVERAGE > 0" | bc -l 2>/dev/null || echo "0") )); then
+                  echo "coverage_percent=$JEST_COVERAGE" >> $GITHUB_OUTPUT
+                  echo "📊 Using Jest coverage: $JEST_COVERAGE%"
+                fi
+              fi
+            fi
+          fi
+
+      # 10.1. Display coverage report in summary
+      - name: Display coverage report
+        if: success() # Only display coverage if tests passed
+        run: |
+          echo "## 📊 Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          if [ -f "coverage/lcov.info" ]; then
+            echo "### 📈 LCOV Coverage Summary" >> $GITHUB_STEP_SUMMARY
+            
+            # Try to use lcov tool if available
+            if command -v lcov >/dev/null 2>&1; then
+              echo "```" >> $GITHUB_STEP_SUMMARY
+              lcov --summary coverage/lcov.info 2>/dev/null | head -20 >> $GITHUB_STEP_SUMMARY
+              echo "```" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "**Coverage files available:**" >> $GITHUB_STEP_SUMMARY
+              echo "- `coverage/lcov.info` - Line coverage data" >> $GITHUB_STEP_SUMMARY
+              echo "- `coverage/lcov-report/index.html` - HTML report" >> $GITHUB_STEP_SUMMARY
+              echo "- `coverage/coverage-summary.json` - JSON summary" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          if [ -f "coverage/coverage-summary.json" ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "### 📊 Jest Coverage Summary" >> $GITHUB_STEP_SUMMARY
+            echo "```json" >> $GITHUB_STEP_SUMMARY
+            cat coverage/coverage-summary.json | jq -r '.total | "Statements: \(.statements.pct)% | Branches: \(.branches.pct)% | Functions: \(.functions.pct)% | Lines: \(.lines.pct)%"' >> $GITHUB_STEP_SUMMARY
+            echo "```" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 **Coverage Artifacts**: Coverage reports are available as workflow artifacts" >> $GITHUB_STEP_SUMMARY
+
+      # 11. Create test summary
+      - name: Create test summary
+        if: always()
+        run: |
+          echo "## Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # TypeDoc test results
+          if [ "${{ steps.typedoc-test.outcome }}" == "success" ]; then
+            echo "✅ **TypeDoc**: Documentation generation test passed" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ **TypeDoc**: Documentation generation test failed" >> $GITHUB_STEP_SUMMARY
+            echo "💡 **Action Required**: Fix TypeDoc issues before running unit tests" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Unit test results
+          if [ "${{ steps.test-run.outcome }}" == "success" ]; then
+            echo "✅ **Unit Tests**: All tests passed successfully" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "📊 **Coverage**: ${{ steps.coverage-check.outputs.coverage_percent }}%" >> $GITHUB_STEP_SUMMARY
+            
+            if [ "${{ steps.coverage-check.outcome }}" == "success" ] && (( $(echo "${{ steps.coverage-check.outputs.coverage_percent }} < 100" | bc -l 2>/dev/null || echo "0") )); then
+              echo "⚠️ **Warning**: Coverage is below 100%" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "🎯 **Coverage**: 100% coverage achieved!" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ **Unit Tests**: Some tests failed" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "🚫 **Coverage**: Coverage analysis skipped due to test failures" >> $GITHUB_STEP_SUMMARY
+            echo "💡 **Action Required**: Fix failing tests before analyzing coverage" >> $GITHUB_STEP_SUMMARY
+            
+            # Try to show specific test failures if test-results.json exists
+            if [ -f "test-results.json" ]; then
+              echo "" >> $GITHUB_STEP_SUMMARY
+              echo "🔍 **Test Failure Details**: Download 'test-results' artifact for complete analysis" >> $GITHUB_STEP_SUMMARY
+              echo "📋 **Quick Summary**: Check the 'Run tests with coverage' step logs above" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔍 **Details**: Check the logs above for more information" >> $GITHUB_STEP_SUMMARY
+
+      # 11. Comment on PR if this is a PR
+      - name: Comment on PR
+        if: github.event_name == 'pull_request' && always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('## Test Results Summary')
+            );
+            
+            const testStatus = '${{ steps.test-run.outcome }}' === 'success' ? '✅ PASSED' : '❌ FAILED';
+            const coveragePercent = '${{ steps.coverage-check.outputs.coverage_percent }}';
+            const coverageStatus = parseFloat(coveragePercent) >= 100 ? '🎯 100%' : `⚠️ ${coveragePercent}%`;
+            
+            const commentBody = `## 🧪 Test Results for Push
+            
+            **Status**: ${testStatus}
+            **Coverage**: ${coverageStatus}
+            
+            **Details**: [View full workflow run](${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            
+            ---
+            *This comment was automatically generated by the test workflow*`;
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: commentBody
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: commentBody
+              });
+            }
+
+      # 12. Notify on failure or low coverage
+      - name: Notify on issues
+        if: always() && (steps.typedoc-test.outcome == 'failure' || steps.test-run.outcome == 'failure' || steps.coverage-check.outputs.coverage_percent < 100)
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = `Test Issues Detected - ${context.sha.substring(0, 7)}`;
+            const issueBody = `## 🚨 Test Issues Detected
+            
+            **Commit**: ${context.sha}
+            **Branch**: ${context.ref}
+            **Author**: @${context.actor}
+            **Workflow**: [${context.workflow}](https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId})
+            
+            ### Issues Found:
+            ${'${{ steps.typedoc-test.outcome }}' === 'failure' ? '- ❌ **TypeDoc Failed**: Documentation generation test failed' : ''}
+            ${'${{ steps.test-run.outcome }}' === 'failure' ? '- ❌ **Tests Failed**: Some tests are failing' : ''}
+            ${parseFloat('${{ steps.coverage-check.outputs.coverage_percent }}') < 100 ? `- ⚠️ **Low Coverage**: Current coverage is ${{ steps.coverage-check.outputs.coverage_percent }}% (target: 100%)` : ''}
+            
+            ### Required Actions:
+            ${'${{ steps.typedoc-test.outcome }}' === 'failure' ? '- [ ] Fix TypeDoc issues (missing @returns values, invalid syntax, TypeScript errors)' : ''}
+            ${'${{ steps.test-run.outcome }}' === 'failure' ? '- [ ] Fix failing tests' : ''}
+            ${parseFloat('${{ steps.coverage-check.outputs.coverage_percent }}') < 100 ? '- [ ] Improve test coverage to 100%' : ''}
+            - [ ] Re-run tests to verify fixes
+            
+            ---
+            *This issue was automatically created by the test workflow*`;
+            
+            // Check if issue already exists
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: ['test-issues', 'automated']
+            });
+            
+            const existingIssue = issues.find(issue => 
+              issue.title === issueTitle && 
+              issue.body.includes(context.sha.substring(0, 7))
+            );
+            
+            if (!existingIssue) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: issueTitle,
+                body: issueBody,
+                labels: ['test-issues', 'automated', 'needs-attention'],
+                assignees: [context.actor]
+              });
+            }
+
+      # 13. Final status
+      - name: Final status
+        if: always()
+        run: |
+          if [ "${{ steps.typedoc-test.outcome }}" == "success" ] && [ "${{ steps.test-run.outcome }}" == "success" ]; then
+            if [ "${{ steps.coverage-check.outputs.coverage_percent }}" == "100" ]; then
+              echo "🎉 All checks passed! TypeDoc, tests successful and 100% coverage achieved."
+            else
+              echo "✅ TypeDoc and tests passed but coverage is below 100% (${{ steps.coverage-check.outputs.coverage_percent }}%)"
+            fi
+          else
+            if [ "${{ steps.typedoc-test.outcome }}" != "success" ]; then
+              echo "❌ TypeDoc generation test failed. Please check the logs above for details."
+              echo "💡 Fix TypeDoc issues before running unit tests."
+            fi
+            if [ "${{ steps.test-run.outcome }}" != "success" ]; then
+              echo "❌ Unit tests failed. Please check the logs above for details."
+              echo "💡 Coverage analysis was skipped due to test failures."
+            fi
+          fi
+
+      # 14. Generate TSDoc documentation for deployment
+      - name: Generate TSDoc documentation for deployment
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        run: |
+          echo "Generating TSDoc documentation for deployment..."
+          npm run docs
+          echo "Documentation generated successfully"
+          
+          # Verify that TypeDoc generated the index.html file
+          if [ ! -f "docs/index.html" ]; then
+            echo "❌ Error: TypeDoc did not generate docs/index.html"
+            exit 1
+          fi
+          echo "✅ TypeDoc documentation generated successfully in docs/ folder"
+
+      # 15. Checkout gh-pages branch to preserve existing versions
+      - name: Checkout gh-pages branch
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: gh-pages
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+        continue-on-error: true
+
+      # 15.1. Initialize gh-pages if it doesn't exist
+      - name: Initialize gh-pages if needed
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main') && failure()
+        run: |
+          mkdir -p gh-pages
+          cd gh-pages
+          git init
+          git checkout -b gh-pages || true
+          echo "✅ Initialized gh-pages directory"
+
+      # 16. Prepare development documentation
+      - name: Prepare development documentation
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        run: |
+          echo "Preparing development documentation..."
+          
+          # Create development directory in gh-pages workspace
+          DEV_DIR="gh-pages/development"
+          mkdir -p "$DEV_DIR"
+          
+          # Copy documentation files
+          cp -r docs/* "$DEV_DIR/"
+          
+          echo "✅ Development documentation prepared in $DEV_DIR/"
+
+      # 17. Generate documentation index page
+      - name: Generate documentation index
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        run: |
+          chmod +x scripts/generate-docs-index.sh
+          ./scripts/generate-docs-index.sh gh-pages
+
+      # 18. Deploy development documentation to GitHub Pages
+      # Note: GitHub Pages must be configured to serve from the 'gh-pages' branch
+      # Settings > Pages > Source: Deploy from a branch > Branch: gh-pages / (root)
+      - name: Deploy to GitHub Pages
+        if: steps.typedoc-test.outcome == 'success' && steps.test-run.outcome == 'success' && (github.ref == 'refs/heads/development' || github.ref == 'refs/heads/main')
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./gh-pages
+          publish_branch: gh-pages
+          keep_files: false
+          force_orphan: false
+          user_name: 'github-actions[bot]'
+          user_email: 'github-actions[bot]@users.noreply.github.com'

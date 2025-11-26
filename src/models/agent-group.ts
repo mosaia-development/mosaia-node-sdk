@@ -1,12 +1,10 @@
 import {
     AgentGroupInterface,
-    APIResponse,
-    ChatCompletionRequest,
-    ChatCompletionResponse,
     GetAgentGroupPayload
 } from '../types';
 import { BaseModel } from './base';
 import { Chat } from '../functions/chat';
+import { Image } from '../functions/image';
 
 /**
  * AgentGroup class for managing collaborative AI agent groups
@@ -43,7 +41,7 @@ import { Chat } from '../functions/chat';
  * 
  * // Add branding
  * const logo = new File(['...'], 'team-logo.png', { type: 'image/png' });
- * await supportTeam.uploadImage(logo);
+ * await supportTeam.image.upload(logo);
  * ```
  * 
  * @example
@@ -90,51 +88,21 @@ export default class AgentGroup extends BaseModel<AgentGroupInterface> {
     }
 
     /**
-     * Upload an image for the agent group
+     * Get the image functionality for this agent group
      * 
-     * Uploads an image file to be associated with the agent group for branding
-     * and identification purposes.
+     * This getter provides access to the agent group's image operations through
+     * the Image class. It allows for image uploads and other image-related
+     * operations specific to this agent group.
      * 
-     * @param file - Image file to upload (supports common image formats)
-     * @returns Promise that resolves to the updated agent group instance
-     * @throws {Error} When upload fails or network errors occur
+     * @returns A new Image instance configured for this agent group
      * 
      * @example
      * ```typescript
-     * // Upload a group logo
-     * const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-     * const file = fileInput.files[0];
-     * 
-     * try {
-     *   await agentGroup.uploadImage(file);
-     *   console.log('Image uploaded successfully');
-     * } catch (error) {
-     *   console.error('Upload failed:', error.message);
-     * }
+     * const updatedGroup = await agentGroup.image.upload<AgentGroup, GetAgentGroupPayload>(file);
      * ```
      */
-    async uploadImage(file: File): Promise<AgentGroup> {
-        const formData = new FormData();
-        formData.append('file', file);
-        
-        try {
-            const {
-                data,
-                error
-            } = await this.apiClient.POST<GetAgentGroupPayload>(`${this.getUri()}/image/upload`, formData);
-            
-            if (error) {
-                throw new Error(error.message);
-            }
-            this.update(data as any);
-    
-            return this;
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error((error as any).message);
-            }
-            throw new Error('Unknown error occurred');
-        }
+    get image(): Image {
+        return new Image(this.getUri(), (this.data as any).image || '');
     }
 
     /**
@@ -179,5 +147,37 @@ export default class AgentGroup extends BaseModel<AgentGroupInterface> {
      */
     get chat() {
         return new Chat(this.getUri());
+    }
+
+    /**
+     * Like or unlike this agent group
+     * 
+     * Toggles the like status of this agent group. If the group is already liked,
+     * it will be unliked, and vice versa.
+     * 
+     * @returns Promise that resolves to the updated agent group instance
+     * 
+     * @example
+     * ```typescript
+     * await agentGroup.like();
+     * console.log('Group liked:', agentGroup.liked);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async like(): Promise<AgentGroup> {
+        try {
+            const response = await this.apiClient.POST<GetAgentGroupPayload>(`${this.getUri()}/like`);
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+            this.update(response.data);
+            return this;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
     }
 } 

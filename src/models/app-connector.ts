@@ -1,11 +1,11 @@
-import { AppBotInterface } from '../types';
+import { AppConnectorInterface } from '../types';
 import { BaseModel } from './base';
 
 /**
- * AppBot class for managing webhook-based AI integrations
+ * AppConnector class for managing webhook-based AI integrations
  * 
  * This class represents a specialized integration that connects external
- * applications with AI agents through webhook-style interactions. AppBots
+ * applications with AI agents through webhook-style interactions. AppConnectors
  * enable automated responses and workflows by bridging the gap between
  * applications and AI capabilities.
  * 
@@ -17,7 +17,7 @@ import { BaseModel } from './base';
  * - Event handling
  * 
  * @remarks
- * AppBots are particularly useful for:
+ * AppConnectors are particularly useful for:
  * - Chat platform integrations (Slack, Discord, etc.)
  * - Custom application webhooks
  * - Automated response systems
@@ -25,12 +25,12 @@ import { BaseModel } from './base';
  * - Secure API access management
  * 
  * @example
- * Basic bot setup:
+ * Basic connector setup:
  * ```typescript
- * import { AppBot } from 'mosaia-node-sdk';
+ * import { AppConnector } from 'mosaia-node-sdk';
  * 
  * // Create a Slack integration bot
- * const slackBot = new AppBot({
+ * const slackBot = new AppConnector({
  *   app: 'slack-app-id',
  *   response_url: 'https://slack.example.com/webhook',
  *   agent: 'support-agent-id',
@@ -45,7 +45,7 @@ import { BaseModel } from './base';
  * Custom webhook integration:
  * ```typescript
  * // Create a custom webhook bot
- * const webhookBot = new AppBot({
+ * const webhookBot = new AppConnector({
  *   app: 'custom-app-id',
  *   response_url: 'https://api.example.com/ai-webhook',
  *   agent_group: 'expert-team-id',
@@ -64,14 +64,14 @@ import { BaseModel } from './base';
  * }
  * ```
  * 
- * @extends BaseModel<AppBotInterface>
+ * @extends BaseModel<AppConnectorInterface>
  * @category Models
  */
-export default class AppBot extends BaseModel<AppBotInterface> {
+export default class AppConnector extends BaseModel<AppConnectorInterface> {
     /**
-     * Creates a new AppBot instance
+     * Creates a new AppConnector instance
      * 
-     * Initializes an app bot that connects external applications with AI agents
+     * Initializes an app connector that connects external applications with AI agents
      * through webhook-style interactions. The bot manages webhook endpoints,
      * API keys, and routing of responses.
      * 
@@ -85,9 +85,9 @@ export default class AppBot extends BaseModel<AppBotInterface> {
      * @param uri - Optional custom URI path for the bot endpoint
      * 
      * @example
-     * Basic webhook bot:
+     * Basic webhook connector:
      * ```typescript
-     * const bot = new AppBot({
+     * const connector = new AppConnector({
      *   app: 'app-123',
      *   response_url: 'https://api.example.com/webhook',
      *   agent: 'agent-456',
@@ -98,7 +98,7 @@ export default class AppBot extends BaseModel<AppBotInterface> {
      * @example
      * Advanced configuration:
      * ```typescript
-     * const bot = new AppBot({
+     * const connector = new AppConnector({
      *   app: 'app-123',
      *   response_url: 'https://chat.example.com/events',
      *   agent_group: 'group-789',
@@ -108,10 +108,10 @@ export default class AppBot extends BaseModel<AppBotInterface> {
      *     channel: 'support',
      *     team: 'customer-success'
      *   }
-     * }, '/integrations/bot');
+     * }, '/integrations/connector');
      * ```
      */
-    constructor(data: Partial<AppBotInterface>, uri?: string) {
-        super(data, uri || '/bot');
+    constructor(data: Partial<AppConnectorInterface>, uri?: string) {
+        super(data, uri || '/connector');
     }
 } 
