@@ -52,6 +52,16 @@ jest.mock('../../collections', () => ({
     uri,
     get: jest.fn(),
     create: jest.fn()
+  })),
+  AppConnectors: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  })),
+  AppWebhooks: jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
   }))
 }));
 
@@ -246,6 +256,44 @@ describe('App Model', () => {
         app.image;
 
         expect(Image).toHaveBeenCalledWith('/app/123', '');
+      });
+    });
+
+    describe('connectors getter', () => {
+      it('should return AppConnectors instance', () => {
+        const { AppConnectors } = require('../../collections');
+        
+        const connectors = app.connectors;
+
+        expect(AppConnectors).toHaveBeenCalled();
+        expect(connectors).toBeDefined();
+      });
+
+      it('should create AppConnectors with correct URI', () => {
+        const { AppConnectors } = require('../../collections');
+        
+        app.connectors;
+
+        expect(AppConnectors).toHaveBeenCalledWith('/app/123');
+      });
+    });
+
+    describe('webhooks getter', () => {
+      it('should return AppWebhooks instance', () => {
+        const { AppWebhooks } = require('../../collections');
+        
+        const webhooks = app.webhooks;
+
+        expect(AppWebhooks).toHaveBeenCalled();
+        expect(webhooks).toBeDefined();
+      });
+
+      it('should create AppWebhooks with correct URI', () => {
+        const { AppWebhooks } = require('../../collections');
+        
+        app.webhooks;
+
+        expect(AppWebhooks).toHaveBeenCalledWith('/app/123');
       });
     });
   });

@@ -678,26 +678,6 @@ export interface ClientInterface extends BaseEntity {
     }
 }
 
-// App Bot interfaces
-export interface AppBotInterface extends BaseEntity {
-    id?: string;
-    app: string | AppInterface;
-    response_url: string;
-    org?: string;
-    user?: string;
-    agent?: string;
-    agent_group?: string;
-    api_key?: string;
-    api_key_partial?: string;
-    active?: boolean;
-    tags?: string[];
-    extensors?: {
-        [key: string]: string;
-    }
-    external_id?: string;
-    record_history?: RecordHistory;
-}
-
 // App Connector interfaces
 export interface AppConnectorInterface extends BaseEntity {
     id?: string;
@@ -716,11 +696,6 @@ export interface AppConnectorInterface extends BaseEntity {
     }
     record_history?: RecordHistory;
 }
-
-/**
- * Deprecated
- */
-export type DehydratedAppBotInterface = Omit<AppBotInterface, 'id' | 'app'> & { id: string, app: string }
 
 export type DehydratedAppConnectorInterface = Omit<AppConnectorInterface, 'id' | 'app'> & { id: string, app: string }
 
@@ -1215,21 +1190,6 @@ export type GetClientsPayload = {
 
 export type GetClientPayload = {
     data: ClientInterface;
-}
-
-/**
- * Deprecated
- */
-export type GetAppBotsPayload = {
-    data: DehydratedAppBotInterface[];
-    paging?: PagingInterface;
-}
-
-/**
- * Deprecated
- */
-export type GetAppBotPayload = {
-    data: DehydratedAppBotInterface;
 }
 
 export type GetAppConnectorsPayload = {

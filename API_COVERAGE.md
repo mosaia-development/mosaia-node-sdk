@@ -8,6 +8,19 @@
 ## 📋 Quick Summary
 
 **Recent Updates (Latest Implementation):**
+- ✅ **IAM Collections**: Added Access Policies, Organization Permissions, and User Permissions
+  - ✅ `AccessPolicies` collection with full CRUD support
+  - ✅ `OrgPermissions` collection with full CRUD support
+  - ✅ `UserPermissions` collection with full CRUD support
+  - ✅ `Organization` model: Added `policies` and `permissions` getters
+  - ✅ `User` model: Added `policies` and `permissions` getters
+  - ✅ `MosaiaClient`: Added `accessPolicies` and `orgPermissions` getters
+- ✅ **Billing Collections**: Added Meters and Wallets
+  - ✅ `Meters` collection with full CRUD support (org-scoped and user-scoped)
+  - ✅ `Wallets` collection with full CRUD support (org-scoped and user-scoped)
+  - ✅ `Organization` model: Added `meters` and `wallets` getters
+  - ✅ `User` model: Added `meters` and `wallets` getters
+  - ✅ `MosaiaClient`: Added `meters` and `wallets` getters
 - ✅ **Architecture Refactoring**: Moved instance methods from collections to models
   - ✅ Collections now only handle GET and CREATE operations
   - ✅ Instance-specific operations (like, fork, rerank, embeddings) moved to model classes
@@ -37,9 +50,9 @@
 - ✅ **Notifications Collection**: Added email notification support
 - ✅ **Image Upload Refactoring**: All image uploads now use generic `Image` class via `image` getter
 - ✅ **Naming Standardization**: Renamed LogMessage → Message, TaskPlan → Plan, LogMessages → Messages, TaskPlans → Plans
-- ✅ **Types**: Added `RerankRequest`, `RerankResponse`, `EmbeddingRequest`, `EmbeddingResponse`, `SearchQueryParams`, `SearchResponse`, `DriveInterface`, `DriveItemInterface`, `MessageInterface`, `PlanInterface` interfaces
+- ✅ **Types**: Added `RerankRequest`, `RerankResponse`, `EmbeddingRequest`, `EmbeddingResponse`, `SearchQueryParams`, `SearchResponse`, `DriveInterface`, `DriveItemInterface`, `MessageInterface`, `PlanInterface`, `AccessPolicyInterface`, `OrgPermissionInterface`, `UserPermissionInterface`, `MeterInterface`, `WalletInterface` interfaces
 
-**Coverage Improvement:** ~30-40% → **~70-80%** (increased by ~40-50%)
+**Coverage Improvement:** ~30-40% → **~75-85%** (increased by ~45-55%)
 
 ---
 
@@ -58,13 +71,13 @@
 
 | Category | Supported | Missing | Partial | Total |
 |----------|-----------|---------|---------|-------|
-| **Collections** | 22 | 0 | 2 | ~25 |
+| **Collections** | 28 | 0 | 2 | ~30 |
 | **Base CRUD** | ✅ GET, POST, PUT, DELETE | - | - | 4 |
 | **Nested Routes** | ⚠️ Limited | ❌ Most | - | ~200+ |
 | **Specialized Endpoints** | ⚠️ Some | ❌ Many | - | ~50+ |
-| **Overall Coverage** | **~70-80%** | **~20-30%** | - | **100%** |
+| **Overall Coverage** | **~75-85%** | **~15-25%** | - | **100%** |
 
-**Last Updated:** After implementing Logs, Messages, Snapshots, Tasks, Plans, VectorIndexes, Scopes, SSO, Notifications, and Agent model enhancements
+**Last Updated:** After implementing IAM (Access Policies, Org Permissions, User Permissions) and Billing (Meters, Wallets) collections
 
 **Legend:**
 - ✅ = Fully Supported
@@ -168,19 +181,19 @@
 - ⚠️ `PUT /client/:id` - Update client (via model.save())
 - ⚠️ `DELETE /client/:id` - Delete client (via model.delete())
 
-#### 10. **App Bots** (`AppBots`)
-- ✅ `GET /app/:id/bot` - List app bots
-- ✅ `GET /app/:id/bot/:id` - Get app bot
-- ✅ `POST /app/:id/bot` - Create app bot
-- ⚠️ `PUT /app/:id/bot/:id` - Update app bot (via model.save())
-- ⚠️ `DELETE /app/:id/bot/:id` - Delete app bot (via model.delete())
-
-#### 11. **App Connectors** (`AppConnectors`)
+#### 10. **App Connectors** (`AppConnectors`)
 - ✅ `GET /app/:id/connector` - List app connectors
 - ✅ `GET /app/:id/connector/:id` - Get app connector
 - ✅ `POST /app/:id/connector` - Create app connector
 - ⚠️ `PUT /app/:id/connector/:id` - Update connector (via model.save())
 - ⚠️ `DELETE /app/:id/connector/:id` - Delete connector (via model.delete())
+
+#### 11. **App Webhooks** (`AppWebhooks`)
+- ✅ `GET /app/:id/hook` - List app webhooks
+- ✅ `GET /app/:id/hook/:id` - Get app webhook
+- ✅ `POST /app/:id/hook` - Create app webhook
+- ⚠️ `PUT /app/:id/hook/:id` - Update webhook (via model.save())
+- ⚠️ `DELETE /app/:id/hook/:id` - Delete webhook (via model.delete())
 
 #### 12. **Authentication** (`MosaiaAuth`)
 - ✅ `POST /auth/signin` - Sign in (password, client, refresh)
@@ -278,6 +291,51 @@
 #### 23. **Notifications** (`Notifications`)
 - ✅ `POST /notify` - Send email notification (via `notifications.sendEmail()`)
 
+#### 24. **Access Policies** (`AccessPolicies`)
+- ✅ `GET /org/:id/iam/policy` - List access policies (via `org.policies.get()`)
+- ✅ `GET /org/:id/iam/policy/:id` - Get access policy by ID
+- ✅ `POST /org/:id/iam/policy` - Create access policy (via `org.policies.create()`)
+- ✅ `PUT /org/:id/iam/policy/:id` - Update policy (via collection.update())
+- ✅ `DELETE /org/:id/iam/policy/:id` - Delete policy (via collection.delete())
+- ✅ `GET /iam/policy` - List all policies (via `mosaia.accessPolicies.get()`)
+- ✅ `POST /iam/policy` - Create policy (via `mosaia.accessPolicies.create()`)
+
+#### 25. **Organization Permissions** (`OrgPermissions`)
+- ✅ `GET /org/:id/iam/permission` - List org permissions (via `org.permissions.get()`)
+- ✅ `GET /org/:id/iam/permission/:id` - Get permission by ID
+- ✅ `POST /org/:id/iam/permission` - Create permission (via `org.permissions.create()`)
+- ✅ `PUT /org/:id/iam/permission/:id` - Update permission (via collection.update())
+- ✅ `DELETE /org/:id/iam/permission/:id` - Delete permission (via collection.delete())
+- ✅ `GET /iam/permission` - List all permissions (via `mosaia.orgPermissions.get()`)
+- ✅ `POST /iam/permission` - Create permission (via `mosaia.orgPermissions.create()`)
+
+#### 26. **User Permissions** (`UserPermissions`)
+- ✅ `GET /user/:id/iam/permission` - List user permissions (via `user.permissions.get()`)
+- ✅ `GET /user/:id/iam/permission/:id` - Get permission by ID
+- ✅ `POST /user/:id/iam/permission` - Create permission (via `user.permissions.create()`)
+- ✅ `PUT /user/:id/iam/permission/:id` - Update permission (via collection.update())
+- ✅ `DELETE /user/:id/iam/permission/:id` - Delete permission (via collection.delete())
+
+#### 27. **Meters** (`Meters`)
+- ✅ `GET /org/:id/billing/usage` - List org usage meters (via `org.meters.get()`)
+- ✅ `GET /org/:id/billing/usage/:id` - Get meter by ID
+- ✅ `POST /org/:id/billing/usage` - Create meter (via `org.meters.create()`)
+- ✅ `GET /user/:id/billing/usage` - List user usage meters (via `user.meters.get()`)
+- ✅ `GET /user/:id/billing/usage/:id` - Get meter by ID
+- ✅ `POST /user/:id/billing/usage` - Create meter (via `user.meters.create()`)
+- ✅ `GET /billing/usage` - List all meters (via `mosaia.meters.get()`)
+- ✅ `POST /billing/usage` - Create meter (via `mosaia.meters.create()`)
+
+#### 28. **Wallets** (`Wallets`)
+- ✅ `GET /org/:id/billing/wallet` - Get org wallet (via `org.wallets.get()`)
+- ✅ `POST /org/:id/billing/wallet` - Create wallet (via `org.wallets.create()`)
+- ✅ `PUT /org/:id/billing/wallet` - Update wallet (via collection.update())
+- ✅ `GET /user/:id/billing/wallet` - Get user wallet (via `user.wallets.get()`)
+- ✅ `POST /user/:id/billing/wallet` - Create wallet (via `user.wallets.create()`)
+- ✅ `PUT /user/:id/billing/wallet` - Update wallet (via collection.update())
+- ✅ `GET /billing/wallet` - Get wallet (via `mosaia.wallets.get()`)
+- ✅ `POST /billing/wallet` - Create wallet (via `mosaia.wallets.create()`)
+
 ---
 
 ## Partial Coverage
@@ -368,24 +426,43 @@
 - `/org/:id/hook` - Org webhooks
 
 #### Billing & Usage
-**Status:** ❌ Missing  
-**Missing:**
-- `GET /user/:id/billing` - User billing
-- `GET /user/:id/billing/usage` - User usage
-- `GET /user/:id/billing/usage/:id` - Get usage record
-- `GET /user/:id/billing/wallet` - User wallet
-- `PUT /user/:id/billing/wallet` - Update wallet
-- `POST /user/:id/billing/wallet` - Wallet operations
-- `/org/:id/billing` - Org billing (similar structure)
+**Status:** ✅ Complete  
+**Implemented:**
+- ✅ `GET /org/:id/billing/usage` - List org usage meters (via `org.meters.get()`)
+- ✅ `GET /org/:id/billing/usage/:id` - Get meter by ID
+- ✅ `POST /org/:id/billing/usage` - Create meter (via `org.meters.create()`)
+- ✅ `GET /user/:id/billing/usage` - List user usage meters (via `user.meters.get()`)
+- ✅ `GET /user/:id/billing/usage/:id` - Get meter by ID
+- ✅ `POST /user/:id/billing/usage` - Create meter (via `user.meters.create()`)
+- ✅ `GET /org/:id/billing/wallet` - Get org wallet (via `org.wallets.get()`)
+- ✅ `POST /org/:id/billing/wallet` - Create wallet (via `org.wallets.create()`)
+- ✅ `PUT /org/:id/billing/wallet` - Update wallet (via collection.update())
+- ✅ `GET /user/:id/billing/wallet` - Get user wallet (via `user.wallets.get()`)
+- ✅ `POST /user/:id/billing/wallet` - Create wallet (via `user.wallets.create()`)
+- ✅ `PUT /user/:id/billing/wallet` - Update wallet (via collection.update())
+
+**Architecture:** Meters and Wallets are accessible via `MosaiaClient`, `Organization`, and `User` model instances, providing convenient access to org-scoped and user-scoped billing resources.
 
 #### IAM & Permissions
-**Status:** ❌ Missing  
-**Missing:**
-- `GET /org/:id/iam` - Org IAM
-- `GET /org/:id/iam/permission` - List permissions
-- `POST /org/:id/iam/permission` - Create permission
-- `GET /org/:id/iam/policy` - List policies
-- `POST /org/:id/iam/policy` - Create policy
+**Status:** ✅ Complete  
+**Implemented:**
+- ✅ `GET /org/:id/iam/policy` - List access policies (via `org.policies.get()`)
+- ✅ `GET /org/:id/iam/policy/:id` - Get policy by ID
+- ✅ `POST /org/:id/iam/policy` - Create policy (via `org.policies.create()`)
+- ✅ `PUT /org/:id/iam/policy/:id` - Update policy (via collection.update())
+- ✅ `DELETE /org/:id/iam/policy/:id` - Delete policy (via collection.delete())
+- ✅ `GET /org/:id/iam/permission` - List org permissions (via `org.permissions.get()`)
+- ✅ `GET /org/:id/iam/permission/:id` - Get permission by ID
+- ✅ `POST /org/:id/iam/permission` - Create permission (via `org.permissions.create()`)
+- ✅ `PUT /org/:id/iam/permission/:id` - Update permission (via collection.update())
+- ✅ `DELETE /org/:id/iam/permission/:id` - Delete permission (via collection.delete())
+- ✅ `GET /user/:id/iam/permission` - List user permissions (via `user.permissions.get()`)
+- ✅ `GET /user/:id/iam/permission/:id` - Get permission by ID
+- ✅ `POST /user/:id/iam/permission` - Create permission (via `user.permissions.create()`)
+- ✅ `PUT /user/:id/iam/permission/:id` - Update permission (via collection.update())
+- ✅ `DELETE /user/:id/iam/permission/:id` - Delete permission (via collection.delete())
+
+**Architecture:** Access Policies and Permissions are accessible via `MosaiaClient`, `Organization`, and `User` model instances. The `Organization` model provides `policies` and `permissions` getters, while the `User` model provides `policies` and `permissions` getters for user-scoped IAM resources.
 
 #### Social Features
 **Status:** ✅ Complete  
@@ -410,7 +487,6 @@
 
 #### Bot Operations
 **Status:** ⚠️ Partial  
-**Current:** `AppBots` collection exists
 
 **Missing:**
 - `POST /user/:id/agent/:agentId/bot/intent/create` - Create bot intent
@@ -449,6 +525,8 @@
 | **Scopes** | Scope retrieval | - | ✅ Complete |
 | **SSO** | SSO authentication | - | ✅ Complete |
 | **Notifications** | Email notifications | - | ✅ Complete |
+| **IAM** | Access Policies, Org Permissions, User Permissions | - | ✅ Complete |
+| **Billing** | Meters and Wallets (org/user scoped) | - | ✅ Complete |
 
 ---
 
@@ -515,8 +593,15 @@
    - ✅ Fork method on Agent model
    - ✅ All implemented as instance methods on models
 7. **Add Webhook Management**
-8. **Add Billing/Usage Endpoints**
-9. **Add IAM Endpoints**
+8. ✅ **Add Billing/Usage Endpoints** - COMPLETED
+   - ✅ Meters collection (org-scoped and user-scoped)
+   - ✅ Wallets collection (org-scoped and user-scoped)
+   - ✅ Organization and User model getters
+9. ✅ **Add IAM Endpoints** - COMPLETED
+   - ✅ Access Policies collection
+   - ✅ Organization Permissions collection
+   - ✅ User Permissions collection
+   - ✅ Organization and User model getters
 
 ---
 

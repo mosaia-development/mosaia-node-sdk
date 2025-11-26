@@ -7,7 +7,11 @@ import {
     Models,
     OrgUsers,
     AgentGroups,
-    Tools
+    Tools,
+    Meters,
+    Wallets,
+    AccessPolicies,
+    UserPermissions
 } from '../collections';
 import { Image } from '../functions/image';
 
@@ -506,5 +510,87 @@ export default class User extends BaseModel<UserInterface> {
      */
     get image(): Image {
         return new Image(`${this.getUri()}/profile`, (this.data as any).image || '');
+    }
+
+    /**
+     * Get the user's access policies
+     * 
+     * This getter provides access to the user's access control policies
+     * through the AccessPolicies collection. It enables management of IAM policies
+     * that define fine-grained permissions for resources and actions.
+     * 
+     * @returns AccessPolicies collection for managing access control policies
+     * 
+     * @example
+     * ```typescript
+     * const policies = await user.policies.get();
+     * const policy = await user.policies.create({
+     *   name: 'Personal Access',
+     *   effect: 'allow',
+     *   actions: ['agents:read', 'apps:read'],
+     *   resources: ['agents', 'apps']
+     * });
+     * ```
+     */
+    get policies(): AccessPolicies {
+        return new AccessPolicies(this.getUri());
+    }
+
+    /**
+     * Get the user's permissions
+     * 
+     * This getter provides access to the user's permissions through
+     * the UserPermissions collection. It enables management of permissions that
+     * associate clients with access policies for this user.
+     * 
+     * @returns UserPermissions collection for managing user permissions
+     * 
+     * @example
+     * ```typescript
+     * const permissions = await user.permissions.get();
+     * const permission = await user.permissions.create({
+     *   client: 'client-id',
+     *   policy: 'policy-id'
+     * });
+     * ```
+     */
+    get permissions(): UserPermissions {
+        return new UserPermissions(this.getUri());
+    }
+
+    /**
+     * Get the user's usage meters
+     * 
+     * This getter provides access to the user's usage meters through
+     * the Meters collection. It enables tracking of service consumption and
+     * associated costs for billing purposes.
+     * 
+     * @returns Meters collection for managing usage meters
+     * 
+     * @example
+     * ```typescript
+     * const meters = await user.meters.get();
+     * ```
+     */
+    get meters(): Meters {
+        return new Meters(this.getUri());
+    }
+
+    /**
+     * Get the user's wallet
+     * 
+     * This getter provides access to the user's wallet through
+     * the Wallets collection. It enables management of balances, payment
+     * methods, and financial transactions.
+     * 
+     * @returns Wallets collection for managing the user wallet
+     * 
+     * @example
+     * ```typescript
+     * const wallet = await user.wallets.get();
+     * ```
+     */
+    get wallets(): Wallets {
+        return new Wallets(this.getUri());
     }
 }

@@ -16,19 +16,20 @@
  * - **Tools**: Manage external integrations and utilities
  * - **Clients**: Manage OAuth client applications
  * - **Models**: Manage AI model configurations
- * - **AppBots**: Handle application-bot integrations
  * - **AgentGroups**: Manage collections of AI agents
  * - **AppConnectors**: Handle application-connector integrations
+ * - **AppWebhooks**: Handle application webhook configurations
  * 
  * @example
  * ```typescript
- * import { Apps, Tools, Agents, Auth, AppConnectors } from './collections';
+ * import { Apps, Tools, Agents, Auth, AppConnectors, AppWebhooks } from './collections';
  * 
  * // Create collection clients
  * const apps = new Apps();
  * const tools = new Tools();
  * const agents = new Agents();
  * const appConnectors = new AppConnectors();
+ * const appWebhooks = new AppWebhooks();
  * const auth = new MosaiaAuth();
  * 
  * // Use the clients
@@ -36,6 +37,7 @@
  * const allTools = await tools.get();
  * const allAgents = await agents.get();
  * const allAppConnectors = await appConnectors.get();
+ * const allAppWebhooks = await appWebhooks.get();
  * ```
  */
 
@@ -48,9 +50,9 @@ import OrgUsers from './org-users';
 import Tools from './tools';
 import Clients from './clients';
 import Models from './models';
-import AppBots from './app-bots';
 import AgentGroups from './agent-groups';
 import AppConnectors from './app-connectors';
+import AppWebhooks from './app-webhooks';
 import Search from './search';
 import Drives from './drives';
 import DriveItems from './drive-items';
@@ -63,6 +65,11 @@ import Notifications from './notifications';
 import VectorIndexes from './vector-indexes';
 import Tasks from './tasks';
 import Plans from './plans';
+import AccessPolicies from './access-policies';
+import OrgPermissions from './org-permissions';
+import UserPermissions from './user-permissions';
+import Meters from './meters';
+import Wallets from './wallets';
 
 /**
  * Agents collection client for managing AI agents
@@ -155,16 +162,6 @@ export { Clients };
 export { Models };
 
 /**
- * App Bots collection client for managing application-bot integrations
- * 
- * Provides CRUD operations for app bots, which are specialized integrations
- * that connect applications with AI agents through webhook-style interactions.
- * 
- * @see {@link AppBots}
- */
-export { AppBots };
-
-/**
  * App Connectors collection client for managing application-connector integrations
  * 
  * Provides CRUD operations for application connectors, which allow connecting
@@ -173,6 +170,16 @@ export { AppBots };
  * @see {@link AppConnectors}
  */
 export { AppConnectors };
+
+/**
+ * App Webhooks collection client for managing application webhook configurations
+ * 
+ * Provides CRUD operations for application webhooks, which enable external systems
+ * to receive notifications about application events through webhook-style interactions.
+ * 
+ * @see {@link AppWebhooks}
+ */
+export { AppWebhooks };
 
 /**
  * Agent Groups collection client for managing agent collections
@@ -301,3 +308,53 @@ export { Tasks };
  * @see {@link Plans}
  */
 export { Plans };
+
+/**
+ * Access Policies collection client for managing IAM access control policies
+ * 
+ * Provides CRUD operations for access control policies, which define
+ * fine-grained permissions for resources and actions.
+ * 
+ * @see {@link AccessPolicies}
+ */
+export { AccessPolicies };
+
+/**
+ * Org Permissions collection client for managing organization-level permissions
+ * 
+ * Provides CRUD operations for organization-level permissions, which associate
+ * users, agents, or clients with access policies within an organization.
+ * 
+ * @see {@link OrgPermissions}
+ */
+export { OrgPermissions };
+
+/**
+ * User Permissions collection client for managing user-level permissions
+ * 
+ * Provides CRUD operations for user-level permissions, which associate
+ * clients with access policies for a specific user.
+ * 
+ * @see {@link UserPermissions}
+ */
+export { UserPermissions };
+
+/**
+ * Meters collection client for managing usage meters and billing
+ * 
+ * Provides CRUD operations for usage meters, which track service consumption
+ * and associated costs for billing and resource management purposes.
+ * 
+ * @see {@link Meters}
+ */
+export { Meters };
+
+/**
+ * Wallets collection client for managing digital wallets and payment balances
+ * 
+ * Provides CRUD operations for digital wallets, which manage user and organization
+ * balances, payment methods, and financial transactions.
+ * 
+ * @see {@link Wallets}
+ */
+export { Wallets };
