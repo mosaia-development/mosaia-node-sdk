@@ -858,6 +858,36 @@ export interface DriveItemInterface extends BaseEntity {
     }
 }
 
+// Upload Job interfaces
+export interface UploadJobInterface extends BaseEntity {
+    id?: string;
+    drive: string;
+    status: 'PENDING' | 'UPLOADING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    filename: string;
+    original_filename?: string;
+    s3_key?: string;
+    size: number;
+    mime_type: string;
+    content_type_category?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'ARCHIVE' | 'CODE' | 'DATA' | 'OTHER';
+    path?: string;
+    file_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
+    presigned_url?: string;
+    presigned_url_expires_at: string | Date;
+    etag?: string;
+    s3_version_id?: string;
+    started_at: string | Date;
+    completed_at?: string | Date;
+    error_summary?: string;
+    // Action URLs (provided by API)
+    failed_url?: string;
+    status_url?: string;
+    // Virtual fields
+    duration_ms?: number;
+    formatted_duration?: string;
+    formatted_size?: string;
+    is_expired?: boolean;
+}
+
 // Vector Index interfaces
 export interface VectorIndexInterface extends BaseEntity {
     id?: string;
@@ -1245,6 +1275,15 @@ export type GetDriveItemsPayload = {
 
 export type GetDriveItemPayload = {
     data: DriveItemInterface;
+}
+
+export type GetUploadJobsPayload = {
+    data: UploadJobInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetUploadJobPayload = {
+    data: UploadJobInterface;
 }
 
 export type GetWalletsPayload = {

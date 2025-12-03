@@ -67,6 +67,7 @@ import AppConnector from './app-connector';
 import AppWebhook from './app-webhook';
 import Drive from './drive';
 import DriveItem from './drive-item';
+import UploadJob from './upload-job';
 import Log from './log';
 import Message from './message';
 import Snapshot from './snapshot';
@@ -168,6 +169,12 @@ export { Drive };
  * @see {@link DriveItem}
  */
 export { DriveItem };
+
+/**
+ * UploadJob model for tracking individual file uploads
+ * @see {@link UploadJob}
+ */
+export { UploadJob };
 
 /**
  * Log model for managing agent logs

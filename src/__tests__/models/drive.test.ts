@@ -39,14 +39,26 @@ jest.mock('../../collections/drive-items', () => {
     uri,
     get: jest.fn(),
     create: jest.fn(),
-    uploadFile: jest.fn(),
-    uploadFiles: jest.fn(),
-    getUploadStatus: jest.fn()
+    uploadFiles: jest.fn()
   }));
   return {
     __esModule: true,
     default: mockDriveItems,
     DriveItems: mockDriveItems
+  };
+});
+
+// Mock the UploadJobs collection
+jest.mock('../../collections/upload-jobs', () => {
+  const mockUploadJobs = jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    get: jest.fn(),
+    create: jest.fn()
+  }));
+  return {
+    __esModule: true,
+    default: mockUploadJobs,
+    UploadJobs: mockUploadJobs
   };
 });
 
@@ -106,13 +118,42 @@ describe('Drive Model', () => {
       expect(items).toBeDefined();
       expect(typeof items.get).toBe('function');
       expect(typeof items.create).toBe('function');
-      expect(typeof items.uploadFile).toBe('function');
+      expect(typeof items.uploadFiles).toBe('function');
     });
 
     it('should allow accessing drive items', () => {
       const items = drive.items;
       expect(items).toBeDefined();
       expect(items.uri).toBe('/drive/123');
+    });
+  });
+
+  describe('uploads getter', () => {
+    const UploadJobs = require('../../collections/upload-jobs').default;
+
+    it('should return UploadJobs collection', () => {
+      const uploads = drive.uploads;
+      expect(UploadJobs).toHaveBeenCalledWith('/drive/123');
+      expect(uploads).toBeDefined();
+      expect(typeof uploads.get).toBe('function');
+      expect(typeof uploads.create).toBe('function');
+    });
+
+    it('should allow accessing upload jobs', () => {
+      const uploads = drive.uploads;
+      expect(uploads).toBeDefined();
+      expect(uploads.uri).toBe('/drive/123');
+    });
+
+    it('should create separate instances for items and uploads', () => {
+      const items = drive.items;
+      const uploads = drive.uploads;
+      
+      expect(items).toBeDefined();
+      expect(uploads).toBeDefined();
+      // They should be different collections
+      expect(DriveItems).toHaveBeenCalled();
+      expect(UploadJobs).toHaveBeenCalled();
     });
   });
 

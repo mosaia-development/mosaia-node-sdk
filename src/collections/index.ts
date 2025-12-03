@@ -56,6 +56,7 @@ import AppWebhooks from './app-webhooks';
 import Search from './search';
 import Drives from './drives';
 import DriveItems from './drive-items';
+import UploadJobs from './upload-jobs';
 import Logs from './logs';
 import Messages from './messages';
 import Snapshots from './snapshots';
@@ -220,6 +221,16 @@ export { Drives };
  * @see {@link DriveItems}
  */
 export { DriveItems };
+
+/**
+ * Upload Jobs collection client for tracking file uploads
+ * 
+ * Provides operations for managing individual file upload jobs,
+ * including status checking and failure handling with automatic quota reversion.
+ * 
+ * @see {@link UploadJobs}
+ */
+export { UploadJobs };
 
 /**
  * Logs collection client for managing agent logs
