@@ -50,12 +50,12 @@ import OrgUsers from './org-users';
 import Tools from './tools';
 import Clients from './clients';
 import Models from './models';
-import AgentGroups from './agent-groups';
 import AppConnectors from './app-connectors';
 import AppWebhooks from './app-webhooks';
 import Search from './search';
 import Drives from './drives';
 import DriveItems from './drive-items';
+import UploadJobs from './upload-jobs';
 import Logs from './logs';
 import Messages from './messages';
 import Snapshots from './snapshots';
@@ -182,16 +182,6 @@ export { AppConnectors };
 export { AppWebhooks };
 
 /**
- * Agent Groups collection client for managing agent collections
- * 
- * Provides CRUD operations for agent groups, which allow organizing and
- * managing multiple AI agents together for coordinated workflows.
- * 
- * @see {@link AgentGroups}
- */
-export { AgentGroups };
-
-/**
  * Search collection client for universal search across resources
  * 
  * Provides search functionality across multiple resource types (agents, apps,
@@ -220,6 +210,16 @@ export { Drives };
  * @see {@link DriveItems}
  */
 export { DriveItems };
+
+/**
+ * Upload Jobs collection client for tracking file uploads
+ * 
+ * Provides operations for managing individual file upload jobs,
+ * including status checking and failure handling with automatic quota reversion.
+ * 
+ * @see {@link UploadJobs}
+ */
+export { UploadJobs };
 
 /**
  * Logs collection client for managing agent logs

@@ -21,7 +21,6 @@ import {
     Organizations,
     OrgUsers,
     Agents,
-    AgentGroups,
     Models,
     Clients,
     AppConnectors,
@@ -516,30 +515,6 @@ class MosaiaClient {
         return new Organizations();
     }
 
-    /**
-     * Access to Agent Groups API
-     * 
-     * Manage agent groups for multi-agent collaboration, including CRUD operations and group-specific functionality.
-     * 
-     * @returns {AgentGroups} Agent Groups API client
-     * 
-     * @example
-     * ```typescript
-     * // Get all agent groups
-     * const groups = await mosaia.agentGroups.get();
-     * 
-     * // Get specific agent group
-     * const group = await mosaia.agentGroups.get({}, 'group-id');
-     * 
-     * // Create chat completion with group
-     * const completion = await mosaia.agentGroups.chatCompletion('group-id', {
-     *   model: 'gpt-4',
-     *   messages: [{ role: 'user', content: 'Hello' }]
-     * ```
-     */
-    get agentGroups() {
-        return new AgentGroups();
-    }
 
     /**
      * Access to Models API
@@ -922,7 +897,6 @@ export { Apps } from './collections';
 export { Tools } from './collections';
 export { Organizations } from './collections';
 export { OrgUsers } from './collections';
-export { AgentGroups } from './collections';
 export { Models } from './collections';
 export { Clients } from './collections';
 export { AppConnectors } from './collections';
@@ -931,6 +905,7 @@ export { MosaiaAuth } from './collections';
 export { Search } from './collections';
 export { Drives } from './collections';
 export { DriveItems } from './collections';
+export { UploadJobs } from './collections';
 export { Logs } from './collections';
 export { Messages } from './collections';
 export { Snapshots } from './collections';
@@ -949,7 +924,6 @@ export { Organization } from './models';
 export { OrgUser } from './models';
 export { AppConnector } from './models';
 export { AppWebhook } from './models';
-export { AgentGroup } from './models';
 export { Tool } from './models';
 export { Client } from './models';
 export { Model } from './models';
@@ -957,6 +931,7 @@ export { Session } from './models';
 export { BaseModel } from './models';
 export { Drive } from './models';
 export { DriveItem } from './models';
+export { UploadJob } from './models';
 export { Log } from './models';
 export { Message } from './models';
 export { Snapshot } from './models';

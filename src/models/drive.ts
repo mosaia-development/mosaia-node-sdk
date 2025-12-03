@@ -1,6 +1,6 @@
 import { DriveInterface, DriveItemInterface } from '../types';
 import { BaseModel } from './base';
-import { DriveItems } from '../collections';
+import { DriveItems, UploadJobs } from '../collections';
 
 /**
  * Drive class for managing file storage drives
@@ -104,6 +104,17 @@ export default class Drive extends BaseModel<DriveInterface> {
      */
     get items(): DriveItems {
         return new DriveItems(this.getUri());
+    }
+
+    /**
+     * Get the drive's upload jobs collection
+     * 
+     * This getter provides access to the drive's upload jobs through
+     * the UploadJobs collection. It enables management of all upload jobs
+     * for the drive.
+     */
+    get uploads(): UploadJobs {
+        return new UploadJobs(this.getUri());
     }
 }
 

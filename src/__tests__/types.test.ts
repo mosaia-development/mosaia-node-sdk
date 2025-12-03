@@ -13,7 +13,6 @@ import {
   AppInterface,
   ToolInterface,
   AgentInterface,
-  AgentGroupInterface,
   ModelInterface,
   ClientInterface,
   WalletInterface,

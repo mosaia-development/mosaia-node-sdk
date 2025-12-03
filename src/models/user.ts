@@ -6,7 +6,6 @@ import {
     Clients,
     Models,
     OrgUsers,
-    AgentGroups,
     Tools,
     Meters,
     Wallets,
@@ -286,47 +285,6 @@ export default class User extends BaseModel<UserInterface> {
         return new Clients(this.getUri());
     }
 
-    /**
-     * Get the user's agent groups
-     * 
-     * This getter provides access to the user's agent groups through the
-     * AgentGroups collection. It enables management of collaborative
-     * agent teams and specialized configurations.
-     * 
-     * @returns AgentGroups collection for managing agent groups
-     * 
-     * @example
-     * List groups:
-     * ```typescript
-     * const groups = await user.groups.get();
-     * groups.forEach(group => {
-     *   console.log(`Group: ${group.name}`);
-     *   console.log(`Agents: ${group.agents.length}`);
-     * });
-     * ```
-     * 
-     * @example
-     * Create specialized team:
-     * ```typescript
-     * const supportTeam = await user.groups.create({
-     *   name: 'Support Team',
-     *   short_description: 'Customer support specialists',
-     *   agents: ['billing-expert', 'tech-support', 'general-help'],
-     *   metadata: {
-     *     type: 'customer-support',
-     *     specialties: ['billing', 'technical', 'general'],
-     *     availability: '24/7',
-     *     routing: {
-     *       strategy: 'round-robin',
-     *       fallback: 'general-help'
-     *     }
-     *   }
-     * });
-     * ```
-     */
-    get groups(): AgentGroups {
-        return new AgentGroups(this.getUri());
-    }
 
     /**
      * Get the user's AI models

@@ -259,12 +259,6 @@ describe('MosaiaClient', () => {
     });
   });
 
-  describe('agentGroups getter', () => {
-    it('should return AgentGroups instance', () => {
-      const agentGroups = mosaia.agentGroups;
-      expect(agentGroups).toBeDefined();
-    });
-  });
 
   describe('models getter', () => {
     it('should return Models instance', () => {
