@@ -205,17 +205,6 @@ describe('User Model', () => {
     });
   });
 
-  describe('groups getter', () => {
-    it('should return AgentGroups instance with correct URI', () => {
-      const { AgentGroups } = require('../../collections');
-      
-      const groups = user.groups;
-
-      expect(AgentGroups).toHaveBeenCalledWith('/user/123');
-      expect(groups).toBeDefined();
-      expect(groups.uri).toBe('/user/123');
-    });
-  });
 
   describe('models getter', () => {
     it('should return Models instance with correct URI', () => {

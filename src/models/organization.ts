@@ -4,7 +4,6 @@ import {
     Agents,
     Apps,
     Clients,
-    AgentGroups,
     Models,
     OrgUsers,
     Tools,
@@ -254,43 +253,6 @@ export default class Organization extends BaseModel<OrganizationInterface> {
         return new Clients(this.getUri());
     }
 
-    /**
-     * Get the organization's agent groups
-     * 
-     * This getter provides access to the organization's agent groups through
-     * the AgentGroups collection. It enables management of collaborative
-     * agent teams and specialized agent configurations.
-     * 
-     * @returns AgentGroups collection for managing agent groups
-     * 
-     * @example
-     * List agent groups:
-     * ```typescript
-     * const groups = await org.groups.get();
-     * groups.forEach(group => {
-     *   console.log(`Group: ${group.name}`);
-     *   console.log(`Agents: ${group.agents.length}`);
-     * });
-     * ```
-     * 
-     * @example
-     * Create specialized team:
-     * ```typescript
-     * const supportTeam = await org.groups.create({
-     *   name: 'Support Team',
-     *   short_description: 'Customer support specialists',
-     *   agents: ['billing-expert', 'tech-support', 'general-help'],
-     *   metadata: {
-     *     type: 'customer-support',
-     *     specialties: ['billing', 'technical', 'general'],
-     *     availability: '24/7'
-     *   }
-     * });
-     * ```
-     */
-    get groups(): AgentGroups {
-        return new AgentGroups(this.getUri());
-    }
 
     /**
      * Placeholder to be implemented later in the future

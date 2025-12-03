@@ -439,7 +439,13 @@ export interface UserInterface extends BaseEntity {
     /** Social media and other external links */
     links?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on User model instances)
+    readonly agents?: any; // Agents collection
+    readonly apps?: any; // Apps collection
+    readonly clients?: any; // Clients collection
+    readonly models?: any; // Models collection
+    readonly orgs?: any; // OrgUsers collection
 }
 
 /**
@@ -482,7 +488,13 @@ export interface OrganizationInterface extends BaseEntity {
     /** Extended properties for custom integrations */
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Organization model instances)
+    readonly agents?: any; // Agents collection
+    readonly apps?: any; // Apps collection
+    readonly clients?: any; // Clients collection
+    readonly models?: any; // Models collection
+    readonly orgs?: any; // OrgUsers collection (team members)
 }
 
 /**
@@ -572,6 +584,10 @@ export interface AppInterface extends BaseEntity {
     }
     /** External system identifier */
     external_id?: string;
+    // Collection getters (available on App model instances)
+    readonly connectors?: any; // AppConnectors collection
+    readonly webhooks?: any; // AppWebhooks collection
+    // Note: image property conflicts with image URL string, so not typed here
 }
 
 // Tool interfaces
@@ -616,27 +632,12 @@ export interface AgentInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
-}
-
-// Agent Group interfaces
-export interface AgentGroupInterface extends BaseEntity {
-    id?: string;
-    name: string;
-    org?: string;
-    user?: string;
-    short_description: string;
-    long_description?: string;
-    image?: string;
-    agents?: string[];
-    public?: boolean;
-    active?: boolean;
-    tags?: string[];
-    keywords?: string[];
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    };
+    // Collection getters (available on Agent model instances)
+    readonly chat?: any; // Chat functionality
+    // Note: image property conflicts with image URL string, so not typed here
+    readonly tasks?: any; // Tasks collection
+    readonly logs?: any; // Logs collection
 }
 
 // Model interfaces
@@ -685,7 +686,6 @@ export interface AppConnectorInterface extends BaseEntity {
     org?: string | OrganizationInterface;
     user?: string | UserInterface;
     agent?: string | AgentInterface;
-    agent_group?: string | AgentGroupInterface;
     client?: string | ClientInterface;
     response_hook?: string| AppWebhookInterface;
     tags?: string[];
@@ -836,7 +836,10 @@ export interface DriveInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Drive model instances)
+    readonly items?: any; // DriveItems collection
+    readonly uploads?: any; // UploadJobs collection
 }
 
 // Drive Item (FileMetadata) interfaces
@@ -856,6 +859,36 @@ export interface DriveItemInterface extends BaseEntity {
     extensors?: {
         [key: string]: string;
     }
+}
+
+// Upload Job interfaces
+export interface UploadJobInterface extends BaseEntity {
+    id?: string;
+    drive: string;
+    status: 'PENDING' | 'UPLOADING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
+    filename: string;
+    original_filename?: string;
+    s3_key?: string;
+    size: number;
+    mime_type: string;
+    content_type_category?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'ARCHIVE' | 'CODE' | 'DATA' | 'OTHER';
+    path?: string;
+    file_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
+    presigned_url?: string;
+    presigned_url_expires_at: string | Date;
+    etag?: string;
+    s3_version_id?: string;
+    started_at: string | Date;
+    completed_at?: string | Date;
+    error_summary?: string;
+    // Action URLs (provided by API)
+    failed_url?: string;
+    status_url?: string;
+    // Virtual fields
+    duration_ms?: number;
+    formatted_duration?: string;
+    formatted_size?: string;
+    is_expired?: boolean;
 }
 
 // Vector Index interfaces
@@ -890,7 +923,6 @@ export interface LikeInterface extends BaseEntity {
 export interface AgentLogInterface extends BaseEntity {
     id?: string;
     agent: string;
-    messages: any[];
     response?: any;
     metadata?: {
         [key: string]: any;
@@ -898,7 +930,10 @@ export interface AgentLogInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Log model instances)
+    readonly messages?: any; // Messages collection (replaces messages: any[] data property)
+    readonly snapshots?: any; // Snapshots collection
 }
 
 // Agent Tool interfaces
@@ -1165,15 +1200,6 @@ export type GetAgentPayload = {
     data: AgentInterface;
 }
 
-export type GetAgentGroupsPayload = {
-    data: AgentGroupInterface[];
-    paging?: PagingInterface;
-}
-
-export type GetAgentGroupPayload = {
-    data: AgentGroupInterface;
-}
-
 export type GetModelsPayload = {
     data: ModelInterface[];
     paging?: PagingInterface;
@@ -1245,6 +1271,15 @@ export type GetDriveItemsPayload = {
 
 export type GetDriveItemPayload = {
     data: DriveItemInterface;
+}
+
+export type GetUploadJobsPayload = {
+    data: UploadJobInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetUploadJobPayload = {
+    data: UploadJobInterface;
 }
 
 export type GetWalletsPayload = {
@@ -1443,7 +1478,9 @@ export interface TaskInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Task model instances)
+    readonly plans?: any; // Plans collection
 }
 
 export interface PlanInterface extends BaseEntity {

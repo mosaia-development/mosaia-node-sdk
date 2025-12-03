@@ -59,7 +59,6 @@ import Session from './session';
 import User from './user';
 import Organization from './organization';
 import OrgUser from './org-user';
-import AgentGroup from './agent-group';
 import Tool from './tool';
 import Client from './client';
 import Model from './model';
@@ -67,6 +66,7 @@ import AppConnector from './app-connector';
 import AppWebhook from './app-webhook';
 import Drive from './drive';
 import DriveItem from './drive-item';
+import UploadJob from './upload-job';
 import Log from './log';
 import Message from './message';
 import Snapshot from './snapshot';
@@ -133,11 +133,6 @@ export { AppConnector };
  */
 export { AppWebhook };
 
-/**
- * Agent Group model for managing AI agent collections
- * @see {@link AgentGroup}
- */
-export { AgentGroup };
 
 /**
  * Tool model for managing external integrations and utilities
@@ -168,6 +163,12 @@ export { Drive };
  * @see {@link DriveItem}
  */
 export { DriveItem };
+
+/**
+ * UploadJob model for tracking individual file uploads
+ * @see {@link UploadJob}
+ */
+export { UploadJob };
 
 /**
  * Log model for managing agent logs
