@@ -836,7 +836,10 @@ export interface DriveInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Drive model instances)
+    readonly items?: any; // DriveItems collection
+    readonly uploads?: any; // UploadJobs collection
 }
 
 // Drive Item (FileMetadata) interfaces
