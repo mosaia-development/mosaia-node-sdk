@@ -439,7 +439,14 @@ export interface UserInterface extends BaseEntity {
     /** Social media and other external links */
     links?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on User model instances)
+    readonly agents?: any; // Agents collection
+    readonly apps?: any; // Apps collection
+    readonly clients?: any; // Clients collection
+    readonly groups?: any; // AgentGroups collection
+    readonly models?: any; // Models collection
+    readonly orgs?: any; // OrgUsers collection
 }
 
 /**
@@ -482,7 +489,14 @@ export interface OrganizationInterface extends BaseEntity {
     /** Extended properties for custom integrations */
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Organization model instances)
+    readonly agents?: any; // Agents collection
+    readonly apps?: any; // Apps collection
+    readonly clients?: any; // Clients collection
+    readonly groups?: any; // AgentGroups collection
+    readonly models?: any; // Models collection
+    readonly orgs?: any; // OrgUsers collection (team members)
 }
 
 /**
@@ -572,6 +586,10 @@ export interface AppInterface extends BaseEntity {
     }
     /** External system identifier */
     external_id?: string;
+    // Collection getters (available on App model instances)
+    readonly connectors?: any; // AppConnectors collection
+    readonly webhooks?: any; // AppWebhooks collection
+    // Note: image property conflicts with image URL string, so not typed here
 }
 
 // Tool interfaces
@@ -616,7 +634,12 @@ export interface AgentInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Agent model instances)
+    readonly chat?: any; // Chat functionality
+    // Note: image property conflicts with image URL string, so not typed here
+    readonly tasks?: any; // Tasks collection
+    readonly logs?: any; // Logs collection
 }
 
 // Agent Group interfaces
@@ -923,7 +946,6 @@ export interface LikeInterface extends BaseEntity {
 export interface AgentLogInterface extends BaseEntity {
     id?: string;
     agent: string;
-    messages: any[];
     response?: any;
     metadata?: {
         [key: string]: any;
@@ -931,7 +953,10 @@ export interface AgentLogInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Log model instances)
+    readonly messages?: any; // Messages collection (replaces messages: any[] data property)
+    readonly snapshots?: any; // Snapshots collection
 }
 
 // Agent Tool interfaces
@@ -1485,7 +1510,9 @@ export interface TaskInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on Task model instances)
+    readonly plans?: any; // Plans collection
 }
 
 export interface PlanInterface extends BaseEntity {
