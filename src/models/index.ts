@@ -59,7 +59,6 @@ import Session from './session';
 import User from './user';
 import Organization from './organization';
 import OrgUser from './org-user';
-import AgentGroup from './agent-group';
 import Tool from './tool';
 import Client from './client';
 import Model from './model';
@@ -134,11 +133,6 @@ export { AppConnector };
  */
 export { AppWebhook };
 
-/**
- * Agent Group model for managing AI agent collections
- * @see {@link AgentGroup}
- */
-export { AgentGroup };
 
 /**
  * Tool model for managing external integrations and utilities

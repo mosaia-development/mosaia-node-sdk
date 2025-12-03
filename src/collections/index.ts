@@ -50,7 +50,6 @@ import OrgUsers from './org-users';
 import Tools from './tools';
 import Clients from './clients';
 import Models from './models';
-import AgentGroups from './agent-groups';
 import AppConnectors from './app-connectors';
 import AppWebhooks from './app-webhooks';
 import Search from './search';
@@ -181,16 +180,6 @@ export { AppConnectors };
  * @see {@link AppWebhooks}
  */
 export { AppWebhooks };
-
-/**
- * Agent Groups collection client for managing agent collections
- * 
- * Provides CRUD operations for agent groups, which allow organizing and
- * managing multiple AI agents together for coordinated workflows.
- * 
- * @see {@link AgentGroups}
- */
-export { AgentGroups };
 
 /**
  * Search collection client for universal search across resources

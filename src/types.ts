@@ -444,7 +444,6 @@ export interface UserInterface extends BaseEntity {
     readonly agents?: any; // Agents collection
     readonly apps?: any; // Apps collection
     readonly clients?: any; // Clients collection
-    readonly groups?: any; // AgentGroups collection
     readonly models?: any; // Models collection
     readonly orgs?: any; // OrgUsers collection
 }
@@ -494,7 +493,6 @@ export interface OrganizationInterface extends BaseEntity {
     readonly agents?: any; // Agents collection
     readonly apps?: any; // Apps collection
     readonly clients?: any; // Clients collection
-    readonly groups?: any; // AgentGroups collection
     readonly models?: any; // Models collection
     readonly orgs?: any; // OrgUsers collection (team members)
 }
@@ -642,26 +640,6 @@ export interface AgentInterface extends BaseEntity {
     readonly logs?: any; // Logs collection
 }
 
-// Agent Group interfaces
-export interface AgentGroupInterface extends BaseEntity {
-    id?: string;
-    name: string;
-    org?: string;
-    user?: string;
-    short_description: string;
-    long_description?: string;
-    image?: string;
-    agents?: string[];
-    public?: boolean;
-    active?: boolean;
-    tags?: string[];
-    keywords?: string[];
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
-}
-
 // Model interfaces
 export interface ModelInterface extends BaseEntity {
     id?: string;
@@ -708,7 +686,6 @@ export interface AppConnectorInterface extends BaseEntity {
     org?: string | OrganizationInterface;
     user?: string | UserInterface;
     agent?: string | AgentInterface;
-    agent_group?: string | AgentGroupInterface;
     client?: string | ClientInterface;
     response_hook?: string| AppWebhookInterface;
     tags?: string[];
@@ -1221,15 +1198,6 @@ export type GetAgentsPayload = {
 
 export type GetAgentPayload = {
     data: AgentInterface;
-}
-
-export type GetAgentGroupsPayload = {
-    data: AgentGroupInterface[];
-    paging?: PagingInterface;
-}
-
-export type GetAgentGroupPayload = {
-    data: AgentGroupInterface;
 }
 
 export type GetModelsPayload = {
