@@ -62,6 +62,19 @@ jest.mock('../../collections/upload-jobs', () => {
   };
 });
 
+// Mock the Access function
+jest.mock('../../functions/access', () => {
+  const mockAccess = jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    grant: jest.fn(),
+    revoke: jest.fn()
+  }));
+  return {
+    __esModule: true,
+    Access: mockAccess
+  };
+});
+
 describe('Drive Model', () => {
   let drive: any;
   const DriveItems = require('../../collections/drive-items').default;
@@ -154,6 +167,39 @@ describe('Drive Model', () => {
       // They should be different collections
       expect(DriveItems).toHaveBeenCalled();
       expect(UploadJobs).toHaveBeenCalled();
+    });
+  });
+
+  describe('access getter', () => {
+    const Access = require('../../functions/access').Access;
+    const UploadJobs = require('../../collections/upload-jobs').default;
+
+    it('should return Access function instance', () => {
+      const access = drive.access;
+      expect(Access).toHaveBeenCalledWith('/drive/123');
+      expect(access).toBeDefined();
+      expect(typeof access.grant).toBe('function');
+      expect(typeof access.revoke).toBe('function');
+    });
+
+    it('should allow managing access permissions', () => {
+      const access = drive.access;
+      expect(access).toBeDefined();
+      expect(access.uri).toBe('/drive/123');
+    });
+
+    it('should create separate instances for items, uploads, and access', () => {
+      const items = drive.items;
+      const uploads = drive.uploads;
+      const access = drive.access;
+      
+      expect(items).toBeDefined();
+      expect(uploads).toBeDefined();
+      expect(access).toBeDefined();
+      // They should be different instances
+      expect(DriveItems).toHaveBeenCalled();
+      expect(UploadJobs).toHaveBeenCalled();
+      expect(Access).toHaveBeenCalled();
     });
   });
 
