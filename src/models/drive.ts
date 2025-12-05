@@ -1,6 +1,7 @@
 import { DriveInterface, DriveItemInterface } from '../types';
 import { BaseModel } from './base';
 import { DriveItems, UploadJobs } from '../collections';
+import { Access } from '../functions/access';
 
 /**
  * Drive class for managing file storage drives
@@ -115,6 +116,43 @@ export default class Drive extends BaseModel<DriveInterface> {
      */
     get uploads(): UploadJobs {
         return new UploadJobs(this.getUri());
+    }
+
+    /**
+     * Get the access control functionality for this drive
+     * 
+     * This getter provides access to the drive's access control methods through
+     * the Access class. It allows for granting and revoking permissions to users,
+     * org users, agents, and clients.
+     * 
+     * @returns An Access instance configured for this drive
+     * 
+     * @example
+     * Grant access:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * // Grant read access to a user
+     * await drive.access.grant({ user: 'user123' }, 'read');
+     * 
+     * // Grant full access to an agent
+     * const agent = await client.agents.get({}, agentId);
+     * await drive.access.grant({ agent: agent }, '*');
+     * ```
+     * 
+     * @example
+     * Revoke access:
+     * ```typescript
+     * // Revoke write access from a user
+     * await drive.access.revoke({ user: 'user123' }, 'write');
+     * 
+     * // Revoke all access from an org user
+     * const result = await drive.access.revoke({ org_user: orgUserObj }, '*');
+     * console.log(`Removed ${result.deleted_count} permissions`);
+     * ```
+     */
+    get access(): Access {
+        return new Access(this.getUri());
     }
 }
 
