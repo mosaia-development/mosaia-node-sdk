@@ -9,7 +9,8 @@ jest.mock('../../models/base', () => ({
     this.apiClient = {
       POST: jest.fn(),
       PUT: jest.fn(),
-      DELETE: jest.fn()
+      DELETE: jest.fn(),
+      GET: jest.fn()
     };
     this.config = {
       apiKey: 'test-api-key',
@@ -32,6 +33,19 @@ jest.mock('../../models/base', () => ({
     });
   })
 }));
+
+// Mock the Access function
+jest.mock('../../functions/access', () => {
+  const mockAccess = jest.fn().mockImplementation((uri: string) => ({
+    uri,
+    grant: jest.fn(),
+    revoke: jest.fn()
+  }));
+  return {
+    __esModule: true,
+    Access: mockAccess
+  };
+});
 
 describe('DriveItem Model', () => {
   let driveItem: any;
@@ -187,6 +201,97 @@ describe('DriveItem Model', () => {
         author: 'John Doe',
         tags: ['important', 'draft']
       });
+    });
+  });
+
+  describe('downloadUrl method', () => {
+    it('should return download URL with default expiration', async () => {
+      const url = await driveItem.downloadUrl();
+      
+      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/item-456/download');
+    });
+
+    it('should return download URL with custom expiration', async () => {
+      const url = await driveItem.downloadUrl(7200);
+      
+      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/item-456/download?expires_in=7200');
+    });
+
+    it('should throw error for unsaved drive item', async () => {
+      const unsavedItem = new DriveItem({
+        drive: 'drive-123',
+        name: 'document.pdf'
+      });
+
+      await expect(unsavedItem.downloadUrl()).rejects.toThrow('Cannot get download URL for unsaved drive item');
+    });
+
+    it('should construct correct URL for different items', async () => {
+      const item1 = new DriveItem({
+        id: 'item-111',
+        drive: 'drive-123',
+        name: 'file1.pdf'
+      });
+      
+      // Mock getUri for this item
+      (item1 as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/item-111');
+      
+      const url1 = await item1.downloadUrl();
+      expect(url1).toBe('https://api.mosaia.ai/drive/drive-123/item/item-111/download');
+    });
+
+    it('should handle folders (ZIP download)', async () => {
+      const folder = new DriveItem({
+        id: 'folder-789',
+        drive: 'drive-123',
+        name: 'Documents'
+      });
+
+      (folder as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/folder-789');
+      
+      const url = await folder.downloadUrl(3600);
+      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/folder-789/download?expires_in=3600');
+    });
+  });
+
+  describe('access getter', () => {
+    const Access = require('../../functions/access').Access;
+
+    it('should return Access function instance', () => {
+      const access = driveItem.access;
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-456/456');
+      expect(access).toBeDefined();
+      expect(typeof access.grant).toBe('function');
+      expect(typeof access.revoke).toBe('function');
+    });
+
+    it('should allow managing access permissions', () => {
+      const access = driveItem.access;
+      expect(access).toBeDefined();
+      expect(access.uri).toBe('/drive/drive-123/item/item-456/456');
+    });
+
+    it('should throw error for unsaved drive item', () => {
+      const unsavedItem = new DriveItem({
+        drive: 'drive-123',
+        name: 'document.pdf'
+      });
+
+      expect(() => unsavedItem.access).toThrow('Cannot access permissions for unsaved drive item');
+    });
+
+    it('should create access instance with correct URI', () => {
+      const item = new DriveItem({
+        id: 'item-999',
+        drive: 'drive-123',
+        name: 'test.pdf'
+      });
+      
+      (item as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/item-999');
+      
+      const access = item.access;
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-999/item-999');
+      expect(access).toBeDefined();
     });
   });
 });
