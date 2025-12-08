@@ -222,5 +222,100 @@ export default class DriveItems extends BaseCollection<
         }
     }
 
+    /**
+     * Find a drive item or directory by URL path
+     * 
+     * Resolves a URL path to a drive item by traversing the folder hierarchy.
+     * If the path resolves to a directory, returns an array of all items within that directory.
+     * If the path resolves to a file, returns a single DriveItem.
+     * 
+     * @param path - URL path like '/documents/report.pdf' or '/folder1/subfolder/file.txt'
+     * @param options - Optional options for path resolution
+     * @param options.caseSensitive - Whether filename matching is case-sensitive (default: true)
+     * @returns Promise resolving to DriveItem for files, DriveItem[] for directories, or null if not found
+     * 
+     * @example
+     * Find a file by path:
+     * ```typescript
+     * const item = await items.findByPath('/documents/report.pdf');
+     * if (item) {
+     *   console.log('Found file:', item.filename);
+     * }
+     * ```
+     * 
+     * @example
+     * Find a directory (returns array):
+     * ```typescript
+     * const items = await items.findByPath('/documents');
+     * if (Array.isArray(items)) {
+     *   console.log(`Directory contains ${items.length} items`);
+     *   items.forEach(item => console.log(item.filename));
+     * }
+     * ```
+     * 
+     * @example
+     * Case-insensitive matching:
+     * ```typescript
+     * const item = await items.findByPath('/Report.PDF', { caseSensitive: false });
+     * ```
+     * 
+     * @throws {Error} When path resolution fails or API error occurs
+     */
+    async findByPath(
+        path: string,
+        options?: { caseSensitive?: boolean }
+    ): Promise<DriveItem | DriveItem[] | null> {
+        try {
+            if (!path || path.trim().length === 0) {
+                throw new Error('Path is required');
+            }
+
+            // Normalize path: remove leading slash if present (API expects path without leading slash)
+            const normalizedPath = path.startsWith('/') ? path.slice(1) : path;
+
+            // Build query parameters
+            const queryParams: Record<string, string> = {};
+            if (options?.caseSensitive !== undefined) {
+                queryParams.caseSensitive = options.caseSensitive.toString();
+            }
+
+            // The current URI is already /drive/:driveId/item
+            // For root path "/", call the root endpoint directly
+            // Otherwise, construct: /drive/:driveId/item/{path}
+            const baseUri = this.uri.endsWith('/') ? this.uri.slice(0, -1) : this.uri;
+            const pathUri = normalizedPath.length === 0 
+                ? baseUri  // Root path: /drive/:driveId/item
+                : `${baseUri}/${normalizedPath}`;  // Nested path: /drive/:driveId/item/{path}
+
+            // Make GET request to the path endpoint
+            const response = await this.apiClient.GET<DriveItemInterface | DriveItemInterface[]>(pathUri, queryParams);
+            const data = response.data || response;
+
+            // Handle null/undefined (not found)
+            if (data === null || data === undefined) {
+                return null;
+            }
+
+            // Check if response is an array (directory listing)
+            if (Array.isArray(data)) {
+                // Return array of DriveItem instances
+                return data.map(itemData => new DriveItem(itemData));
+            } else {
+                // Return single DriveItem instance
+                return new DriveItem(data);
+            }
+        } catch (error: any) {
+            // Handle 404 as null (not found)
+            if (error.status === 404) {
+                return null;
+            }
+            // Re-throw other errors
+            if (error.message) {
+                throw new Error(String(error.message));
+            }
+            throw new Error('Unknown error occurred while resolving path');
+        }
+    }
+
 }
 

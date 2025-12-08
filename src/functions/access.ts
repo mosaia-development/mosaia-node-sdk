@@ -19,7 +19,7 @@ export type Accessor = {
 /**
  * Action type definition for access control
  */
-export type AccessAction = 'read' | 'write' | 'delete' | '*';
+export type AccessAction = 'create' | 'read' | 'update' | 'delete' | '*';
 
 /**
  * Response type for grant access operation

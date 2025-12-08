@@ -182,22 +182,22 @@ describe('Access', () => {
           permission: { id: 'perm-456' },
           drive_id: 'drive-123',
           accessor_id: 'user-456',
-          action: 'write'
+          action: 'update'
         }
       };
       mockApiClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await access.grant({ user: userModel as any }, 'write');
+      const result = await access.grant({ user: userModel as any }, 'update');
 
       expect(mockApiClient.POST).toHaveBeenCalledWith(
         '/drive/123/access',
-        { accessor: { user: 'user-456' }, action: 'write' }
+        { accessor: { user: 'user-456' }, action: 'update' }
       );
       expect(result).toEqual(mockResponse.data);
     });
 
     it('should grant access with all action types', async () => {
-      const actions: AccessAction[] = ['read', 'write', 'delete', '*'];
+      const actions: AccessAction[] = ['read', 'update', 'delete', '*'];
       
       for (const action of actions) {
         mockApiClient.POST.mockResolvedValue({
@@ -324,23 +324,23 @@ describe('Access', () => {
         data: {
           drive_id: 'drive-123',
           accessor_id: 'user-456',
-          action: 'write',
+          action: 'update',
           deleted_count: 2
         }
       };
       mockApiClient.DELETE.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ user: userModel as any }, 'write');
+      const result = await access.revoke({ user: userModel as any }, 'update');
 
       expect(mockApiClient.DELETE).toHaveBeenCalledWith(
         '/drive/123/access',
-        { accessor: { user: 'user-456' }, action: 'write' }
+        { accessor: { user: 'user-456' }, action: 'update' }
       );
       expect(result).toEqual(mockResponse.data);
     });
 
     it('should revoke access with all action types', async () => {
-      const actions: AccessAction[] = ['read', 'write', 'delete', '*'];
+      const actions: AccessAction[] = ['read', 'update', 'delete', '*'];
       
       for (const action of actions) {
         mockApiClient.DELETE.mockResolvedValue({

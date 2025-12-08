@@ -434,5 +434,155 @@ describe('DriveItems', () => {
       expect(driveItems.delete).toHaveBeenCalledWith('1');
     });
   });
+
+  describe('findByPath method', () => {
+    beforeEach(() => {
+      driveItems = new DriveItems('/drive/drive-123');
+    });
+
+    it('should find a file by path and return single DriveItem', async () => {
+      const mockItemData: DriveItemInterface = {
+        id: 'item-1',
+        drive: 'drive-123',
+        name: 'report.pdf',
+        filename: 'report.pdf',
+        path: '/documents',
+        size: 1024,
+        mime_type: 'application/pdf',
+        file_type: 'FILE',
+        active: true
+      };
+
+      mockAPIClient.GET.mockResolvedValue({ data: mockItemData });
+
+      const result = await driveItems.findByPath('/documents/report.pdf');
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(false);
+      expect((result as any).data).toEqual(mockItemData);
+      expect(mockAPIClient.GET).toHaveBeenCalledWith(
+        '/drive/drive-123/item/documents/report.pdf',
+        {}
+      );
+    });
+
+    it('should find a directory by path and return array of DriveItems', async () => {
+      const mockItemsData: DriveItemInterface[] = [
+        {
+          id: 'item-1',
+          drive: 'drive-123',
+          name: 'file1.pdf',
+          filename: 'file1.pdf',
+          path: '/documents',
+          size: 1024,
+          mime_type: 'application/pdf',
+          file_type: 'FILE',
+          active: true
+        },
+        {
+          id: 'item-2',
+          drive: 'drive-123',
+          name: 'file2.txt',
+          filename: 'file2.txt',
+          path: '/documents',
+          size: 512,
+          mime_type: 'text/plain',
+          file_type: 'FILE',
+          active: true
+        }
+      ];
+
+      mockAPIClient.GET.mockResolvedValue({ data: mockItemsData });
+
+      const result = await driveItems.findByPath('/documents');
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect((result as DriveItem[]).length).toBe(2);
+      expect(mockAPIClient.GET).toHaveBeenCalledWith(
+        '/drive/drive-123/item/documents',
+        {}
+      );
+    });
+
+    it('should return null when path is not found', async () => {
+      const error = new Error('Not found') as any;
+      error.status = 404;
+      mockAPIClient.GET.mockRejectedValue(error);
+
+      const result = await driveItems.findByPath('/nonexistent/file.pdf');
+
+      expect(result).toBeNull();
+    });
+
+    it('should handle empty directory (returns empty array)', async () => {
+      mockAPIClient.GET.mockResolvedValue({ data: [] });
+
+      const result = await driveItems.findByPath('/empty-folder');
+
+      expect(result).toBeDefined();
+      expect(Array.isArray(result)).toBe(true);
+      expect((result as DriveItem[]).length).toBe(0);
+    });
+
+    it('should pass caseSensitive option as query parameter', async () => {
+      const mockItemData: DriveItemInterface = {
+        id: 'item-1',
+        drive: 'drive-123',
+        name: 'report.pdf',
+        filename: 'report.pdf',
+        path: '/documents',
+        size: 1024,
+        mime_type: 'application/pdf',
+        file_type: 'FILE',
+        active: true
+      };
+
+      mockAPIClient.GET.mockResolvedValue({ data: mockItemData });
+
+      await driveItems.findByPath('/Report.PDF', { caseSensitive: false });
+
+      expect(mockAPIClient.GET).toHaveBeenCalledWith(
+        '/drive/drive-123/item/Report.PDF',
+        { caseSensitive: 'false' }
+      );
+    });
+
+    it('should normalize path by removing leading slash', async () => {
+      const mockItemData: DriveItemInterface = {
+        id: 'item-1',
+        drive: 'drive-123',
+        name: 'report.pdf',
+        filename: 'report.pdf',
+        path: '/documents',
+        size: 1024,
+        mime_type: 'application/pdf',
+        file_type: 'FILE',
+        active: true
+      };
+
+      mockAPIClient.GET.mockResolvedValue({ data: mockItemData });
+
+      await driveItems.findByPath('/documents/report.pdf');
+
+      expect(mockAPIClient.GET).toHaveBeenCalledWith(
+        '/drive/drive-123/item/documents/report.pdf',
+        {}
+      );
+    });
+
+    it('should throw error for empty path', async () => {
+      await expect(driveItems.findByPath('')).rejects.toThrow('Path is required');
+      await expect(driveItems.findByPath('   ')).rejects.toThrow('Path is required');
+    });
+
+    it('should throw error for non-404 API errors', async () => {
+      const error = new Error('Server error') as any;
+      error.status = 500;
+      mockAPIClient.GET.mockRejectedValue(error);
+
+      await expect(driveItems.findByPath('/documents/report.pdf')).rejects.toThrow('Server error');
+    });
+  });
 });
 
