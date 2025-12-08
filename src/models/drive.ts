@@ -2,6 +2,7 @@ import { DriveInterface, DriveItemInterface } from '../types';
 import { BaseModel } from './base';
 import { DriveItems, UploadJobs } from '../collections';
 import { Access } from '../functions/access';
+import DriveItem from './drive-item';
 
 /**
  * Drive class for managing file storage drives
@@ -153,6 +154,58 @@ export default class Drive extends BaseModel<DriveInterface> {
      */
     get access(): Access {
         return new Access(this.getUri());
+    }
+
+    /**
+     * Find a drive item or directory by URL path within this drive
+     * 
+     * Convenience method that wraps DriveItems.findByPath() for this drive instance.
+     * Resolves a URL path to a drive item by traversing the folder hierarchy.
+     * If the path resolves to a directory, returns an array of all items within that directory.
+     * If the path resolves to a file, returns a single DriveItem.
+     * 
+     * @param path - URL path like '/documents/report.pdf' or '/folder1/subfolder/file.txt'
+     * @param options - Optional options for path resolution
+     * @param options.caseSensitive - Whether filename matching is case-sensitive (default: true)
+     * @returns Promise resolving to DriveItem for files, DriveItem[] for directories, or null if not found
+     * 
+     * @example
+     * Find a file by path:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const item = await drive.findItemByPath('/documents/report.pdf');
+     * if (item) {
+     *   console.log('Found file:', item.filename);
+     * }
+     * ```
+     * 
+     * @example
+     * Find a directory (returns array):
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const items = await drive.findItemByPath('/documents');
+     * if (Array.isArray(items)) {
+     *   console.log(`Directory contains ${items.length} items`);
+     *   items.forEach(item => console.log(item.filename));
+     * }
+     * ```
+     * 
+     * @example
+     * Case-insensitive matching:
+     * ```typescript
+     * const item = await drive.findItemByPath('/Report.PDF', { caseSensitive: false });
+     * ```
+     * 
+     * @throws {Error} When path resolution fails or API error occurs
+     */
+    async findItemByPath(
+        path: string,
+        options?: { caseSensitive?: boolean }
+    ): Promise<DriveItem | DriveItem[] | null> {
+        if (!this.data.id) {
+            throw new Error('Cannot find item by path for unsaved drive');
+        }
+        return await this.items.findByPath(path, options);
     }
 }
 

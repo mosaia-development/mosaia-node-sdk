@@ -39,7 +39,8 @@ jest.mock('../../collections/drive-items', () => {
     uri,
     get: jest.fn(),
     create: jest.fn(),
-    uploadFiles: jest.fn()
+    uploadFiles: jest.fn(),
+    findByPath: jest.fn()
   }));
   return {
     __esModule: true,
@@ -267,6 +268,63 @@ describe('Drive Model', () => {
       });
 
       expect(inactiveDrive.isActive()).toBe(false);
+    });
+  });
+
+  describe('findItemByPath method', () => {
+    it('should call items.findByPath with correct parameters', async () => {
+      const mockItem = { id: 'item-1', name: 'report.pdf' };
+      const mockFindByPath = jest.fn().mockResolvedValue(mockItem);
+      
+      // Mock the items getter to return an object with findByPath
+      jest.spyOn(drive, 'items', 'get').mockReturnValue({
+        findByPath: mockFindByPath
+      } as any);
+
+      const result = await drive.findItemByPath('/documents/report.pdf');
+
+      expect(mockFindByPath).toHaveBeenCalledWith('/documents/report.pdf', undefined);
+      expect(result).toEqual(mockItem);
+    });
+
+    it('should pass options to items.findByPath', async () => {
+      const mockItem = { id: 'item-1', name: 'report.pdf' };
+      const mockFindByPath = jest.fn().mockResolvedValue(mockItem);
+      
+      jest.spyOn(drive, 'items', 'get').mockReturnValue({
+        findByPath: mockFindByPath
+      } as any);
+
+      const options = { caseSensitive: false };
+      await drive.findItemByPath('/Report.PDF', options);
+
+      expect(mockFindByPath).toHaveBeenCalledWith('/Report.PDF', options);
+    });
+
+    it('should throw error for unsaved drive', async () => {
+      const unsavedDrive = new Drive({ name: 'Test Drive' });
+      
+      await expect(unsavedDrive.findItemByPath('/test')).rejects.toThrow(
+        'Cannot find item by path for unsaved drive'
+      );
+    });
+
+    it('should return array for directory paths', async () => {
+      const mockItemsArray = [
+        { id: 'item-1', name: 'file1.pdf' },
+        { id: 'item-2', name: 'file2.txt' }
+      ];
+      const mockFindByPath = jest.fn().mockResolvedValue(mockItemsArray);
+      
+      jest.spyOn(drive, 'items', 'get').mockReturnValue({
+        findByPath: mockFindByPath
+      } as any);
+
+      const result = await drive.findItemByPath('/documents');
+
+      expect(mockFindByPath).toHaveBeenCalledWith('/documents', undefined);
+      expect(Array.isArray(result)).toBe(true);
+      expect(result).toEqual(mockItemsArray);
     });
   });
 });
