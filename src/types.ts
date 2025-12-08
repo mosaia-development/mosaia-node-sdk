@@ -851,6 +851,7 @@ export interface DriveItemInterface extends BaseEntity {
     path?: string;
     size?: number;
     mime_type?: string;
+    file_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
     url?: string;
     metadata?: {
         [key: string]: any;
