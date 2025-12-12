@@ -89,6 +89,7 @@ export default class DriveItems extends BaseCollection<
      * @param options.path - Base path where files should be uploaded (defaults to '/')
      * @param options.relativePaths - Array of relative paths for directory structure preservation
      * @param options.preserveStructure - Boolean flag to enable/disable structure preservation (default: true if relativePaths provided)
+     * @param options.onProgress - Optional progress callback that receives the UploadJob and progress (0-100) for each file
      * @returns Promise resolving to upload information with UploadJob instances
      * 
      * @example
@@ -98,24 +99,14 @@ export default class DriveItems extends BaseCollection<
      * const file = fileInput.files[0];
      * 
      * const result = await items.uploadFiles([file], {
-     *   path: '/documents'
+     *   path: '/documents',
+     *   onProgress: (uploadJob, progress) => {
+     *     console.log(`${uploadJob.filename}: ${progress}%`);
+     *   }
      * });
      * 
-     * // Get UploadJob instance for the file
-     * const uploadJob = result.uploadJobs[0];
-     * console.log('Upload job ID:', uploadJob.id);
-     * 
-     * // Upload to S3 using presigned_url
-     * await fetch(uploadJob.presigned_url, {
-     *   method: 'PUT',
-     *   body: file,
-     *   headers: { 'Content-Type': uploadJob.mime_type }
-     * });
-     * 
-     * // Check if expired
-     * if (uploadJob.isExpired()) {
-     *   await uploadJob.markFailed('Upload expired');
-     * }
+     * // Files are automatically uploaded to S3
+     * console.log('Upload jobs:', result.uploadJobs);
      * ```
      * 
      * @example
@@ -129,12 +120,20 @@ export default class DriveItems extends BaseCollection<
      * });
      * 
      * // Each file can be tracked independently
-     * for (const uploadJob of result.uploadJobs) {
+     * for (let i = 0; i < result.uploadJobs.length; i++) {
+     *   const uploadJob = result.uploadJobs[i];
+     *   const file = files[i];
      *   console.log(`Uploading ${uploadJob.filename}...`);
-     *   await fetch(uploadJob.presigned_url, {
-     *     method: 'PUT',
-     *     body: files[result.uploadJobs.indexOf(uploadJob)]
-     *   });
+     *   try {
+     *     await uploadJob.upload(file, {
+     *       onProgress: (progress) => {
+     *         console.log(`${uploadJob.filename}: ${progress}%`);
+     *       }
+     *     });
+     *   } catch (error) {
+     *     console.error(`Failed to upload ${uploadJob.filename}:`, error);
+     *     await uploadJob.markFailed(error.message);
+     *   }
      * }
      * ```
      * 
@@ -146,6 +145,7 @@ export default class DriveItems extends BaseCollection<
             path?: string;
             relativePaths?: string[] | string;
             preserveStructure?: boolean;
+            onProgress?: (uploadJob: UploadJob, progress: number) => void;
         }
     ): Promise<{
         message: string;
@@ -189,7 +189,7 @@ export default class DriveItems extends BaseCollection<
             const data = response.data || response;
             
             // Convert file info to UploadJob instances
-            const uploadJobs = (data.files || []).map((fileInfo: any) => {
+            const uploadJobs = (data.files || []).map((fileInfo: any, index: number) => {
                 // Map snake_case API response to UploadJobInterface
                 const uploadJobData: Partial<UploadJobInterface> = {
                     id: fileInfo.upload_job_id,
@@ -208,6 +208,36 @@ export default class DriveItems extends BaseCollection<
                 
                 return new UploadJob(uploadJobData);
             });
+            
+            // Automatically upload files to drive
+            // This is the expected behavior when calling uploadFiles()
+            const uploadPromises = uploadJobs.map(async (uploadJob: UploadJob, index: number) => {
+                const file = files[index];
+                if (!file) {
+                    throw new Error(`File not found for upload job ${uploadJob.id}`);
+                }
+                
+                try {
+                    const onProgressCallback = options?.onProgress;
+                    await uploadJob.upload(file, {
+                        onProgress: onProgressCallback 
+                            ? (progress: number) => onProgressCallback(uploadJob, progress)
+                            : undefined
+                    });
+                } catch (error: any) {
+                    // Mark as failed if upload fails
+                    try {
+                        await uploadJob.markFailed(error.message || 'Upload failed');
+                    } catch (markFailedError) {
+                        // Ignore errors when marking as failed
+                        console.error('Failed to mark upload as failed:', markFailedError);
+                    }
+                    throw error;
+                }
+            });
+            
+            // Wait for all uploads to complete (or fail)
+            await Promise.allSettled(uploadPromises);
             
             return {
                 message: data.message,

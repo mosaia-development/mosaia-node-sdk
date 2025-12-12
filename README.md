@@ -696,21 +696,18 @@ const uploadResult = await drive.items.uploadFile(file, {
   relativePath: 'folder/file.txt'
 });
 
-// Upload to S3 using presigned URL
-const fileInfo = uploadResult.files[0];
-const uploadResponse = await fetch(fileInfo.presignedUrl, {
-  method: 'PUT',
-  body: file,
-  headers: {
-    'Content-Type': fileInfo.mimeType
-  }
-});
-
-if (!uploadResponse.ok) {
-  // Mark upload as failed if S3 upload fails
-  await drive.items.markUploadFailed(fileInfo.fileId, {
-    error: `Upload failed: ${uploadResponse.statusText}`
+// Upload to S3 using the upload() method (handles encryption headers automatically)
+const uploadJob = uploadResult.uploadJobs[0];
+try {
+  await uploadJob.upload(file, {
+    onProgress: (progress) => {
+      console.log(`Upload progress: ${progress}%`);
+    }
   });
+  console.log('Upload successful!');
+} catch (error) {
+  console.error('Upload failed:', error);
+  await uploadJob.markFailed(error.message);
 }
 
 // Check upload job status
@@ -726,15 +723,19 @@ const batchResult = await drive.items.uploadFiles(files, {
 });
 
 // Upload all files to S3
-for (let i = 0; i < files.length; i++) {
-  const fileInfo = batchResult.files[i];
-  await fetch(fileInfo.presignedUrl, {
-    method: 'PUT',
-    body: files[i],
-    headers: {
-      'Content-Type': fileInfo.mimeType
-    }
-  });
+for (let i = 0; i < batchResult.uploadJobs.length; i++) {
+  const uploadJob = batchResult.uploadJobs[i];
+  const file = files[i];
+  try {
+    await uploadJob.upload(file, {
+      onProgress: (progress) => {
+        console.log(`${uploadJob.filename}: ${progress}%`);
+      }
+    });
+  } catch (error) {
+    console.error(`Failed to upload ${uploadJob.filename}:`, error);
+    await uploadJob.markFailed(error.message);
+  }
 }
 
 // Update drive item metadata
