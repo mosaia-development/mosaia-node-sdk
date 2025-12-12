@@ -183,8 +183,24 @@ export default class UploadJob extends BaseModel<UploadJobInterface> {
             throw new Error('Cannot mark upload as failed: failed_url not available');
         }
 
+        // The failed_url from the API already includes /v1/, but the API client
+        // prepends the base URL which also includes /v1/. We need to strip the /v1/ prefix
+        // if it exists, or use the URL directly if it's an absolute URL.
+        let url = this.failed_url;
+        
+        // If it's a relative URL starting with /v1/, remove the /v1/ prefix
+        // The API client will add it back with the base URL
+        if (url.startsWith('/v1/')) {
+            url = url.substring(3); // Remove '/v1' prefix, keep the leading '/'
+        }
+        // If it's an absolute URL, use it directly (but this shouldn't happen)
+        else if (url.startsWith('http://') || url.startsWith('https://')) {
+            // For absolute URLs, we'd need to use fetch directly, but this case shouldn't occur
+            // as the API returns relative URLs
+        }
+
         const response = await this.apiClient.POST<any>(
-            this.failed_url,
+            url,
             { error: errorMessage || 'Upload failed' }
         );
 
@@ -213,6 +229,98 @@ export default class UploadJob extends BaseModel<UploadJobInterface> {
             ? new Date(this.presigned_url_expires_at)
             : this.presigned_url_expires_at;
         return new Date() > expiresAt;
+    }
+
+    /**
+     * Upload item to drive using upload
+     * 
+     * Uploads an item to the drive using the presigned URL with all required headers,
+     * including the server-side encryption header required by the bucket policy.
+     * 
+     * @param file - The File or Blob to upload
+     * @param options - Optional upload options
+     * @param options.onProgress - Optional progress callback that receives upload progress (0-100)
+     * @returns Promise that resolves when upload completes successfully
+     * 
+     * @example
+     * ```typescript
+     * const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+     * const file = fileInput.files[0];
+     * 
+     * const result = await drive.items.uploadFiles([file]);
+     * const uploadJob = result.uploadJobs[0];
+     * 
+     * try {
+     *   await uploadJob.upload(file, {
+     *     onProgress: (progress) => {
+     *       console.log(`Upload progress: ${progress}%`);
+     *     }
+     *   });
+     *   console.log('Upload successful!');
+     * } catch (error) {
+     *   console.error('Upload failed:', error);
+     *   await uploadJob.markFailed(error.message);
+     * }
+     * ```
+     * 
+     * @throws {Error} When presigned URL is missing, expired, or upload fails
+     */
+    async upload(
+        file: File | Blob,
+        options?: {
+            onProgress?: (progress: number) => void;
+        }
+    ): Promise<void> {
+        if (!this.presigned_url) {
+            throw new Error('Cannot upload: presigned URL not available');
+        }
+        if (this.isExpired()) {
+            throw new Error('Cannot upload: presigned URL has expired');
+        }
+        const presignedUrl = this.presigned_url as string;
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            // Track upload progress
+            if (options?.onProgress) {
+                xhr.upload.addEventListener('progress', (e) => {
+                    if (e.lengthComputable) {
+                        const progress = Math.round((e.loaded / e.total) * 100);
+                        options.onProgress!(progress);
+                    }
+                });
+            }
+
+            // Handle successful upload
+            xhr.addEventListener('load', () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resolve();
+                } else {
+                    reject(new Error(`Upload failed: ${xhr.status} ${xhr.statusText}`));
+                }
+            });
+
+            // Handle upload errors
+            xhr.addEventListener('error', () => {
+                reject(new Error('Upload failed due to network error'));
+            });
+
+            xhr.addEventListener('abort', () => {
+                reject(new Error('Upload was aborted'));
+            });
+
+            // Configure and send the request
+            xhr.open('PUT', presignedUrl);
+            xhr.setRequestHeader('Content-Type', this.mime_type || 'application/octet-stream');
+            
+            // Required by Drive bucket policy (SSE-S3 enforcement)
+            // The presigned URL is generated with ServerSideEncryption: 'AES256',
+            // so the client MUST include this header or S3 will reject with 403 Forbidden
+            xhr.setRequestHeader('x-amz-server-side-encryption', 'AES256');
+            
+            xhr.send(file);
+        });
     }
 }
 
