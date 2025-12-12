@@ -155,8 +155,10 @@ describe('UploadJob Model', () => {
 
       const result = await uploadJob.markFailed('Upload timeout');
 
+      // The markFailed method strips /v1/ prefix before calling API client
+      // because the API client already prepends /v1/ to the base URL
       expect(uploadJob.apiClient.POST).toHaveBeenCalledWith(
-        '/v1/drive/drive-123/upload/upload-123/failed',
+        '/drive/drive-123/upload/upload-123/failed',
         { error: 'Upload timeout' }
       );
       expect(result).toBeDefined();
@@ -174,8 +176,10 @@ describe('UploadJob Model', () => {
 
       await uploadJob.markFailed();
 
+      // The markFailed method strips /v1/ prefix before calling API client
+      // because the API client already prepends /v1/ to the base URL
       expect(uploadJob.apiClient.POST).toHaveBeenCalledWith(
-        '/v1/drive/drive-123/upload/upload-123/failed',
+        '/drive/drive-123/upload/upload-123/failed',
         { error: 'Upload failed' }
       );
     });
@@ -270,6 +274,148 @@ describe('UploadJob Model', () => {
       const expired = uploadJob.isExpired();
 
       expect(expired).toBe(false);
+    });
+  });
+
+  describe('upload method', () => {
+    let mockFile: File;
+    let mockXHR: any;
+
+    beforeEach(() => {
+      // Create a mock File object
+      mockFile = new File(['test content'], 'test.txt', { type: 'text/plain' });
+
+      // Mock XMLHttpRequest
+      mockXHR = {
+        open: jest.fn(),
+        setRequestHeader: jest.fn(),
+        send: jest.fn(),
+        upload: {
+          addEventListener: jest.fn()
+        },
+        addEventListener: jest.fn(),
+        status: 200,
+        statusText: 'OK'
+      };
+
+      global.XMLHttpRequest = jest.fn(() => mockXHR) as any;
+    });
+
+    it('should upload file successfully', async () => {
+      // Mock successful upload
+      mockXHR.addEventListener.mockImplementation((event: string, handler: Function) => {
+        if (event === 'load') {
+          setTimeout(() => handler(), 0);
+        }
+      });
+
+      await uploadJob.upload(mockFile);
+
+      expect(mockXHR.open).toHaveBeenCalledWith('PUT', 'https://s3.example.com/presigned-upload');
+      expect(mockXHR.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
+      expect(mockXHR.setRequestHeader).toHaveBeenCalledWith('x-amz-server-side-encryption', 'AES256');
+      expect(mockXHR.send).toHaveBeenCalledWith(mockFile);
+    });
+
+    it('should track upload progress', async () => {
+      const progressHandlers: Array<(e: any) => void> = [];
+      
+      mockXHR.upload.addEventListener.mockImplementation((event: string, handler: (e: any) => void) => {
+        if (event === 'progress') {
+          progressHandlers.push(handler);
+        }
+      });
+
+      mockXHR.addEventListener.mockImplementation((event: string, handler: (e: any) => void) => {
+        if (event === 'load') {
+          setTimeout(() => handler({} as any), 0);
+        }
+      });
+
+      const onProgress = jest.fn();
+      const uploadPromise = uploadJob.upload(mockFile, { onProgress });
+
+      // Simulate progress event
+      if (progressHandlers.length > 0) {
+        progressHandlers[0]({ lengthComputable: true, loaded: 50, total: 100 });
+      }
+
+      await uploadPromise;
+
+      expect(onProgress).toHaveBeenCalledWith(50);
+    });
+
+    it('should throw error when presigned URL is missing', async () => {
+      const jobWithoutUrl = new UploadJob({
+        id: 'upload-no-url',
+        drive: 'drive-123',
+        filename: 'test.pdf',
+        size: 1024,
+        mime_type: 'application/pdf',
+        presigned_url_expires_at: new Date().toISOString(),
+        status: 'PENDING',
+        started_at: new Date().toISOString()
+      } as any);
+
+      await expect(jobWithoutUrl.upload(mockFile)).rejects.toThrow(
+        'Cannot upload: presigned URL not available'
+      );
+    });
+
+    it('should throw error when presigned URL is expired', async () => {
+      const expiredJob = new UploadJob({
+        id: 'upload-expired',
+        drive: 'drive-123',
+        filename: 'test.pdf',
+        size: 1024,
+        mime_type: 'application/pdf',
+        presigned_url: 'https://s3.example.com/presigned-upload',
+        presigned_url_expires_at: new Date(Date.now() - 1000).toISOString(), // Expired
+        status: 'PENDING',
+        started_at: new Date().toISOString()
+      } as any);
+
+      await expect(expiredJob.upload(mockFile)).rejects.toThrow(
+        'Cannot upload: presigned URL has expired'
+      );
+    });
+
+    it('should handle upload errors', async () => {
+      mockXHR.addEventListener.mockImplementation((event: string, handler: Function) => {
+        if (event === 'load') {
+          mockXHR.status = 403;
+          mockXHR.statusText = 'Forbidden';
+          setTimeout(() => handler(), 0);
+        }
+      });
+
+      await expect(uploadJob.upload(mockFile)).rejects.toThrow(
+        'Upload failed: 403 Forbidden'
+      );
+    });
+
+    it('should handle network errors', async () => {
+      mockXHR.addEventListener.mockImplementation((event: string, handler: Function) => {
+        if (event === 'error') {
+          setTimeout(() => handler(), 0);
+        }
+      });
+
+      await expect(uploadJob.upload(mockFile)).rejects.toThrow(
+        'Upload failed due to network error'
+      );
+    });
+
+    it('should handle upload abort', async () => {
+      mockXHR.addEventListener.mockImplementation((event: string, handler: Function) => {
+        if (event === 'abort') {
+          setTimeout(() => handler(), 0);
+        }
+      });
+
+      await expect(uploadJob.upload(mockFile)).rejects.toThrow(
+        'Upload was aborted'
+      );
     });
   });
 
