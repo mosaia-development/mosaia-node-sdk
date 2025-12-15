@@ -313,7 +313,7 @@ describe('UploadJob Model', () => {
 
       expect(mockXHR.open).toHaveBeenCalledWith('PUT', 'https://s3.example.com/presigned-upload');
       expect(mockXHR.setRequestHeader).toHaveBeenCalledWith('Content-Type', 'application/pdf');
-      expect(mockXHR.setRequestHeader).toHaveBeenCalledWith('x-amz-server-side-encryption', 'AES256');
+      // Note: x-amz-server-side-encryption header is no longer required - bucket has default encryption
       expect(mockXHR.send).toHaveBeenCalledWith(mockFile);
     });
 
