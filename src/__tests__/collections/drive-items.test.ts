@@ -100,7 +100,8 @@ describe('DriveItems', () => {
         failed_url: data.failed_url,
         status_url: data.status_url,
         presigned_url_expires_at: data.presigned_url_expires_at,
-        markFailed: jest.fn(),
+        upload: jest.fn().mockResolvedValue(undefined),
+        markFailed: jest.fn().mockResolvedValue(data),
         isExpired: jest.fn().mockReturnValue(false),
         toJSON: jest.fn().mockReturnValue(data)
       } as any;
@@ -128,7 +129,7 @@ describe('DriveItems', () => {
   });
 
   describe('uploadFiles method', () => {
-    it('should upload files and return UploadJob instances', async () => {
+    it('should upload files automatically and return UploadJob instances', async () => {
       const mockFile = new File(['file content'], 'test.txt', { type: 'text/plain' });
       const mockResponse = {
         message: 'Batch upload initiated',
@@ -165,6 +166,9 @@ describe('DriveItems', () => {
       expect(result.uploadJobs[0].filename).toBe('test.txt');
       expect(result.uploadJobs[0].presigned_url).toBe('https://s3.example.com/upload');
       expect(result.uploadJobs[0].failed_url).toBe('/v1/drive/drive-123/upload/upload-123/failed');
+      
+      // Verify that upload() was called automatically
+      expect(result.uploadJobs[0].upload).toHaveBeenCalledWith(mockFile, expect.any(Object));
     });
 
     it('should upload files with path option', async () => {
@@ -355,6 +359,98 @@ describe('DriveItems', () => {
       expect(result.uploadJobs[0].mime_type).toBe('application/pdf');
       expect(result.uploadJobs[0].failed_url).toBe('/v1/drive/drive-123/upload/upload-complete/failed');
       expect(result.uploadJobs[0].status_url).toBe('/v1/drive/drive-123/upload/upload-complete');
+      
+      // Verify that upload() was called automatically
+      expect(result.uploadJobs[0].upload).toHaveBeenCalledWith(mockFile, expect.any(Object));
+    });
+
+    it('should automatically upload files with progress tracking', async () => {
+      const mockFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+      const mockResponse = {
+        message: 'Upload initiated',
+        files: [{
+          upload_job_id: 'upload-progress',
+          filename: 'test.pdf',
+          presigned_url: 'https://s3.example.com/presigned',
+          mime_type: 'application/pdf',
+          size: 7,
+          path: '/documents/test.pdf',
+          expires_in: 300,
+          expires_at: '2025-12-03T20:00:00Z',
+          failed_url: '/v1/drive/drive-123/upload/upload-progress/failed',
+          status_url: '/v1/drive/drive-123/upload/upload-progress'
+        }],
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+      const onProgress = jest.fn();
+
+      const result = await driveItems.uploadFiles([mockFile], { onProgress });
+
+      // Verify upload was called with progress callback
+      expect(result.uploadJobs[0].upload).toHaveBeenCalledWith(
+        mockFile,
+        expect.objectContaining({
+          onProgress: expect.any(Function)
+        })
+      );
+    });
+
+    it('should handle upload failures and mark as failed', async () => {
+      const mockFile = new File(['content'], 'test.pdf', { type: 'application/pdf' });
+      const mockResponse = {
+        message: 'Upload initiated',
+        files: [{
+          upload_job_id: 'upload-fail',
+          filename: 'test.pdf',
+          presigned_url: 'https://s3.example.com/presigned',
+          mime_type: 'application/pdf',
+          size: 7,
+          path: '/documents/test.pdf',
+          expires_in: 300,
+          expires_at: '2025-12-03T20:00:00Z',
+          failed_url: '/v1/drive/drive-123/upload/upload-fail/failed',
+          status_url: '/v1/drive/drive-123/upload/upload-fail'
+        }],
+        instructions: {}
+      };
+
+      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
+      
+      // Get the upload job instance that will be created
+      let uploadJobInstance: any;
+      MockUploadJob.mockImplementation((data: any) => {
+        uploadJobInstance = {
+          data,
+          id: data.id,
+          filename: data.filename,
+          presigned_url: data.presigned_url,
+          mime_type: data.mime_type,
+          size: data.size,
+          path: data.path,
+          status: data.status,
+          failed_url: data.failed_url,
+          status_url: data.status_url,
+          presigned_url_expires_at: data.presigned_url_expires_at,
+          upload: jest.fn().mockRejectedValue(new Error('Upload failed: 403 Forbidden')),
+          markFailed: jest.fn().mockResolvedValue(data),
+          isExpired: jest.fn().mockReturnValue(false),
+          toJSON: jest.fn().mockReturnValue(data)
+        };
+        return uploadJobInstance;
+      });
+
+      // uploadFiles now uses Promise.allSettled, so it resolves even if uploads fail
+      // The uploads are automatically marked as failed internally
+      const result = await driveItems.uploadFiles([mockFile]);
+      
+      // Verify the result contains the upload jobs
+      expect(result.uploadJobs).toBeDefined();
+      expect(result.uploadJobs.length).toBe(1);
+      
+      // Verify markFailed was called to mark the failed upload
+      expect(uploadJobInstance.markFailed).toHaveBeenCalledWith('Upload failed: 403 Forbidden');
     });
   });
 

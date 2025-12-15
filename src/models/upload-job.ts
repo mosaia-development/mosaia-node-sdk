@@ -314,10 +314,9 @@ export default class UploadJob extends BaseModel<UploadJobInterface> {
             xhr.open('PUT', presignedUrl);
             xhr.setRequestHeader('Content-Type', this.mime_type || 'application/octet-stream');
             
-            // Required by Drive bucket policy (SSE-S3 enforcement)
-            // The presigned URL is generated with ServerSideEncryption: 'AES256',
-            // so the client MUST include this header or S3 will reject with 403 Forbidden
-            xhr.setRequestHeader('x-amz-server-side-encryption', 'AES256');
+            // Note: x-amz-server-side-encryption header is not needed - the bucket has
+            // default encryption enabled via BucketEncryption property. All objects
+            // will be automatically encrypted with AES256.
             
             xhr.send(file);
         });
