@@ -46,6 +46,7 @@ import Users from './users';
 import Organizations from './organizations';
 import OrgUsers from './org-users';
 import Tools from './tools';
+import AgentTools from './agent-tools';
 import Clients from './clients';
 import Models from './models';
 import AppBots from './app-bots';

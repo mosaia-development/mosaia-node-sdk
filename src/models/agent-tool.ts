@@ -1,4 +1,4 @@
-import { ToolInterface, GetToolPayload } from '../types';
+import { ToolInterface, GetToolPayload, AgentToolInterface } from '../types';
 import { BaseModel } from './base';
 import { Image } from '../functions/image';
 
@@ -111,10 +111,10 @@ import { Image } from '../functions/image';
  * }
  * ```
  * 
- * @extends BaseModel<ToolInterface>
+ * @extends BaseModel<AgentToolInterface>
  * @category Models
  */
-export default class Tool extends BaseModel<ToolInterface> {
+export default class AgentTool extends BaseModel<AgentToolInterface> {
     /**
      * Creates a new tool configuration
      * 
@@ -199,58 +199,8 @@ export default class Tool extends BaseModel<ToolInterface> {
      * }, '/integrations/tool');
      * ```
      */
-    constructor(data: Partial<ToolInterface>, uri?: string) {
+    constructor(data: Partial<AgentToolInterface>, uri?: string) {
         super(data, uri || '/tool');
-    }
-
-    /**
-     * Get the image functionality for this tool
-     * 
-     * This getter provides access to the tool's image operations through
-     * the Image class. It allows for image uploads and other image-related
-     * operations specific to this tool.
-     * 
-     * @returns A new Image instance configured for this tool
-     * 
-     * @example
-     * ```typescript
-     * const updatedTool = await tool.image.upload<Tool, GetToolPayload>(file);
-     * ```
-     */
-    get image(): Image {
-        return new Image(this.getUri(), (this.data as any).image || '');
-    }
-
-    /**
-     * Like or unlike this tool
-     * 
-     * Toggles the like status of this tool. If the tool is already liked,
-     * it will be unliked, and vice versa.
-     * 
-     * @returns Promise that resolves to the updated tool instance
-     * 
-     * @example
-     * ```typescript
-     * await tool.like();
-     * console.log('Tool liked:', tool.liked);
-     * ```
-     * 
-     * @throws {Error} When API request fails
-     */
-    async like(): Promise<Tool> {
-        try {
-            const response = await this.apiClient.POST<GetToolPayload>(`${this.getUri()}/like`);
-            if (!response || !response.data) {
-                throw new Error('Invalid response from API');
-            }
-            this.update(response.data);
-            return this;
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error(String((error as any).message || 'Unknown error'));
-            }
-            throw new Error('Unknown error occurred');
-        }
     }
 
     /**
@@ -268,7 +218,7 @@ export default class Tool extends BaseModel<ToolInterface> {
      */
     async execute(args: object): Promise<object> {
         try {
-            const response = await this.apiClient.POST<GetToolPayload>(`${this.getUri()}/execute`, args);
+            const response = await this.apiClient.POST(`${this.getUri()}/execute`, args);
             if (!response || !response.data) {
                 throw new Error('Invalid response from API');
             }

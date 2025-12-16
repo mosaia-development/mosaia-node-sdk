@@ -929,8 +929,8 @@ export interface AgentLogInterface extends BaseEntity {
 // Agent Tool interfaces
 export interface AgentToolInterface extends BaseEntity {
     id?: string;
-    agent: string;
-    tool: string;
+    agent: AgentInterface;
+    tool: ToolInterface;
     config?: {
         [key: string]: any;
     }
@@ -1017,12 +1017,29 @@ export interface ApiRequestLogInterface extends BaseEntity {
     }
 }
 
+export interface ToolCall {
+    id: string;
+    type: 'function';
+    function: {
+        name: string;
+        arguments: string;
+        execution_context: 'frontend' | 'backend'
+    }
+}
+
+export interface ClientToolCallDefinition {
+    name: string;
+    tool_schema: object;
+}
+
 // Chat completion interfaces
 export interface ChatMessage {
-    role?: 'system' | 'user' | 'assistant';
+    role?: 'system' | 'user' | 'assistant' | 'tool';
     content?: string;
     refusal?: string;
     annotations?: string[];
+    tool_calls?: ToolCall[];
+    tool_call_id?: string;
 }
 
 export interface ChatCompletionRequest {
@@ -1033,6 +1050,7 @@ export interface ChatCompletionRequest {
     stream?: boolean;
     logging?: boolean;
     log_id?: string;
+    frontend_tools: ClientToolCallDefinition[];
 }
 
 export interface ChatCompletionResponse {
