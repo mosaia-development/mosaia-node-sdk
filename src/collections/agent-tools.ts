@@ -1,58 +1,21 @@
-import {
-    ToolInterface,
-    GetToolsPayload,
-    GetToolPayload,
-    AgentToolInterface,
-} from '../types';
-import { Tool } from '../models';
-import { BaseCollection } from './base-collection';
 import AgentTool from '../models/agent-tool';
+import {
+    AgentToolInterface,
+    GetToolPayload,
+    GetToolsPayload
+} from '../types';
+import { BaseCollection } from './base-collection';
 
 /**
- * Tools API client for the Mosaia SDK
+ * Agent Tools API client for the Mosaia SDK
  * 
- * Provides CRUD operations for managing tools in the Mosaia platform.
- * Tools are external integrations and utilities that agents can use to
+ * Provides CRUD operations for managing agent tools in the Mosaia platform.
+ * Agent Tools are external integrations and utilities that agents can use to
  * perform specific tasks, such as API calls, data processing, or
  * external service integrations.
  * 
  * This class inherits from BaseCollection and provides the following functionality:
- * - Retrieve tools with filtering and pagination
- * - Create new tool integrations
- * - Manage tool schemas and configurations
- * - Handle tool-specific environment variables and requirements
- * 
- * @example
- * ```typescript
- * import { Mosaia } from 'mosaia-node-sdk';
- * 
- * const mosaia = new Mosaia({ apiKey: 'your-api-key' });
- * const tools = mosaia.tools;
- * 
- * // Get all tools
- * const allTools = await tools.get();
- * 
- * // Get a specific tool
- * const tool = await tools.get({}, 'tool-id');
- * 
- * // Create a new tool
- * const newTool = await tools.create({
- *   name: 'Weather API Tool',
- *   friendly_name: 'Weather Information',
- *   short_description: 'Get current weather information for any location',
- *   tool_schema: JSON.stringify({
- *     type: 'object',
- *     properties: {
- *       location: { type: 'string' }
- *     }
- *   }),
- *   required_environment_variables: ['WEATHER_API_KEY'],
- *   source_url: 'https://api.weatherapi.com'
- * });
- * 
- * // Like a tool (via model instance)
- * await tool.like();
- * ```
+ * - execute tools
  * 
  * @extends BaseCollection<AgentToolInterface, AgentTool, GetToolsPayload, GetToolPayload>
  */
@@ -63,13 +26,13 @@ export default class AgentTools extends BaseCollection<
     GetToolPayload
 > {
     /**
-     * Creates a new Tools API client instance
+     * Creates a new Agent Tools API client instance
      * 
-     * Initializes the tools client with the appropriate endpoint URI
-     * and model class for handling tool operations.
+     * Initializes the agnet tools client with the appropriate endpoint URI
+     * and model class for handling agent tool operations.
      * 
      * The constructor sets up the API endpoint to `/tool` (or `${uri}/tool` if a base URI is provided),
-     * which corresponds to the Mosaia API's tools endpoint.
+     * which corresponds to the Mosaia API's agent tools endpoint.
      * 
      * @param uri - Optional base URI path. If provided, the endpoint will be `${uri}/tool`.
      *              If not provided, defaults to `/tool`.
@@ -77,11 +40,11 @@ export default class AgentTools extends BaseCollection<
      * @example
      * ```typescript
      * // Create with default endpoint (/tool)
-     * const tools = new Tools();
+     * const agentTools = new AgentTools();
      * 
      * // Create with custom base URI
-     * const tools = new Tools('/api/v1');
-     * // This will use endpoint: /api/v1/tool
+     * const agentTools = new AgentTools('/api/v1');
+     * // This will use endpoint: /api/v1/agent/tool
      * ```
      */
     constructor(uri = '') {

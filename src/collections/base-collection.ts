@@ -169,14 +169,9 @@ export abstract class BaseCollection<
     // Implementation
     async get(params?: QueryParams, id?: string): Promise<BatchAPIResponse<M> | M | null> {
         try {
-<<<<<<< Updated upstream
             let baseUri = this.uri;
             let uri = baseUri
             if (id) uri = `${uri}/${id}`;
-=======
-            let uri = this.uri;
-            // if (id) uri = `${uri}/${id}`;
->>>>>>> Stashed changes
             
             const response = await this.apiClient.GET<GetPayload>(uri, params);
 
