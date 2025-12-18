@@ -389,7 +389,8 @@ describe('ChatCompletionRequest', () => {
       temperature: 0.7,
       stream: false,
       logging: true,
-      log_id: 'log-123'
+      log_id: 'log-123',
+      frontend_tools: []
     };
 
     expect(request.model).toBe('gpt-4');

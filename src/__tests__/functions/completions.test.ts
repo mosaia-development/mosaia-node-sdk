@@ -83,7 +83,8 @@ describe('Completions', () => {
           { role: 'user', content: 'Hello, how are you?' }
         ],
         temperature: 0.7,
-        max_tokens: 100
+        max_tokens: 100,
+        frontend_tools: []
       };
 
       expect(mockRequest).toBeDefined();
@@ -139,7 +140,8 @@ describe('Completions', () => {
       // This test ensures the class is properly typed
       const request: ChatCompletionRequest = {
         model: 'gpt-4',
-        messages: [{ role: 'user', content: 'Test' }]
+        messages: [{ role: 'user', content: 'Test' }],
+        frontend_tools: []
       };
 
       const response: ChatCompletionResponse = {
