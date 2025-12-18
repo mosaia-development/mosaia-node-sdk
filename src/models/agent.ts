@@ -5,7 +5,8 @@ import {
 } from '../types';
 import { BaseModel } from './base';
 import { Image } from '../functions/image';
-import { Tasks, Logs } from '../collections';
+import { Tasks, Logs, Tools } from '../collections';
+import AgentTools from '../collections/agent-tools';
 
 /**
  * Agent class for managing AI agent instances in the Mosaia SDK
@@ -122,7 +123,7 @@ export default class Agent extends BaseModel<AgentInterface> {
      * console.log('Response:', response.choices[0].message.content);
      * ```
      */
-    get chat() {
+    get chat(): Chat {
         return new Chat(this.getUri());
     }
 
@@ -190,6 +191,10 @@ export default class Agent extends BaseModel<AgentInterface> {
      */
     get logs(): Logs {
         return new Logs(this.getUri());
+    }
+
+    get tools(): AgentTools {
+        return new AgentTools(this.getUri());
     }
 
     /**
