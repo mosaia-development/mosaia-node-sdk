@@ -53,6 +53,43 @@ if (typeof global.fetch === 'undefined') {
   global.fetch = jest.fn();
 }
 
+// Mock File API for Node.js environment
+if (typeof global.File === 'undefined') {
+  class MockFile {
+    name: string;
+    size: number;
+    type: string;
+    lastModified: number;
+    webkitRelativePath: string = '';
+
+    constructor(fileBits: BlobPart[], fileName: string, options?: FilePropertyBag) {
+      const content = fileBits.join('');
+      this.name = fileName;
+      this.size = content.length;
+      this.type = options?.type || '';
+      this.lastModified = options?.lastModified || Date.now();
+    }
+
+    slice(start?: number, end?: number, contentType?: string): Blob {
+      return new Blob([], { type: contentType });
+    }
+
+    stream(): ReadableStream {
+      return new ReadableStream();
+    }
+
+    text(): Promise<string> {
+      return Promise.resolve('');
+    }
+
+    arrayBuffer(): Promise<ArrayBuffer> {
+      return Promise.resolve(new ArrayBuffer(0));
+    }
+  }
+
+  (global as any).File = MockFile;
+}
+
 // Mock crypto for OAuth tests
 if (typeof global.crypto === 'undefined') {
   global.crypto = {
