@@ -1,6 +1,6 @@
 import { DriveInterface, DriveItemInterface } from '../types';
 import { BaseModel } from './base';
-import { DriveItems, UploadJobs } from '../collections';
+import { DriveItems, UploadJobs, VectorIndexes } from '../collections';
 import { Access } from '../functions/access';
 import DriveItem from './drive-item';
 
@@ -120,36 +120,110 @@ export default class Drive extends BaseModel<DriveInterface> {
     }
 
     /**
+     * Get the drive's vector indexes collection
+     * 
+     * This getter provides access to the drive's vector indexes through
+     * the VectorIndexes collection. It enables management of all vector indexes
+     * associated with this drive.
+     * 
+     * @returns VectorIndexes collection for managing vector indexes
+     * 
+     * @example
+     * List indexes:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const indexes = await drive.indexes.get({ active: true });
+     * indexes.forEach(index => {
+     *   console.log(`Index: ${index.name}`);
+     * });
+     * ```
+     * 
+     * @example
+     * Create index:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const index = await drive.indexes.create({
+     *   name: 'Document Search Index',
+     *   description: 'Index for searching documents'
+     * });
+     * ```
+     */
+    get indexes(): VectorIndexes {
+        return new VectorIndexes(this.getUri());
+    }
+
+    /**
      * Get the access control functionality for this drive
      * 
      * This getter provides access to the drive's access control methods through
      * the Access class. It allows for granting and revoking permissions to users,
      * org users, agents, and clients.
      * 
+     * **Available roles for drives**: READ_ONLY, VIEWER, CONTRIBUTOR, EDITOR, MANAGER
+     * 
      * @returns An Access instance configured for this drive
      * 
      * @example
-     * Grant access:
+     * Grant access with different roles:
      * ```typescript
      * const drive = await client.drives.get({}, driveId);
      * 
-     * // Grant read access to a user
-     * await drive.access.grant({ user: 'user123' }, 'read');
+     * // Grant viewer role (read-only)
+     * await drive.access.grantByRole({ org_user: 'orguser123' }, 'VIEWER');
      * 
-     * // Grant full access to an agent
-     * const agent = await client.agents.get({}, agentId);
-     * await drive.access.grant({ agent: agent }, '*');
+     * // Grant editor role (read, create, update)
+     * await drive.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+     * 
+     * // Grant manager role (full access)
+     * await drive.access.grantByRole({ org_user: 'orguser123' }, 'MANAGER');
+     * ```
+     * 
+     * @example
+     * Grant access with cascade to items:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * // Grant manager role and cascade to all items
+     * await drive.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'MANAGER',
+     *   { cascade_to_items: true }
+     * );
+     * 
+     * // Cascade only to folders
+     * await drive.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'EDITOR',
+     *   { cascade_to_folders: true }
+     * );
+     * ```
+     * 
+     * @example
+     * List all accessors:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * const result = await drive.access.list();
+     * console.log(`Drive has ${result.accessors.length} accessors`);
+     * 
+     * result.accessors.forEach(accessor => {
+     *   console.log(`${accessor.accessor_type}: ${accessor.accessor_id} - ${accessor.role}`);
+     * });
      * ```
      * 
      * @example
      * Revoke access:
      * ```typescript
-     * // Revoke write access from a user
-     * await drive.access.revoke({ user: 'user123' }, 'write');
+     * const drive = await client.drives.get({}, driveId);
      * 
-     * // Revoke all access from an org user
-     * const result = await drive.access.revoke({ org_user: orgUserObj }, '*');
-     * console.log(`Removed ${result.deleted_count} permissions`);
+     * // Revoke all access from a user
+     * const result = await drive.access.revoke({ org_user: 'orguser123' });
+     * console.log(`Revoked ${result.revoked_count} permissions`);
+     * 
+     * // Revoke all access from an agent
+     * const agent = await client.agents.get({}, agentId);
+     * const result = await drive.access.revoke({ agent: agent });
+     * console.log(`Removed ${result.revoked_count} permissions`);
      * ```
      */
     get access(): Access {
@@ -166,7 +240,7 @@ export default class Drive extends BaseModel<DriveInterface> {
      * 
      * @param path - URL path like '/documents/report.pdf' or '/folder1/subfolder/file.txt'
      * @param options - Optional options for path resolution
-     * @param options.caseSensitive - Whether filename matching is case-sensitive (default: true)
+     * @param options.caseSensitive - Whether name matching is case-sensitive (default: true)
      * @returns Promise resolving to DriveItem for files, DriveItem[] for directories, or null if not found
      * 
      * @example
@@ -175,7 +249,7 @@ export default class Drive extends BaseModel<DriveInterface> {
      * const drive = await client.drives.get({}, driveId);
      * const item = await drive.findItemByPath('/documents/report.pdf');
      * if (item) {
-     *   console.log('Found file:', item.filename);
+     *   console.log('Found file:', item.name);
      * }
      * ```
      * 
@@ -186,7 +260,7 @@ export default class Drive extends BaseModel<DriveInterface> {
      * const items = await drive.findItemByPath('/documents');
      * if (Array.isArray(items)) {
      *   console.log(`Directory contains ${items.length} items`);
-     *   items.forEach(item => console.log(item.filename));
+     *   items.forEach(item => console.log(item.name));
      * }
      * ```
      * 

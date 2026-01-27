@@ -91,7 +91,7 @@ describe('DriveItems', () => {
       return {
         data,
         id: data.id,
-        filename: data.filename,
+        name: data.name,
         presigned_url: data.presigned_url,
         mime_type: data.mime_type,
         size: data.size,
@@ -135,7 +135,7 @@ describe('DriveItems', () => {
         message: 'Batch upload initiated',
         files: [{
           upload_job_id: 'upload-123',
-          filename: 'test.txt',
+          name: 'test.txt',
           presigned_url: 'https://s3.example.com/upload',
           mime_type: 'text/plain',
           size: 12,
@@ -163,7 +163,7 @@ describe('DriveItems', () => {
       expect(result.uploadJobs).toBeDefined();
       expect(result.uploadJobs).toHaveLength(1);
       expect(result.uploadJobs[0].id).toBe('upload-123');
-      expect(result.uploadJobs[0].filename).toBe('test.txt');
+      expect(result.uploadJobs[0].name).toBe('test.txt');
       expect(result.uploadJobs[0].presigned_url).toBe('https://s3.example.com/upload');
       expect(result.uploadJobs[0].failed_url).toBe('/v1/drive/drive-123/upload/upload-123/failed');
       
@@ -177,7 +177,7 @@ describe('DriveItems', () => {
         message: 'Batch upload initiated',
         files: [{
           upload_job_id: 'upload-456',
-          filename: 'test.txt',
+          name: 'test.txt',
           presigned_url: 'https://s3.example.com/upload',
           mime_type: 'text/plain',
           size: 12,
@@ -212,7 +212,7 @@ describe('DriveItems', () => {
         files: [
           {
             upload_job_id: 'upload-1',
-            filename: 'file1.txt',
+            name: 'file1.txt',
             presigned_url: 'https://s3.example.com/upload1',
             mime_type: 'text/plain',
             size: 5,
@@ -224,7 +224,7 @@ describe('DriveItems', () => {
           },
           {
             upload_job_id: 'upload-2',
-            filename: 'file2.txt',
+            name: 'file2.txt',
             presigned_url: 'https://s3.example.com/upload2',
             mime_type: 'text/plain',
             size: 5,
@@ -261,7 +261,7 @@ describe('DriveItems', () => {
         files: [
           {
             upload_job_id: 'upload-1',
-            filename: 'file1.txt',
+            name: 'file1.txt',
             presigned_url: 'https://s3.example.com/upload1',
             mime_type: 'text/plain',
             size: 5,
@@ -273,7 +273,7 @@ describe('DriveItems', () => {
           },
           {
             upload_job_id: 'upload-2',
-            filename: 'file2.txt',
+            name: 'file2.txt',
             presigned_url: 'https://s3.example.com/upload2',
             mime_type: 'text/plain',
             size: 5,
@@ -332,7 +332,7 @@ describe('DriveItems', () => {
         message: 'Upload initiated',
         files: [{
           upload_job_id: 'upload-complete',
-          filename: 'test.pdf',
+          name: 'test.pdf',
           presigned_url: 'https://s3.example.com/presigned',
           mime_type: 'application/pdf',
           size: 7,
@@ -354,7 +354,6 @@ describe('DriveItems', () => {
       const result = await driveItems.uploadFiles([mockFile]);
 
       expect(result.uploadJobs[0].id).toBe('upload-complete');
-      expect(result.uploadJobs[0].filename).toBe('test.pdf');
       expect(result.uploadJobs[0].presigned_url).toBe('https://s3.example.com/presigned');
       expect(result.uploadJobs[0].mime_type).toBe('application/pdf');
       expect(result.uploadJobs[0].failed_url).toBe('/v1/drive/drive-123/upload/upload-complete/failed');
@@ -370,7 +369,7 @@ describe('DriveItems', () => {
         message: 'Upload initiated',
         files: [{
           upload_job_id: 'upload-progress',
-          filename: 'test.pdf',
+          name: 'test.pdf',
           presigned_url: 'https://s3.example.com/presigned',
           mime_type: 'application/pdf',
           size: 7,
@@ -403,7 +402,7 @@ describe('DriveItems', () => {
         message: 'Upload initiated',
         files: [{
           upload_job_id: 'upload-fail',
-          filename: 'test.pdf',
+          name: 'test.pdf',
           presigned_url: 'https://s3.example.com/presigned',
           mime_type: 'application/pdf',
           size: 7,
@@ -424,7 +423,7 @@ describe('DriveItems', () => {
         uploadJobInstance = {
           data,
           id: data.id,
-          filename: data.filename,
+          name: data.name,
           presigned_url: data.presigned_url,
           mime_type: data.mime_type,
           size: data.size,
@@ -541,11 +540,10 @@ describe('DriveItems', () => {
         id: 'item-1',
         drive: 'drive-123',
         name: 'report.pdf',
-        filename: 'report.pdf',
         path: '/documents',
         size: 1024,
         mime_type: 'application/pdf',
-        file_type: 'FILE',
+        item_type: 'FILE',
         active: true
       };
 
@@ -568,22 +566,20 @@ describe('DriveItems', () => {
           id: 'item-1',
           drive: 'drive-123',
           name: 'file1.pdf',
-          filename: 'file1.pdf',
           path: '/documents',
           size: 1024,
           mime_type: 'application/pdf',
-          file_type: 'FILE',
+          item_type: 'FILE',
           active: true
         },
         {
           id: 'item-2',
           drive: 'drive-123',
           name: 'file2.txt',
-          filename: 'file2.txt',
           path: '/documents',
           size: 512,
           mime_type: 'text/plain',
-          file_type: 'FILE',
+          item_type: 'FILE',
           active: true
         }
       ];
@@ -626,11 +622,10 @@ describe('DriveItems', () => {
         id: 'item-1',
         drive: 'drive-123',
         name: 'report.pdf',
-        filename: 'report.pdf',
         path: '/documents',
         size: 1024,
         mime_type: 'application/pdf',
-        file_type: 'FILE',
+        item_type: 'FILE',
         active: true
       };
 
@@ -649,11 +644,10 @@ describe('DriveItems', () => {
         id: 'item-1',
         drive: 'drive-123',
         name: 'report.pdf',
-        filename: 'report.pdf',
         path: '/documents',
         size: 1024,
         mime_type: 'application/pdf',
-        file_type: 'FILE',
+        item_type: 'FILE',
         active: true
       };
 

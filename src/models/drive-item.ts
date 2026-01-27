@@ -1,5 +1,6 @@
 import { DriveItemInterface } from '../types';
 import { BaseModel } from './base';
+import { VectorIndexes } from '../collections';
 import { Access } from '../functions/access';
 
 /**
@@ -126,36 +127,111 @@ export default class DriveItem extends BaseModel<DriveItemInterface> {
     }
 
     /**
+     * Get the drive item's vector indexes collection
+     * 
+     * This getter provides access to the drive item's vector indexes through
+     * the VectorIndexes collection. It enables management of all vector indexes
+     * associated with this drive item (folder).
+     * 
+     * **Note**: Vector indexes are typically associated with folders, not individual files.
+     * 
+     * @returns VectorIndexes collection for managing vector indexes
+     * 
+     * @example
+     * List indexes for a folder:
+     * ```typescript
+     * const folder = await drive.items.get({}, folderId);
+     * const indexes = await folder.indexes.get({ active: true });
+     * indexes.forEach(index => {
+     *   console.log(`Index: ${index.name}`);
+     * });
+     * ```
+     * 
+     * @example
+     * Create index for a folder:
+     * ```typescript
+     * const folder = await drive.items.get({}, folderId);
+     * const index = await folder.indexes.create({
+     *   name: 'Folder Search Index',
+     *   description: 'Index for searching folder contents'
+     * });
+     * ```
+     */
+    get indexes(): VectorIndexes {
+        if (!this.data.id) {
+            throw new Error('Cannot access indexes for unsaved drive item');
+        }
+        return new VectorIndexes(this.getUri());
+    }
+
+    /**
      * Get the access control functionality for this drive item
      * 
      * This getter provides access to the drive item's access control methods through
      * the Access class. It allows for granting and revoking permissions to users,
      * org users, agents, and clients.
      * 
+     * **Important**: The available roles depend on whether the item is a directory (folder)
+     * or a file:
+     * - **Directories** can use: READ_ONLY, VIEWER, EDITOR, CONTRIBUTOR (includes create), MANAGER
+     * - **Files** can use: READ_ONLY, VIEWER, EDITOR (no create), MANAGER
+     * 
      * @returns An Access instance configured for this drive item
      * 
      * @example
-     * Grant access:
+     * Grant access to a directory (folder):
      * ```typescript
-     * const item = await drive.items.get({}, itemId);
+     * const directory = await drive.items.get({}, directoryId);
      * 
-     * // Grant read access to a user
-     * await item.access.grant({ user: 'user123' }, 'read');
+     * // Directories support all roles including CONTRIBUTOR
+     * await directory.access.grantByRole({ org_user: 'orguser123' }, 'CONTRIBUTOR');
      * 
-     * // Grant full access to an agent
-     * const agent = await client.agents.get({}, agentId);
-     * await item.access.grant({ agent: agent }, '*');
+     * // Grant editor role
+     * await directory.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+     * 
+     * // Grant path-based access
+     * await directory.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'EDITOR',
+     *   { mode: 'path', folder_role: 'READ_ONLY' }
+     * );
+     * ```
+     * 
+     * @example
+     * Grant access to a file:
+     * ```typescript
+     * const file = await drive.items.get({}, fileId);
+     * 
+     * // Files can use VIEWER, EDITOR, or MANAGER (not CONTRIBUTOR)
+     * await file.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+     * 
+     * // CONTRIBUTOR is not valid for files
+     * // await file.access.grantByRole({ org_user: 'orguser123' }, 'CONTRIBUTOR'); // ❌ Invalid
      * ```
      * 
      * @example
      * Revoke access:
      * ```typescript
-     * // Revoke write access from a user
-     * await item.access.revoke({ user: 'user123' }, 'write');
+     * const item = await drive.items.get({}, itemId);
      * 
-     * // Revoke all access from an org user
-     * const result = await item.access.revoke({ org_user: orgUserObj }, '*');
-     * console.log(`Removed ${result.deleted_count} permissions`);
+     * // Revoke all access from a user
+     * const result = await item.access.revoke({ org_user: 'orguser123' });
+     * console.log(`Revoked ${result.revoked_count} permissions`);
+     * 
+     * // Revoke all access from a client
+     * const result = await item.access.revoke({ client: clientObj });
+     * console.log(`Removed ${result.revoked_count} permissions`);
+     * ```
+     * 
+     * @example
+     * List all accessors:
+     * ```typescript
+     * const item = await drive.items.get({}, itemId);
+     * 
+     * const result = await item.access.list();
+     * result.accessors.forEach(accessor => {
+     *   console.log(`${accessor.accessor_type} ${accessor.accessor_id} has ${accessor.role} role`);
+     * });
      * ```
      */
     get access(): Access {

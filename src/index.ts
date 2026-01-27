@@ -960,6 +960,25 @@ export {
 // Types
 export * from './types';
 
+// Access Control Types
+export type {
+    Accessor,
+    AccessAction,
+    DriveRole,
+    DriveDirectoryRole,
+    DriveFileRole,
+    DriveItemRole,
+    GrantAccessOptions,
+    PermissionObject,
+    PermissionResult,
+    GrantAccessResponse,
+    RevokeAccessResponse,
+    AccessorInfo,
+    ListAccessorsResponse,
+    LegacyGrantAccessResponse
+} from './functions/access';
+export { Access } from './functions/access';
+
 // Main SDK Class
 export { MosaiaClient };
 

@@ -15,7 +15,7 @@ This document summarizes the test coverage for the new UploadJob architecture wh
   - Sets all properties from data
 
 - **Getter Property Tests** (10 tests)
-  - Tests all getter methods: `id`, `filename`, `presigned_url`, `mime_type`, `size`, `path`, `status`, `failed_url`, `status_url`, `presigned_url_expires_at`
+  - Tests all getter methods: `id`, `name`, `presigned_url`, `mime_type`, `size`, `path`, `status`, `failed_url`, `status_url`, `presigned_url_expires_at`
 
 - **markFailed() Method Tests** (5 tests)
   - Marks upload as failed successfully using `failed_url`
@@ -92,7 +92,7 @@ This document summarizes the test coverage for the new UploadJob architecture wh
 - **Updated `uploadFiles()` tests** to match new architecture:
   - Returns `{ message, uploadJobs: UploadJob[], instructions }`
   - Each file gets its own `UploadJob` instance
-  - Tests verify `UploadJob` properties: `id`, `filename`, `presigned_url`, `mime_type`, `size`, `path`, `failed_url`, `status_url`
+  - Tests verify `UploadJob` properties: `id`, `name`, `presigned_url`, `mime_type`, `size`, `path`, `failed_url`, `status_url`
 
 **Key Test Updates**:
 - `uploadFiles()` now returns array of `UploadJob` instances
@@ -130,7 +130,7 @@ npm test
 const uploadJob = new UploadJob({
   id: 'upload-123',
   drive: 'drive-123',
-  filename: 'document.pdf',
+  name: 'document.pdf',
   size: 1024000,
   mime_type: 'application/pdf',
   presigned_url: 'https://s3.example.com/...',

@@ -40,13 +40,13 @@ describe('UploadJob Model', () => {
     const uploadJobData: Partial<UploadJobInterface> = {
       id: 'upload-123',
       drive: 'drive-123',
-      filename: 'document.pdf',
-      original_filename: 'document.pdf',
+      name: 'document.pdf',
+      original_name: 'document.pdf',
       size: 1024000,
       mime_type: 'application/pdf',
       content_type_category: 'DOCUMENT',
       path: '/documents',
-      file_type: 'FILE',
+      item_type: 'FILE',
       presigned_url: 'https://s3.example.com/presigned-upload',
       presigned_url_expires_at: new Date(Date.now() + 300000).toISOString(),
       status: 'PENDING',
@@ -63,7 +63,7 @@ describe('UploadJob Model', () => {
       const uploadJobData: Partial<UploadJobInterface> = {
         id: 'upload-123',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         presigned_url_expires_at: new Date().toISOString(),
@@ -80,7 +80,7 @@ describe('UploadJob Model', () => {
       const uploadJobData: Partial<UploadJobInterface> = {
         id: 'upload-123',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         presigned_url_expires_at: new Date().toISOString(),
@@ -96,7 +96,7 @@ describe('UploadJob Model', () => {
     it('should set all properties from data', () => {
       expect(uploadJob.data).toBeDefined();
       expect((uploadJob as any).id).toBe('upload-123');
-      expect((uploadJob as any).filename).toBe('document.pdf');
+      expect((uploadJob as any).name).toBe('document.pdf');
     });
   });
 
@@ -105,8 +105,8 @@ describe('UploadJob Model', () => {
       expect(uploadJob.id).toBe('upload-123');
     });
 
-    it('should get filename from data', () => {
-      expect(uploadJob.filename).toBe('document.pdf');
+    it('should get name from data', () => {
+      expect(uploadJob.name).toBe('document.pdf');
     });
 
     it('should get presigned_url from data', () => {
@@ -188,7 +188,7 @@ describe('UploadJob Model', () => {
       const jobWithoutUrl = new UploadJob({
         id: 'upload-no-url',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         presigned_url_expires_at: new Date().toISOString(),
@@ -250,7 +250,7 @@ describe('UploadJob Model', () => {
       const jobWithoutExpiry = new UploadJob({
         id: 'upload-no-expiry',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         status: 'PENDING',
@@ -349,7 +349,7 @@ describe('UploadJob Model', () => {
       const jobWithoutUrl = new UploadJob({
         id: 'upload-no-url',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         presigned_url_expires_at: new Date().toISOString(),
@@ -366,7 +366,7 @@ describe('UploadJob Model', () => {
       const expiredJob = new UploadJob({
         id: 'upload-expired',
         drive: 'drive-123',
-        filename: 'test.pdf',
+        name: 'test.pdf',
         size: 1024,
         mime_type: 'application/pdf',
         presigned_url: 'https://s3.example.com/presigned-upload',
