@@ -57,7 +57,6 @@ describe('DriveItem Model', () => {
       id: '456',
       drive: 'drive-123',
       name: 'document.pdf',
-      name: 'document.pdf',
       path: '/documents',
       size: 1024,
       mime_type: 'application/pdf',
@@ -137,7 +136,6 @@ describe('DriveItem Model', () => {
       expect(jsonData).toEqual({
         id: '456',
         drive: 'drive-123',
-        name: 'document.pdf',
         name: 'document.pdf',
         path: '/documents',
         size: 1024,

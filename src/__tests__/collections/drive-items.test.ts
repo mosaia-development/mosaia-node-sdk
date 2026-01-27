@@ -312,18 +312,7 @@ describe('DriveItems', () => {
     });
 
     it('should handle empty files array', async () => {
-      const mockResponse = {
-        message: 'Upload initiated',
-        files: [],
-        instructions: {}
-      };
-
-      mockAPIClient.POST.mockResolvedValue({ data: mockResponse });
-
-      const result = await driveItems.uploadFiles([]);
-
-      expect(mockAPIClient.POST).toHaveBeenCalled();
-      expect(result.uploadJobs).toHaveLength(0);
+      await expect(driveItems.uploadFiles([])).rejects.toThrow('No files provided for upload');
     });
 
     it('should create UploadJob instances with all properties', async () => {

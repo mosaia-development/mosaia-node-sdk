@@ -203,7 +203,7 @@ describe('BaseModel', () => {
 
       await testModel.delete();
 
-      expect(mockAPIClient.DELETE).toHaveBeenCalledWith('/test/test-123');
+      expect(mockAPIClient.DELETE).toHaveBeenCalledWith('/test/test-123', undefined);
     });
 
     it('should throw error when model has no ID', async () => {

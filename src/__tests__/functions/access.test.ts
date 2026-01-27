@@ -386,7 +386,7 @@ describe('Access', () => {
       const error = new Error('Invalid role');
       mockApiClient.POST.mockRejectedValue(error);
 
-      await expect(access.grantByRole({ user: 'user-123' }, 'INVALID_ROLE'))
+      await expect(access.grantByRole({ user: 'user-123' }, 'INVALID_ROLE' as any))
         .rejects.toThrow('Invalid role');
     });
   });
