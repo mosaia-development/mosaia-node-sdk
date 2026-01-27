@@ -779,35 +779,6 @@ export interface OrgUserInterface extends BaseEntity {
     }
 }
 
-// Objective interfaces
-export interface ObjectiveInterface extends BaseEntity {
-    id?: string;
-    org?: string;
-    user?: string;
-    name: string;
-    description?: string;
-    status: string;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
-}
-
-// Offering interfaces
-export interface OfferingInterface extends BaseEntity {
-    id?: string;
-    org?: string;
-    user?: string;
-    name: string;
-    description?: string;
-    price?: number;
-    currency?: string;
-    active?: boolean;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
-}
 
 // Snapshot interfaces
 export interface SnapshotInterface extends BaseEntity {
@@ -840,6 +811,7 @@ export interface DriveInterface extends BaseEntity {
     // Collection getters (available on Drive model instances)
     readonly items?: any; // DriveItems collection
     readonly uploads?: any; // UploadJobs collection
+    readonly indexes?: any; // VectorIndexes collection (scoped to this drive)
 }
 
 // Drive Item (FileMetadata) interfaces
@@ -847,11 +819,10 @@ export interface DriveItemInterface extends BaseEntity {
     id?: string;
     drive: string;
     name: string;
-    filename?: string;
     path?: string;
     size?: number;
     mime_type?: string;
-    file_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
+    item_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
     url?: string;
     metadata?: {
         [key: string]: any;
@@ -859,7 +830,9 @@ export interface DriveItemInterface extends BaseEntity {
     external_id?: string;
     extensors?: {
         [key: string]: string;
-    }
+    };
+    // Collection getters (available on DriveItem model instances)
+    readonly indexes?: any; // VectorIndexes collection (scoped to this drive item/folder)
 }
 
 // Upload Job interfaces
@@ -867,14 +840,14 @@ export interface UploadJobInterface extends BaseEntity {
     id?: string;
     drive: string;
     status: 'PENDING' | 'UPLOADING' | 'COMPLETED' | 'FAILED' | 'CANCELLED';
-    filename: string;
-    original_filename?: string;
+    name: string;
+    original_name?: string;
     s3_key?: string;
     size: number;
     mime_type: string;
     content_type_category?: 'IMAGE' | 'VIDEO' | 'AUDIO' | 'DOCUMENT' | 'ARCHIVE' | 'CODE' | 'DATA' | 'OTHER';
     path?: string;
-    file_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
+    item_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
     presigned_url?: string;
     presigned_url_expires_at: string | Date;
     etag?: string;
@@ -897,14 +870,38 @@ export interface VectorIndexInterface extends BaseEntity {
     id?: string;
     org?: string;
     user?: string;
-    name: string;
+    name?: string;
     description?: string;
-    dimensions: number;
-    metric: string;
-    external_id?: string;
+    drive?: string;
+    folder?: string;
+    status?: string;  // 'ACTIVE', 'BUILDING', 'INACTIVE'
+    active?: boolean;
+    vector_count?: number;
+    index_size_bytes?: number;
+    last_rebuild?: string | Date;
+    tags?: string[];
     extensors?: {
-        [key: string]: string;
-    }
+        [key: string]: any;
+    };
+    // Collection getters (available on VectorIndex model instances)
+    readonly vectors?: any; // Vectors collection
+}
+
+// Vector interfaces
+export interface VectorInterface extends BaseEntity {
+    id?: string;
+    index: string;  // VectorIndex ID (required)
+    file?: string;  // DriveItem ID
+    embedding: number[];  // Required
+    content?: any;
+    metadata?: {
+        [key: string]: any;
+    };
+    tags?: string[];
+    active?: boolean;
+    extensors?: {
+        [key: string]: any;
+    };
 }
 
 // Like interfaces
@@ -1337,23 +1334,6 @@ export type GetOrgUserPayload = {
     data: OrgUserInterface;
 }
 
-export type GetObjectivesPayload = {
-    data: ObjectiveInterface[];
-    paging?: PagingInterface;
-}
-
-export type GetObjectivePayload = {
-    data: ObjectiveInterface;
-}
-
-export type GetOfferingsPayload = {
-    data: OfferingInterface[];
-    paging?: PagingInterface;
-}
-
-export type GetOfferingPayload = {
-    data: OfferingInterface;
-}
 
 export type GetSnapshotsPayload = {
     data: SnapshotInterface[];
@@ -1371,6 +1351,34 @@ export type GetVectorIndexesPayload = {
 
 export type GetVectorIndexPayload = {
     data: VectorIndexInterface;
+}
+
+export interface ReindexFilesResponse {
+    object: string;
+    created: number;
+    deletedVectors: number;
+    status: string;
+    message: string;
+}
+
+export interface RAGSearchDocument {
+    document: string;
+    index: number;
+    relevance_score: number;
+}
+
+export interface RAGSearchResponse {
+    documents: RAGSearchDocument[];
+    paging?: PagingInterface;
+}
+
+export type GetVectorsPayload = {
+    data: VectorInterface[];
+    paging?: PagingInterface;
+}
+
+export type GetVectorPayload = {
+    data: VectorInterface;
 }
 
 export type GetLikesPayload = {

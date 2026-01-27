@@ -289,6 +289,7 @@ export abstract class BaseModel<T> {
      * 2. Sends DELETE request to the API
      * 3. Clears local instance data on success
      * 
+     * @param params - Optional query parameters for deletion (e.g., { delete: true, deleteS3: true })
      * @returns Promise that resolves when deletion is successful
      * 
      * @throws {Error} When model has no ID
@@ -318,13 +319,23 @@ export abstract class BaseModel<T> {
      *   }
      * }
      * ```
+     * 
+     * @example
+     * Delete with query parameters:
+     * ```typescript
+     * // Hard delete
+     * await item.delete({ delete: true });
+     * 
+     * // Delete with S3 cleanup
+     * await item.delete({ deleteS3: true, delete: true });
+     * ```
      */
-    async delete(): Promise<void> {
+    async delete(params?: object): Promise<void> {
         try {
             if (!this.hasId()) {
                 throw new Error('Entity ID is required for deletion');
             }
-            await this.apiClient.DELETE<void>(`${this.uri}/${(this as any).id}`);
+            await this.apiClient.DELETE<void>(`${this.uri}/${(this as any).id}`, params);
             // Clear the model's data after deletion
             this.clearData();
         } catch (error) {

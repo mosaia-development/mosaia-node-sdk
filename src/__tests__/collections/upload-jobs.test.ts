@@ -84,7 +84,7 @@ describe('UploadJobs', () => {
       const mockJobs = [
         { 
           id: 'upload-1', 
-          filename: 'file1.pdf', 
+          name: 'file1.pdf', 
           status: 'PENDING' as const,
           drive: 'drive-123',
           size: 1024,
@@ -94,7 +94,7 @@ describe('UploadJobs', () => {
         },
         { 
           id: 'upload-2', 
-          filename: 'file2.pdf', 
+          name: 'file2.pdf', 
           status: 'COMPLETED' as const,
           drive: 'drive-123',
           size: 2048,
@@ -119,7 +119,7 @@ describe('UploadJobs', () => {
     it('should get a specific upload job by ID', async () => {
       const mockJob = { 
         id: 'upload-1', 
-        filename: 'document.pdf', 
+        name: 'document.pdf', 
         status: 'PENDING' as const,
         drive: 'drive-123',
         size: 1024,
@@ -140,7 +140,7 @@ describe('UploadJobs', () => {
       const mockJobs = [
         { 
           id: 'upload-1', 
-          filename: 'file1.pdf', 
+          name: 'file1.pdf', 
           status: 'PENDING' as const,
           drive: 'drive-123',
           size: 1024,
@@ -186,8 +186,8 @@ describe('UploadJobs', () => {
     it('should create upload job successfully', async () => {
       const jobData = {
         drive: 'drive-123',
-        filename: 'new-file.pdf',
-        original_filename: 'new-file.pdf',
+        name: 'new-file.pdf',
+        original_name: 'new-file.pdf',
         size: 2048,
         mime_type: 'application/pdf',
         path: '/uploads',
@@ -213,7 +213,7 @@ describe('UploadJobs', () => {
     it('should update upload job successfully', async () => {
       const mockJob = { 
         id: 'upload-1', 
-        filename: 'document.pdf', 
+        name: 'document.pdf', 
         status: 'COMPLETED' as const,
         drive: 'drive-123',
         size: 1024,
@@ -249,7 +249,7 @@ describe('UploadJobs', () => {
         { 
           id: 'upload-1', 
           drive: 'drive-123',
-          filename: 'file1.pdf',
+          name: 'file1.pdf',
           status: 'PENDING' as const,
           size: 1024,
           mime_type: 'application/pdf',
@@ -271,8 +271,8 @@ describe('UploadJobs', () => {
 
     it('should filter by multiple statuses', async () => {
       const mockJobs = [
-        { id: 'upload-1', status: 'PENDING' as const, drive: 'drive-123', filename: 'f1.pdf', size: 1024, mime_type: 'application/pdf', presigned_url_expires_at: new Date().toISOString(), started_at: new Date().toISOString() },
-        { id: 'upload-2', status: 'UPLOADING' as const, drive: 'drive-123', filename: 'f2.pdf', size: 1024, mime_type: 'application/pdf', presigned_url_expires_at: new Date().toISOString(), started_at: new Date().toISOString() }
+        { id: 'upload-1', status: 'PENDING' as const, drive: 'drive-123', name: 'f1.pdf', size: 1024, mime_type: 'application/pdf', presigned_url_expires_at: new Date().toISOString(), started_at: new Date().toISOString() },
+        { id: 'upload-2', status: 'UPLOADING' as const, drive: 'drive-123', name: 'f2.pdf', size: 1024, mime_type: 'application/pdf', presigned_url_expires_at: new Date().toISOString(), started_at: new Date().toISOString() }
       ];
 
       const mockResponse = {

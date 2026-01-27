@@ -31,7 +31,7 @@ import { BaseModel } from './base';
  * // But can be queried directly:
  * const uploadJob = new UploadJob({
  *   drive: 'drive-id',
- *   filename: 'document.pdf',
+ *   name: 'document.pdf',
  *   size: 1024000,
  *   status: 'PENDING'
  * });
@@ -72,8 +72,8 @@ export default class UploadJob extends BaseModel<UploadJobInterface> {
      * ```typescript
      * const uploadJob = new UploadJob({
      *   drive: 'drive-id',
-     *   filename: 'report.pdf',
-     *   original_filename: 'report.pdf',
+     *   name: 'report.pdf',
+     *   original_name: 'report.pdf',
      *   size: 2048000,
      *   mime_type: 'application/pdf',
      *   path: '/documents',
@@ -108,10 +108,10 @@ export default class UploadJob extends BaseModel<UploadJobInterface> {
     }
 
     /**
-     * Get the filename
+     * Get the name
      */
-    get filename(): string {
-        return (this.data as any).filename;
+    get name(): string {
+        return (this.data as any).name;
     }
 
     /**

@@ -195,11 +195,21 @@ export default class APIClient {
      * @private
      */
     private handleError(error: Error, status?: number): Promise<never> {
-        const errorResponse: ErrorResponse = {
+        // Preserve all error details from the original error
+        const errorResponse: ErrorResponse & { response?: any; errorData?: any } = {
             message: error.message || DEFAULT_CONFIG.ERRORS.UNKNOWN_ERROR,
             code: 'UNKNOWN_ERROR',
-            status: status || DEFAULT_CONFIG.ERRORS.DEFAULT_STATUS_CODE,
+            status: status || (error as any).status || DEFAULT_CONFIG.ERRORS.DEFAULT_STATUS_CODE,
         };
+        
+        // Preserve response and errorData if available
+        if ((error as any).response) {
+            errorResponse.response = (error as any).response;
+        }
+        if ((error as any).errorData) {
+            errorResponse.errorData = (error as any).errorData;
+        }
+        
         return Promise.reject(errorResponse);
     }
 
@@ -307,28 +317,36 @@ export default class APIClient {
                     errorData = { message: response.statusText };
                 }
 
-                if (this.config?.verbose) {
-                    console.error(`❌ HTTP Error: ${response.status} ${method.toUpperCase()} ${path}`);
-                    console.error('🚨 Error Details:', {
-                        message: errorData.message || response.statusText,
-                        status: response.status,
-                        statusText: response.statusText,
-                        data: errorData
-                    });
-                    
-                    // Log meta and error parameters if they exist in error response
-                    if (errorData?.meta) {
-                        console.log('📊 Response Meta:', errorData.meta);
-                    }
-                    if (errorData?.error) {
-                        console.log('🚨 Response Error:', errorData.error);
-                    }
+                // Always log errors (not just in verbose mode) for debugging
+                console.error(`❌ HTTP Error: ${response.status} ${method.toUpperCase()} ${path}`);
+                console.error('🚨 Error Details:', {
+                    message: errorData.message || response.statusText,
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: errorData,
+                    error: errorData.error,
+                    meta: errorData.meta
+                });
+                
+                // Log meta and error parameters if they exist in error response
+                if (errorData?.meta) {
+                    console.log('📊 Response Meta:', errorData.meta);
+                }
+                if (errorData?.error) {
+                    console.log('🚨 Response Error:', errorData.error);
                 }
 
-                return this.handleError(
-                    new Error(errorData.message || response.statusText), 
-                    response.status
-                );
+                // Create error with full details
+                const error = new Error(errorData.message || response.statusText);
+                (error as any).status = response.status;
+                (error as any).response = {
+                    status: response.status,
+                    statusText: response.statusText,
+                    data: errorData
+                };
+                (error as any).errorData = errorData;
+
+                return this.handleError(error, response.status);
             }
 
             // Parse response data
@@ -428,6 +446,7 @@ export default class APIClient {
      * @template T - The expected response data type
      * @param path - API endpoint path (e.g., '/user', '/org', '/agent')
      * @param data - Request body data to be sent
+     * @param params - Optional query parameters to append to the URL
      * @returns Promise that resolves to the API response data
      * 
      * @example
@@ -452,18 +471,18 @@ export default class APIClient {
      * ```
      * 
      * @example
-     * Perform an action:
+     * Perform an action with query parameters:
      * ```typescript
      * const result = await client.POST<ChatCompletionResponse>('/agent/123/chat', {
      *   messages: [
      *     { role: 'user', content: 'Hello, how can you help me?' }
      *   ],
      *   temperature: 0.7
-     * });
+     * }, { stream: true, timeout: 30000 });
      * ```
      */
-    async POST<T>(path: string, data?: object): Promise<APIResponse<T> | any> {
-        return this.makeRequest<T>('POST', path, data);
+    async POST<T>(path: string, data?: object, params?: object): Promise<APIResponse<T> | any> {
+        return this.makeRequest<T>('POST', path, data, params);
     }
     
     /**
@@ -516,10 +535,12 @@ export default class APIClient {
      * 
      * Removes resources from the system. Supports optional query parameters
      * for additional deletion options like force deletion or soft deletion.
+     * Also supports request body for endpoints that require it.
      * 
      * @template T - The expected response data type
      * @param path - API endpoint path (e.g., '/user/123', '/org/456', '/agent/789')
-     * @param params - Optional query parameters for deletion options
+     * @param bodyOrParams - Request body data (for endpoints that require it) OR query parameters (for backward compatibility)
+     * @param params - Optional query parameters (only used when bodyOrParams is a body object)
      * @returns Promise that resolves to the API response data
      * 
      * @example
@@ -530,7 +551,7 @@ export default class APIClient {
      * ```
      * 
      * @example
-     * Force deletion:
+     * Force deletion with query parameters (backward compatible):
      * ```typescript
      * await client.DELETE<void>('/org/456', { force: true });
      * await client.DELETE<void>('/user/123', { 
@@ -540,15 +561,45 @@ export default class APIClient {
      * ```
      * 
      * @example
-     * Soft deletion:
+     * DELETE with request body:
+     * ```typescript
+     * await client.DELETE<RevokeAccessResponse>('/drive/123/access', {
+     *   accessor: { org_user: 'orguser123' }
+     * });
+     * ```
+     * 
+     * @example
+     * DELETE with body and query parameters:
      * ```typescript
      * await client.DELETE<void>('/agent/789', { 
-     *   soft: true,
+     *   soft: true 
+     * }, { 
      *   archive: true 
      * });
      * ```
      */
-    async DELETE<T>(path: string, params?: object): Promise<APIResponse<T> | any> {
+    async DELETE<T>(path: string, bodyOrParams?: object, params?: object): Promise<APIResponse<T> | any> {
+        // For backward compatibility: determine if bodyOrParams is a body or query params.
+        // Request bodies for DELETE typically have specific structures:
+        // - { accessor: ... } for access control endpoints
+        // - { token: ... } for auth endpoints
+        // Query params are typically simple flat objects (e.g., { force: true, soft: false })
+        
+        if (!bodyOrParams) {
+            // No bodyOrParams: use params if provided, otherwise no body/params
         return this.makeRequest<T>('DELETE', path, undefined, params);
+        }
+        
+        // Check if bodyOrParams looks like a request body
+        const hasBodyStructure = 'accessor' in bodyOrParams || 'token' in bodyOrParams;
+        
+        if (hasBodyStructure) {
+            // Treat as request body, params (if provided) as query string
+            return this.makeRequest<T>('DELETE', path, bodyOrParams, params);
+        } else {
+            // Treat as query parameters (backward compatibility)
+            // If params is also provided, ignore it (backward compatibility case)
+            return this.makeRequest<T>('DELETE', path, undefined, bodyOrParams);
+        }
     }
 }

@@ -71,6 +71,7 @@ import Log from './log';
 import Message from './message';
 import Snapshot from './snapshot';
 import VectorIndex from './vector-index';
+import Vector from './vector';
 import Task from './task';
 import Plan from './plan';
 import AccessPolicy from './access-policy';
@@ -189,10 +190,16 @@ export { Message };
 export { Snapshot };
 
 /**
- * VectorIndex model for managing vector indexes
+ * VectorIndex model for managing vector index containers
  * @see {@link VectorIndex}
  */
 export { VectorIndex };
+
+/**
+ * Vector model for managing individual vector embeddings
+ * @see {@link Vector}
+ */
+export { Vector };
 
 /**
  * Task model for managing tasks

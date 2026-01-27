@@ -63,6 +63,7 @@ import Scopes from './scopes';
 import SSO from './sso';
 import Notifications from './notifications';
 import VectorIndexes from './vector-indexes';
+import Vectors from './vectors';
 import Tasks from './tasks';
 import Plans from './plans';
 import AccessPolicies from './access-policies';
@@ -281,14 +282,24 @@ export { Notifications };
 
 
 /**
- * Vector Indexes collection client for managing vector indexes
+ * Vector Indexes collection client for managing vector index containers
  * 
- * Provides CRUD operations for vector indexes, which enable
- * semantic search and similarity matching.
+ * Provides CRUD operations for vector indexes, which are containers
+ * for organizing and managing vector embeddings.
  * 
  * @see {@link VectorIndexes}
  */
 export { VectorIndexes };
+
+/**
+ * Vectors collection client for managing individual vector embeddings
+ * 
+ * Provides CRUD operations for vectors, which contain the actual
+ * embedding arrays and content within a VectorIndex.
+ * 
+ * @see {@link Vectors}
+ */
+export { Vectors };
 
 /**
  * Tasks collection client for managing tasks
