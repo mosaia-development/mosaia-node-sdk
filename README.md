@@ -6,7 +6,7 @@ TypeScript SDK for constructing 3rd party app integrations on the Mosaia platfor
 
 - **Full TypeScript Support**: Complete type definitions for all API endpoints
 - **Authentication**: OAuth 2.0 and API key authentication with PKCE support
-- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, App Connectors, App Webhooks, Models, Logs, Tasks, Drives, Search, IAM (Access Policies, Permissions), Billing (Meters, Wallets), and more
+- **Comprehensive API Coverage**: Users, Organizations, Agents, Tools, Apps, App Connectors, App Webhooks, Models, Logs, Tasks, Drives (with file uploads, path navigation, vector indexing, access control), Search, IAM (Access Policies, Permissions), Billing (Meters, Wallets), and more
 - **Full CRUD Operations**: Complete Create, Read, Update, Delete support for all resources
 - **Instance Methods**: Model-specific operations like like, fork, chat completions, rerank, embeddings
 - **Built-in Documentation**: Comprehensive TSDoc/JSDoc support with automatic TypeDoc generation
@@ -653,6 +653,10 @@ const results = await mosaia.search.query({
 
 ### Drives and Files
 
+The SDK provides comprehensive support for managing drives (file storage containers) and drive items (files and folders) with advanced features including file uploads, path-based navigation, access control, and vector indexing.
+
+#### Drive Management
+
 ```typescript
 // Get all drives
 const drives = await mosaia.drives.get();
@@ -666,6 +670,12 @@ const newDrive = await mosaia.drives.create({
   description: 'Storage drive for files'
 });
 
+// Create drive with query parameters (e.g., auto-create index)
+const newDriveWithIndex = await mosaia.drives.create({
+  name: 'My Drive',
+  description: 'Storage drive with index'
+}, { index: 'true' });
+
 // Update drive
 await mosaia.drives.update('drive-id', {
   name: 'Updated Drive Name'
@@ -673,70 +683,37 @@ await mosaia.drives.update('drive-id', {
 
 // Delete drive
 await mosaia.drives.delete('drive-id');
+```
 
-// Access drive items
+#### Drive Items Management
+
+```typescript
+// Get all items in a drive
 const items = await drive.items.get();
+
+// Get items with filtering
+const pdfFiles = await drive.items.get({
+  mime_type: 'application/pdf',
+  path: '/documents'
+});
 
 // Get specific drive item
 const item = await drive.items.get({}, 'item-id');
 
-// Create metadata-only drive item
-const newItem = await drive.items.create({
+// Create metadata-only drive item (folder)
+const newFolder = await drive.items.create({
+  name: 'documents',
+  path: '/',
+  item_type: 'FOLDER',
+  mime_type: 'application/x-directory'
+});
+
+// Create item with query parameters (e.g., auto-create index)
+const newItemWithIndex = await drive.items.create({
   name: 'document.pdf',
   path: '/documents',
   size: 1024
-});
-
-// Upload single file with presigned URL
-const fileInput = document.getElementById('fileInput') as HTMLInputElement;
-const file = fileInput.files[0];
-
-const uploadResult = await drive.items.uploadFile(file, {
-  path: '/documents',
-  relativePath: 'folder/file.txt'
-});
-
-// Upload to S3 using the upload() method (handles encryption headers automatically)
-const uploadJob = uploadResult.uploadJobs[0];
-try {
-  await uploadJob.upload(file, {
-    onProgress: (progress) => {
-      console.log(`Upload progress: ${progress}%`);
-    }
-  });
-  console.log('Upload successful!');
-} catch (error) {
-  console.error('Upload failed:', error);
-  await uploadJob.markFailed(error.message);
-}
-
-// Check upload job status
-const status = await drive.items.getUploadStatus(uploadResult.uploadJob.id);
-console.log('Upload progress:', status.progress.percentage + '%');
-
-// Batch file upload with directory structure preservation
-const files = Array.from(fileInput.files);
-const batchResult = await drive.items.uploadFiles(files, {
-  path: '/uploads',
-  relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
-  preserveStructure: true
-});
-
-// Upload all files to S3
-for (let i = 0; i < batchResult.uploadJobs.length; i++) {
-  const uploadJob = batchResult.uploadJobs[i];
-  const file = files[i];
-  try {
-    await uploadJob.upload(file, {
-      onProgress: (progress) => {
-        console.log(`${uploadJob.filename}: ${progress}%`);
-      }
-    });
-  } catch (error) {
-    console.error(`Failed to upload ${uploadJob.filename}:`, error);
-    await uploadJob.markFailed(error.message);
-  }
-}
+}, { index: 'true' });
 
 // Update drive item metadata
 await drive.items.update('item-id', {
@@ -746,6 +723,268 @@ await drive.items.update('item-id', {
 
 // Delete drive item
 await drive.items.delete('item-id');
+```
+
+#### File Uploads
+
+The SDK supports batch file uploads with automatic S3 upload handling. Files are automatically uploaded to S3 when using `uploadFiles()`.
+
+```typescript
+const fileInput = document.getElementById('fileInput') as HTMLInputElement;
+
+// Single file upload (automatically uploaded to S3)
+const file = fileInput.files[0];
+const uploadResult = await drive.items.uploadFiles([file], {
+  path: '/documents',
+  onProgress: (uploadJob, progress) => {
+    console.log(`${uploadJob.name}: ${progress}%`);
+  }
+});
+
+// Files are automatically uploaded - no manual upload() call needed
+console.log('Upload jobs:', uploadResult.uploadJobs);
+
+// Batch file upload with directory structure preservation
+const files = Array.from(fileInput.files);
+const batchResult = await drive.items.uploadFiles(files, {
+  path: '/uploads',
+  relativePaths: ['folder1/file1.txt', 'folder2/file2.txt'],
+  preserveStructure: true,
+  onProgress: (uploadJob, progress) => {
+    console.log(`${uploadJob.name}: ${progress}%`);
+  }
+});
+
+// All files are automatically uploaded to S3
+console.log(`Uploaded ${batchResult.uploadJobs.length} files`);
+```
+
+#### Path-Based Navigation
+
+Find files and folders by their path within a drive:
+
+```typescript
+// Find a file by path
+const file = await drive.findItemByPath('/documents/report.pdf');
+if (file) {
+  console.log('Found file:', file.name);
+}
+
+// Find a directory (returns array of items)
+const folderItems = await drive.findItemByPath('/documents');
+if (Array.isArray(folderItems)) {
+  console.log(`Directory contains ${folderItems.length} items`);
+  folderItems.forEach(item => console.log(item.name));
+}
+
+// Case-insensitive path matching
+const item = await drive.findItemByPath('/Report.PDF', { 
+  caseSensitive: false 
+});
+
+// Using DriveItems collection directly
+const items = drive.items;
+const foundItem = await items.findByPath('/documents/report.pdf');
+```
+
+#### Download URLs
+
+Get authenticated download URLs for files and folders:
+
+```typescript
+const item = await drive.items.get({}, 'item-id');
+
+// Get download URL (default: 1 hour expiration)
+const downloadUrl = await item.downloadUrl();
+window.location.href = downloadUrl; // Trigger browser download
+
+// Get download URL with custom expiration (2 hours)
+const url = await item.downloadUrl(7200);
+
+// Download folder as ZIP archive
+const folder = await drive.items.get({}, 'folder-id');
+const zipUrl = await folder.downloadUrl();
+// Browser will download the folder as a ZIP file
+
+// Programmatic download
+const response = await fetch(url);
+const blob = await response.blob();
+// Use blob for further processing
+```
+
+#### Vector Indexes
+
+Manage vector indexes for semantic search on drives and folders:
+
+```typescript
+// Get all vector indexes for a drive
+const driveIndexes = await drive.indexes.get();
+
+// Create a vector index for a drive
+const driveIndex = await drive.indexes.create({
+  name: 'Document Search Index',
+  description: 'Index for searching all documents in the drive'
+});
+
+// Get indexes for a folder (drive item)
+const folder = await drive.items.get({}, 'folder-id');
+const folderIndexes = await folder.indexes.get({ active: true });
+
+// Create index for a folder
+const folderIndex = await folder.indexes.create({
+  name: 'Folder Search Index',
+  description: 'Index for searching folder contents'
+});
+
+// Reindex a drive or folder
+await driveIndex.reindex();
+await folderIndex.reindex();
+```
+
+#### Access Control
+
+Manage permissions for drives and drive items with role-based access control:
+
+**Drive Access Control:**
+
+```typescript
+// Grant viewer role (read-only)
+await drive.access.grantByRole({ org_user: 'orguser123' }, 'VIEWER');
+
+// Grant editor role (read, create, update)
+await drive.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+
+// Grant manager role (full access)
+await drive.access.grantByRole({ org_user: 'orguser123' }, 'MANAGER');
+
+// Grant access with cascade to all items
+await drive.access.grantByRole(
+  { org_user: 'orguser123' },
+  'MANAGER',
+  { cascade_to_items: true }
+);
+
+// Grant access with cascade only to folders
+await drive.access.grantByRole(
+  { org_user: 'orguser123' },
+  'EDITOR',
+  { cascade_to_folders: true }
+);
+
+// List all accessors
+const result = await drive.access.list();
+result.accessors.forEach(accessor => {
+  console.log(`${accessor.accessor_type}: ${accessor.accessor_id} - ${accessor.role}`);
+});
+
+// Revoke access
+const revokeResult = await drive.access.revoke({ org_user: 'orguser123' });
+console.log(`Revoked ${revokeResult.revoked_count} permissions`);
+```
+
+**Drive Item Access Control:**
+
+```typescript
+const item = await drive.items.get({}, 'item-id');
+
+// For directories (folders): Support all roles including CONTRIBUTOR
+if (item.data.item_type === 'FOLDER') {
+  await item.access.grantByRole({ org_user: 'orguser123' }, 'CONTRIBUTOR');
+  await item.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+}
+
+// For files: Support VIEWER, EDITOR, MANAGER (not CONTRIBUTOR)
+if (item.data.item_type === 'FILE') {
+  await item.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
+}
+
+// Path-based access for directories
+await item.access.grantByRole(
+  { org_user: 'orguser123' },
+  'EDITOR',
+  { mode: 'path', folder_role: 'READ_ONLY' }
+);
+
+// List accessors
+const result = await item.access.list();
+console.log(`Item has ${result.accessors.length} accessors`);
+
+// Revoke access
+const revokeResult = await item.access.revoke({ org_user: 'orguser123' });
+```
+
+**Available Roles:**
+- **READ_ONLY**: Read-only access
+- **VIEWER**: Read access with metadata viewing
+- **CONTRIBUTOR**: Read, create (directories only)
+- **EDITOR**: Read, create, update
+- **MANAGER**: Full access including delete
+
+#### Upload Jobs
+
+Track and manage file upload progress:
+
+```typescript
+// Access upload jobs for a drive
+const uploadJobs = await drive.uploads.get();
+
+// Get specific upload job
+const uploadJob = await drive.uploads.get({}, 'upload-job-id');
+
+// Check upload status
+console.log('Status:', uploadJob.data.status); // PENDING, UPLOADING, COMPLETED, FAILED
+console.log('Progress:', uploadJob.data.formatted_duration);
+```
+
+#### Complete Example
+
+```typescript
+// Create a drive
+const drive = await mosaia.drives.create({
+  name: 'Project Files',
+  description: 'Storage for project documents'
+});
+
+// Grant access to team members
+await drive.access.grantByRole({ org_user: 'user1' }, 'EDITOR');
+await drive.access.grantByRole({ org_user: 'user2' }, 'VIEWER');
+
+// Create a folder
+const folder = await drive.items.create({
+  name: 'documents',
+  path: '/',
+  item_type: 'FOLDER',
+  mime_type: 'application/x-directory'
+}, { index: 'true' }); // Auto-create vector index
+
+// Upload files to the folder
+const files = Array.from(fileInput.files);
+const uploadResult = await drive.items.uploadFiles(files, {
+  path: '/documents',
+  preserveStructure: true,
+  onProgress: (uploadJob, progress) => {
+    console.log(`Uploading ${uploadJob.name}: ${progress}%`);
+  }
+});
+
+// Create vector index for semantic search
+const index = await drive.indexes.create({
+  name: 'Document Search',
+  description: 'Search all documents in the drive'
+});
+
+// Find files by path
+const report = await drive.findItemByPath('/documents/report.pdf');
+if (report) {
+  const downloadUrl = await report.downloadUrl();
+  console.log('Download URL:', downloadUrl);
+}
+
+// Search using vector index
+const searchResults = await index.search({
+  query: 'project status',
+  limit: 10
+});
 ```
 
 ### Logs and Messages
