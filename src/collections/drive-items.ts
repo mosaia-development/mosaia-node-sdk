@@ -101,7 +101,7 @@ export default class DriveItems extends BaseCollection<
      * const result = await items.uploadFiles([file], {
      *   path: '/documents',
      *   onProgress: (uploadJob, progress) => {
-     *     console.log(`${uploadJob.filename}: ${progress}%`);
+     *     console.log(`${uploadJob.name}: ${progress}%`);
      *   }
      * });
      * 
@@ -123,15 +123,15 @@ export default class DriveItems extends BaseCollection<
      * for (let i = 0; i < result.uploadJobs.length; i++) {
      *   const uploadJob = result.uploadJobs[i];
      *   const file = files[i];
-     *   console.log(`Uploading ${uploadJob.filename}...`);
+     *   console.log(`Uploading ${uploadJob.name}...`);
      *   try {
      *     await uploadJob.upload(file, {
      *       onProgress: (progress) => {
-     *         console.log(`${uploadJob.filename}: ${progress}%`);
+     *         console.log(`${uploadJob.name}: ${progress}%`);
      *       }
      *     });
      *   } catch (error) {
-     *     console.error(`Failed to upload ${uploadJob.filename}:`, error);
+     *     console.error(`Failed to upload ${uploadJob.name}:`, error);
      *     await uploadJob.markFailed(error.message);
      *   }
      * }
@@ -157,14 +157,70 @@ export default class DriveItems extends BaseCollection<
         };
     }> {
         try {
+            // Validate files
+            if (!files || files.length === 0) {
+                throw new Error('No files provided for upload');
+            }
+
+            // Filter out invalid files (empty or null)
+            console.log('=== SDK uploadFiles: File Validation ===');
+            console.log(`Total files received: ${files.length}`);
+            console.log('Files received:', files.map((f, idx) => ({
+                index: idx,
+                name: f?.name || 'NO NAME',
+                size: f?.size ?? 'NO SIZE',
+                sizeType: typeof f?.size,
+                type: f?.type || 'NO TYPE',
+                isFile: f instanceof File,
+                constructor: f?.constructor?.name,
+            })));
+
+            const validFiles = files.filter((file, idx) => {
+                if (!file) {
+                    console.warn(`SDK: File at index ${idx} is null or undefined`);
+                    return false;
+                }
+                
+                // Ensure size is a number and greater than 0
+                const size = typeof file.size === 'number' ? file.size : Number(file.size);
+                const isValid = !isNaN(size) && size > 0;
+                
+                if (!isValid) {
+                    console.warn(`SDK: Filtering out invalid file at index ${idx}:`, {
+                        name: file.name,
+                        size: file.size,
+                        sizeType: typeof file.size,
+                        sizeNumber: size,
+                        isNaN: isNaN(size),
+                    });
+                    return false;
+                }
+                
+                return true;
+            });
+
+            console.log(`SDK: Valid files: ${validFiles.length} out of ${files.length}`);
+            if (validFiles.length > 0) {
+                console.log('SDK: Valid files details:', validFiles.map((f, idx) => ({
+                    index: idx,
+                    name: f.name,
+                    size: f.size,
+                    type: f.type,
+                })));
+            }
+
+            if (validFiles.length === 0) {
+                throw new Error('No valid files provided. All files are empty or invalid.');
+            }
+
             const formData = new FormData();
             
-            // Append files if provided
-            if (files && files.length > 0) {
-                files.forEach(file => {
-                    formData.append('files', file);
-                });
-            }
+            // Append valid files
+            console.log('SDK: Appending files to FormData...');
+            validFiles.forEach((file, idx) => {
+                console.log(`SDK: Appending file ${idx}: ${file.name} (${file.size} bytes)`);
+                formData.append('files', file);
+            });
 
             // Append path if provided
             if (options?.path) {
@@ -185,7 +241,23 @@ export default class DriveItems extends BaseCollection<
                 formData.append('preserveStructure', options.preserveStructure.toString());
             }
 
+            console.log('SDK: FormData prepared, sending POST request to:', this.uri);
+            console.log('SDK: FormData entries:', {
+                hasFiles: validFiles.length > 0,
+                filesCount: validFiles.length,
+                hasPath: !!options?.path,
+                path: options?.path,
+                hasRelativePaths: !!options?.relativePaths,
+                preserveStructure: options?.preserveStructure,
+            });
+
             const response = await this.apiClient.POST<any>(this.uri, formData);
+            
+            console.log('SDK: Response received:', {
+                hasData: !!response.data,
+                hasFiles: !!(response.data || response).files,
+                filesCount: (response.data || response).files?.length || 0,
+            });
             const data = response.data || response;
             
             // Convert file info to UploadJob instances
@@ -193,7 +265,7 @@ export default class DriveItems extends BaseCollection<
                 // Map snake_case API response to UploadJobInterface
                 const uploadJobData: Partial<UploadJobInterface> = {
                     id: fileInfo.upload_job_id,
-                    filename: fileInfo.filename,
+                    name: fileInfo.name,
                     size: fileInfo.size,
                     mime_type: fileInfo.mime_type,
                     path: fileInfo.path,
@@ -212,7 +284,7 @@ export default class DriveItems extends BaseCollection<
             // Automatically upload files to drive
             // This is the expected behavior when calling uploadFiles()
             const uploadPromises = uploadJobs.map(async (uploadJob: UploadJob, index: number) => {
-                const file = files[index];
+                const file = validFiles[index];
                 if (!file) {
                     throw new Error(`File not found for upload job ${uploadJob.id}`);
                 }
@@ -244,11 +316,33 @@ export default class DriveItems extends BaseCollection<
                 uploadJobs,
                 instructions: data.instructions
             };
-        } catch (error) {
-            if ((error as any).message) {
-                throw new Error(String((error as any).message || 'Unknown error'));
+        } catch (error: any) {
+            // The API client returns error objects with message, code, and status
+            // Preserve all error details
+            const errorMessage = error?.message || error?.error?.message || 'Unknown error occurred';
+            const errorWithDetails = new Error(String(errorMessage));
+            
+            // Preserve status code if available
+            if (error?.status) {
+                (errorWithDetails as any).status = error.status;
             }
-            throw new Error('Unknown error occurred');
+            
+            // Preserve full error response if available
+            if (error?.response) {
+                (errorWithDetails as any).response = error.response;
+            }
+            
+            // Preserve error code if available
+            if (error?.code) {
+                (errorWithDetails as any).code = error.code;
+            }
+            
+            // Preserve full error object for debugging
+            if (error && typeof error === 'object') {
+                Object.assign(errorWithDetails, error);
+            }
+            
+            throw errorWithDetails;
         }
     }
 
@@ -261,7 +355,7 @@ export default class DriveItems extends BaseCollection<
      * 
      * @param path - URL path like '/documents/report.pdf' or '/folder1/subfolder/file.txt'
      * @param options - Optional options for path resolution
-     * @param options.caseSensitive - Whether filename matching is case-sensitive (default: true)
+     * @param options.caseSensitive - Whether name matching is case-sensitive (default: true)
      * @returns Promise resolving to DriveItem for files, DriveItem[] for directories, or null if not found
      * 
      * @example
@@ -269,7 +363,7 @@ export default class DriveItems extends BaseCollection<
      * ```typescript
      * const item = await items.findByPath('/documents/report.pdf');
      * if (item) {
-     *   console.log('Found file:', item.filename);
+     *   console.log('Found file:', item.name);
      * }
      * ```
      * 
@@ -279,7 +373,7 @@ export default class DriveItems extends BaseCollection<
      * const items = await items.findByPath('/documents');
      * if (Array.isArray(items)) {
      *   console.log(`Directory contains ${items.length} items`);
-     *   items.forEach(item => console.log(item.filename));
+     *   items.forEach(item => console.log(item.name));
      * }
      * ```
      * 

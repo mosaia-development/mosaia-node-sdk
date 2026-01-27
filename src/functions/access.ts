@@ -17,19 +17,117 @@ export type Accessor = {
 };
 
 /**
- * Action type definition for access control
+ * Action type definition for access control (deprecated - use roles instead)
+ * @deprecated Use role-based access with grantByRole instead
  */
 export type AccessAction = 'create' | 'read' | 'update' | 'delete' | '*';
 
 /**
- * Response type for grant access operation
+ * Role type for drive access control
+ */
+export type DriveRole = 'READ_ONLY' | 'VIEWER' | 'CONTRIBUTOR' | 'EDITOR' | 'MANAGER';
+
+/**
+ * Role type for drive directory (folder) access control
+ * Directories can have CONTRIBUTOR role which includes create permission
+ */
+export type DriveDirectoryRole = 'READ_ONLY' | 'VIEWER' | 'EDITOR' | 'CONTRIBUTOR' | 'MANAGER';
+
+/**
+ * Role type for drive file access control
+ * Files cannot have CONTRIBUTOR role as they don't support create action
+ */
+export type DriveFileRole = 'READ_ONLY' | 'VIEWER' | 'EDITOR' | 'MANAGER';
+
+/**
+ * Role type for drive item access control (union of directory and file roles)
+ * @deprecated Use DriveDirectoryRole or DriveFileRole instead based on item type
+ */
+export type DriveItemRole = DriveDirectoryRole | DriveFileRole;
+
+/**
+ * Grant access options for different modes
+ */
+export interface GrantAccessOptions {
+    /** Cascade permissions to existing items (drive only) */
+    cascade_to_items?: boolean;
+    /** Cascade permissions only to folders (drive only) */
+    cascade_to_folders?: boolean;
+    /** Access mode: 'path' for path-based access, 'recursive' for recursive access (items only) */
+    mode?: 'path' | 'recursive';
+    /** Role for parent folders (path mode only) - directories only */
+    folder_role?: DriveDirectoryRole;
+    /** Role for nested items (recursive mode only) - can be directory or file role depending on item type */
+    item_role?: DriveDirectoryRole | DriveFileRole;
+}
+
+/**
+ * Permission object in response
+ */
+export interface PermissionObject {
+    id: string;
+    active: boolean;
+    org?: string;
+    user?: string;
+    policy: string;
+    tags: string[];
+    record_history?: {
+        created_at?: string;
+        created_by?: string;
+        created_by_type?: string;
+        updated_at?: string;
+        updated_by?: string;
+        updated_by_type?: string;
+    };
+}
+
+/**
+ * Permission result object
+ */
+export interface PermissionResult {
+    action: string;
+    success: boolean;
+    permission?: PermissionObject;
+    error?: string;
+}
+
+/**
+ * Response type for grant access operation (role-based)
  */
 export interface GrantAccessResponse {
-    permission: any;
     drive_id?: string;
     item_id?: string;
     accessor_id: string;
+    role: string;
+    permissions?: PermissionResult[];
+    drive_permissions?: PermissionResult[];
+    folder_permissions?: Array<{
+        folder_id: string;
+        folder_name: string;
+        level: number;
+        permissions: PermissionResult[];
+    }>;
+    target_permissions?: PermissionResult[];
+    cascaded_items?: {
+        total: number;
+        granted: number;
+        failed: number;
+        items: Array<{
+            item_id: string;
+            action: string;
+            error: string;
+        }>;
+    };
+    nested_items?: {
+        total: number;
+        granted: number;
+        failed: number;
+        items: Array<{
+            item_id: string;
     action: string;
+            error: string;
+        }>;
+    };
 }
 
 /**
@@ -39,43 +137,121 @@ export interface RevokeAccessResponse {
     drive_id?: string;
     item_id?: string;
     accessor_id: string;
+    revoked_count: number;
+}
+
+/**
+ * Accessor information in list response
+ */
+export interface AccessorInfo {
+    accessor_id: string;
+    accessor_type: 'user' | 'org_user' | 'agent' | 'client';
+    role: string;
+    permissions?: PermissionObject[];
+}
+
+/**
+ * Response type for listing accessors
+ */
+export interface ListAccessorsResponse {
+    drive_id?: string;
+    item_id?: string;
+    accessors: AccessorInfo[];
+}
+
+/**
+ * Response type for grant access operation (legacy action-based)
+ * @deprecated Use GrantAccessResponse with grantByRole instead
+ */
+export interface LegacyGrantAccessResponse {
+    permission: any;
+    drive_id?: string;
+    item_id?: string;
+    accessor_id: string;
     action: string;
-    deleted_count: number;
 }
 
 /**
  * Access control functions class for managing permissions on drives and drive items
  * 
- * This class provides methods for granting and revoking access to drives and drive items.
- * It handles both user and entity-based access control, supporting Users, OrgUsers, Agents,
- * and Clients as accessors.
+ * This class provides methods for granting and revoking access to drives and drive items
+ * using role-based access control (RBAC). It handles both user and entity-based access
+ * control, supporting Users, OrgUsers, Agents, and Clients as accessors.
+ * 
+ * The class supports role-based permissions with different roles for different resource types:
+ * - **Drive roles**: READ_ONLY, VIEWER, CONTRIBUTOR, EDITOR, MANAGER
+ * - **Directory roles**: READ_ONLY, VIEWER, EDITOR, CONTRIBUTOR (includes create), MANAGER
+ * - **File roles**: READ_ONLY, VIEWER, EDITOR (no create), MANAGER
+ * 
+ * Note: CONTRIBUTOR role is only valid for directories (folders), not files, as files don't
+ * support the create action. Use DriveDirectoryRole for directories and DriveFileRole for files.
+ * 
+ * The class also supports various grant modes including cascade, path-based, and recursive access.
  * 
  * The class is typically accessed through the Drive or DriveItem classes rather than
  * instantiated directly.
  * 
  * @example
- * Access through Drive class:
+ * Access through Drive class (role-based):
  * ```typescript
  * const drive = await client.drives.get({}, driveId);
  * 
- * // Grant access to a user
- * await drive.access.grant({ user: 'user123' }, 'read');
+ * // Grant editor role to an org user
+ * await drive.access.grantByRole({ org_user: 'orguser123' }, 'EDITOR');
  * 
- * // Revoke access from an agent
- * await drive.access.revoke({ agent: agentObj }, 'write');
+ * // Grant manager role with cascade to items
+ * await drive.access.grantByRole(
+ *   { org_user: 'orguser123' },
+ *   'MANAGER',
+ *   { cascade_to_items: true }
+ * );
+ * 
+ * // Revoke all access
+ * const result = await drive.access.revoke({ org_user: 'orguser123' });
+ * console.log(`Revoked ${result.revoked_count} permissions`);
+ * 
+ * // List all accessors
+ * const accessors = await drive.access.list();
+ * console.log(`Drive has ${accessors.accessors.length} accessors`);
  * ```
  * 
  * @example
- * Access through DriveItem class:
+ * Access through DriveItem class (directory):
  * ```typescript
- * const item = await drive.items.get({}, itemId);
+ * const directory = await drive.items.get({}, directoryId);
  * 
- * // Grant full access to an org user
- * await item.access.grant({ org_user: orgUserObj }, '*');
+ * // Grant editor role to an org user (directories support all roles)
+ * await directory.access.grantByRole({ org_user: orgUserObj }, 'EDITOR');
  * 
- * // Revoke specific access from a client
- * const result = await item.access.revoke({ client: 'client456' }, 'delete');
- * console.log(`Removed ${result.deleted_count} permissions`);
+ * // Grant CONTRIBUTOR role (valid for directories, includes create)
+ * await directory.access.grantByRole({ org_user: 'orguser123' }, 'CONTRIBUTOR');
+ * 
+ * // Grant path-based access
+ * await directory.access.grantByRole(
+ *   { org_user: 'orguser123' },
+ *   'EDITOR',
+ *   { mode: 'path', folder_role: 'READ_ONLY' }
+ * );
+ * 
+ * // Revoke all access
+ * const result = await directory.access.revoke({ org_user: 'orguser123' });
+ * console.log(`Removed ${result.revoked_count} permissions`);
+ * ```
+ * 
+ * @example
+ * Access through DriveItem class (file):
+ * ```typescript
+ * const file = await drive.items.get({}, fileId);
+ * 
+ * // Grant editor role to an org user (files don't support CONTRIBUTOR)
+ * await file.access.grantByRole({ org_user: orgUserObj }, 'EDITOR');
+ * 
+ * // Files cannot have CONTRIBUTOR role (no create action for files)
+ * // await file.access.grantByRole({ org_user: 'orguser123' }, 'CONTRIBUTOR'); // ❌ Invalid
+ * 
+ * // Revoke all access
+ * const result = await file.access.revoke({ org_user: 'orguser123' });
+ * console.log(`Removed ${result.revoked_count} permissions`);
  * ```
  * 
  * @category Functions
@@ -159,8 +335,111 @@ export class Access {
     }
 
     /**
-     * Grant access to a drive or drive item
+     * Grant access to a drive or drive item using role-based permissions
      * 
+     * Creates permissions that allow the specified accessor to perform
+     * actions defined by the role on the resource.
+     * 
+     * @param accessor - Object specifying which entity to grant access to
+     * @param accessor.user - User ID or User model object
+     * @param accessor.org_user - Org user ID or OrgUser model object
+     * @param accessor.agent - Agent ID or Agent model object
+     * @param accessor.client - Client ID or Client model object
+     * @param role - The role to grant:
+     *   - For drives: READ_ONLY, VIEWER, CONTRIBUTOR, EDITOR, MANAGER
+     *   - For directories: READ_ONLY, VIEWER, EDITOR, CONTRIBUTOR (with create), MANAGER
+     *   - For files: READ_ONLY, VIEWER, EDITOR (no create), MANAGER
+     * @param options - Optional grant options for cascade, path, or recursive modes
+     * @returns Promise resolving to the granted permission details
+     * 
+     * @throws {Error} If the API request fails
+     * 
+     * @example
+     * Grant editor role to an org user:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * await drive.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'EDITOR'
+     * );
+     * ```
+     * 
+     * @example
+     * Grant manager role with cascade to items:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * await drive.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'MANAGER',
+     *   { cascade_to_items: true }
+     * );
+     * ```
+     * 
+     * @example
+     * Grant path-based access to a directory:
+     * ```typescript
+     * const item = await drive.items.get({}, itemId);
+     * 
+     * await item.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'EDITOR',
+     *   { mode: 'path', folder_role: 'READ_ONLY' }
+     * );
+     * ```
+     * 
+     * @example
+     * Grant access to a file (cannot use CONTRIBUTOR):
+     * ```typescript
+     * const file = await drive.items.get({}, fileId);
+     * 
+     * // Files can only have VIEWER, EDITOR, or MANAGER
+     * await file.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'EDITOR' // CONTRIBUTOR is not valid for files
+     * );
+     * ```
+     * 
+     * @example
+     * Grant access to a directory (can use CONTRIBUTOR):
+     * ```typescript
+     * const directory = await drive.items.get({}, directoryId);
+     * 
+     * // Directories can have CONTRIBUTOR which includes create permission
+     * await directory.access.grantByRole(
+     *   { org_user: 'orguser123' },
+     *   'CONTRIBUTOR' // Valid for directories
+     * );
+     * ```
+     */
+    async grantByRole(
+        accessor: Accessor,
+        role: DriveRole | DriveDirectoryRole | DriveFileRole,
+        options?: GrantAccessOptions
+    ): Promise<GrantAccessResponse> {
+        try {
+            const normalizedAccessor = this.normalizeAccessor(accessor);
+            
+            const response = await this.apiClient.POST<GrantAccessResponse>(
+                this.uri,
+                { 
+                    accessor: normalizedAccessor, 
+                    role: role.toUpperCase(),
+                    ...(options && { options })
+                }
+            );
+
+            return response.data || response;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * Grant access to a drive or drive item (legacy action-based)
+     * 
+     * @deprecated Use grantByRole instead for role-based access control
      * Creates a permission that allows the specified accessor to perform
      * the given action on the resource.
      * 
@@ -200,11 +479,11 @@ export class Access {
     async grant(
         accessor: Accessor,
         action: AccessAction
-    ): Promise<GrantAccessResponse> {
+    ): Promise<LegacyGrantAccessResponse> {
         try {
             const normalizedAccessor = this.normalizeAccessor(accessor);
             
-            const response = await this.apiClient.POST<GrantAccessResponse>(
+            const response = await this.apiClient.POST<LegacyGrantAccessResponse>(
                 this.uri,
                 { accessor: normalizedAccessor, action }
             );
@@ -216,30 +495,29 @@ export class Access {
     }
 
     /**
-     * Revoke access from a drive or drive item
+     * Revoke all access from a drive or drive item
      * 
-     * Removes a permission that was previously granted to the specified accessor
-     * for the given action on the resource.
+     * Removes all permissions that were previously granted to the specified accessor
+     * on the resource. All permissions for the accessor are deactivated.
      * 
      * @param accessor - Object specifying which entity to revoke access from
      * @param accessor.user - User ID or User model object
      * @param accessor.org_user - Org user ID or OrgUser model object
      * @param accessor.agent - Agent ID or Agent model object
      * @param accessor.client - Client ID or Client model object
-     * @param action - The action to revoke ('read', 'write', 'delete', or '*' for all)
-     * @returns Promise resolving to the revocation details including deleted count
+     * @returns Promise resolving to the revocation details including revoked count
      * 
      * @throws {Error} If the API request fails
      * 
      * @example
-     * Revoke read access from a user by ID:
+     * Revoke all access from a user by ID:
      * ```typescript
      * const drive = await client.drives.get({}, driveId);
      * 
-     * await drive.access.revoke(
-     *   { user: 'user123' },
-     *   'read'
+     * const result = await drive.access.revoke(
+     *   { org_user: 'orguser123' }
      * );
+     * console.log(`Revoked ${result.revoked_count} permissions`);
      * ```
      * 
      * @example
@@ -247,22 +525,66 @@ export class Access {
      * ```typescript
      * const agent = await client.agents.get({}, agentId);
      * const result = await drive.access.revoke(
-     *   { agent: agent },
-     *   '*'
+     *   { agent: agent }
      * );
-     * console.log(`Removed ${result.deleted_count} permissions`);
+     * console.log(`Removed ${result.revoked_count} permissions`);
      * ```
      */
     async revoke(
-        accessor: Accessor,
-        action: AccessAction
+        accessor: Accessor
     ): Promise<RevokeAccessResponse> {
         try {
             const normalizedAccessor = this.normalizeAccessor(accessor);
             
             const response = await this.apiClient.DELETE<RevokeAccessResponse>(
                 this.uri,
-                { accessor: normalizedAccessor, action }
+                { accessor: normalizedAccessor }
+            );
+
+            return response.data || response;
+        } catch (error) {
+            throw this.handleError(error);
+        }
+    }
+
+    /**
+     * List all accessors and their roles for a drive or drive item
+     * 
+     * Retrieves all entities that have been granted access to the resource,
+     * along with their assigned roles and permission details.
+     * 
+     * @returns Promise resolving to the list of accessors with their roles
+     * 
+     * @throws {Error} If the API request fails
+     * 
+     * @example
+     * List all accessors for a drive:
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * 
+     * const result = await drive.access.list();
+     * console.log(`Drive has ${result.accessors.length} accessors`);
+     * 
+     * result.accessors.forEach(accessor => {
+     *   console.log(`${accessor.accessor_type}: ${accessor.accessor_id} - ${accessor.role}`);
+     * });
+     * ```
+     * 
+     * @example
+     * List all accessors for a drive item:
+     * ```typescript
+     * const item = await drive.items.get({}, itemId);
+     * 
+     * const result = await item.access.list();
+     * result.accessors.forEach(accessor => {
+     *   console.log(`${accessor.accessor_type} ${accessor.accessor_id} has ${accessor.role} role`);
+     * });
+     * ```
+     */
+    async list(): Promise<ListAccessorsResponse> {
+        try {
+            const response = await this.apiClient.GET<ListAccessorsResponse>(
+                this.uri
             );
 
             return response.data || response;

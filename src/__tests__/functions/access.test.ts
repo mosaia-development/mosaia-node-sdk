@@ -1,10 +1,11 @@
-import { Access, Accessor, AccessAction } from '../../functions/access';
+import { Access, Accessor, AccessAction, DriveRole, DriveDirectoryRole, DriveFileRole, DriveItemRole } from '../../functions/access';
 
 // Mock the APIClient
 jest.mock('../../utils/api-client', () => {
   return jest.fn().mockImplementation(() => ({
     POST: jest.fn(),
-    DELETE: jest.fn()
+    DELETE: jest.fn(),
+    GET: jest.fn()
   }));
 });
 
@@ -297,162 +298,294 @@ describe('Access', () => {
     });
   });
 
-  describe('revoke', () => {
-    it('should revoke access with string user ID', async () => {
+  describe('grantByRole', () => {
+    it('should grant access with role to user', async () => {
       const mockResponse = {
         data: {
           drive_id: 'drive-123',
           accessor_id: 'user-123',
-          action: 'read',
-          deleted_count: 1
+          role: 'EDITOR',
+          permissions: [
+            { action: 'read', success: true, permission: { id: 'perm-1' } },
+            { action: 'create', success: true, permission: { id: 'perm-2' } },
+            { action: 'update', success: true, permission: { id: 'perm-3' } }
+          ]
         }
       };
-      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+      mockApiClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ user: 'user-123' }, 'read');
+      const result = await access.grantByRole({ user: 'user-123' }, 'EDITOR');
 
-      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+      expect(mockApiClient.POST).toHaveBeenCalledWith(
         '/drive/123/access',
-        { accessor: { user: 'user-123' }, action: 'read' }
+        { accessor: { user: 'user-123' }, role: 'EDITOR' }
       );
       expect(result).toEqual(mockResponse.data);
     });
 
-    it('should revoke access with User model object', async () => {
-      const userModel = { id: 'user-456', email: 'test@example.com' };
+    it('should grant access with role and options', async () => {
       const mockResponse = {
         data: {
           drive_id: 'drive-123',
-          accessor_id: 'user-456',
-          action: 'update',
-          deleted_count: 2
+          accessor_id: 'orguser-123',
+          role: 'MANAGER',
+          drive_permissions: [],
+          cascaded_items: { total: 10, granted: 20, failed: 0, items: [] }
         }
       };
-      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+      mockApiClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ user: userModel as any }, 'update');
+      const result = await access.grantByRole(
+        { org_user: 'orguser-123' },
+        'MANAGER',
+        { cascade_to_items: true }
+      );
 
-      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+      expect(mockApiClient.POST).toHaveBeenCalledWith(
         '/drive/123/access',
-        { accessor: { user: 'user-456' }, action: 'update' }
+        {
+          accessor: { org_user: 'orguser-123' },
+          role: 'MANAGER',
+          options: { cascade_to_items: true }
+        }
       );
       expect(result).toEqual(mockResponse.data);
     });
 
-    it('should revoke access with all action types', async () => {
-      const actions: AccessAction[] = ['read', 'update', 'delete', '*'];
-      
-      for (const action of actions) {
-        mockApiClient.DELETE.mockResolvedValue({
-          data: { accessor_id: 'user-123', action, deleted_count: 1 }
-        });
-
-        await access.revoke({ user: 'user-123' }, action);
-
-        expect(mockApiClient.DELETE).toHaveBeenCalledWith(
-          '/drive/123/access',
-          { accessor: { user: 'user-123' }, action }
-        );
-      }
-    });
-
-    it('should revoke access from org user', async () => {
-      const mockResponse = {
-        data: {
-          drive_id: 'drive-123',
-          accessor_id: 'orguser-789',
-          action: 'delete',
-          deleted_count: 1
-        }
-      };
-      mockApiClient.DELETE.mockResolvedValue(mockResponse);
-
-      const result = await access.revoke({ org_user: 'orguser-789' }, 'delete');
-
-      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
-        '/drive/123/access',
-        { accessor: { org_user: 'orguser-789' }, action: 'delete' }
-      );
-      expect(result).toEqual(mockResponse.data);
-    });
-
-    it('should revoke access from agent', async () => {
-      const agentModel = { id: 'agent-101', name: 'Test Agent' };
+    it('should grant path-based access to item', async () => {
       const mockResponse = {
         data: {
           item_id: 'item-123',
-          accessor_id: 'agent-101',
-          action: '*',
-          deleted_count: 3
+          accessor_id: 'orguser-123',
+          role: 'EDITOR',
+          drive_permissions: [],
+          folder_permissions: [],
+          target_permissions: []
         }
       };
-      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+      mockApiClient.POST.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ agent: agentModel as any }, '*');
-
-      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
-        '/drive/123/access',
-        { accessor: { agent: 'agent-101' }, action: '*' }
+      const result = await access.grantByRole(
+        { org_user: 'orguser-123' },
+        'EDITOR',
+        { mode: 'path', folder_role: 'READ_ONLY' }
       );
-      expect(result).toEqual(mockResponse.data);
-    });
 
-    it('should revoke access from client', async () => {
-      const mockResponse = {
-        data: {
-          drive_id: 'drive-123',
-          accessor_id: 'client-202',
-          action: 'read',
-          deleted_count: 1
-        }
-      };
-      mockApiClient.DELETE.mockResolvedValue(mockResponse);
-
-      const result = await access.revoke({ client: 'client-202' }, 'read');
-
-      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+      expect(mockApiClient.POST).toHaveBeenCalledWith(
         '/drive/123/access',
-        { accessor: { client: 'client-202' }, action: 'read' }
+        {
+          accessor: { org_user: 'orguser-123' },
+          role: 'EDITOR',
+          options: { mode: 'path', folder_role: 'READ_ONLY' }
+        }
       );
       expect(result).toEqual(mockResponse.data);
     });
 
     it('should handle API errors', async () => {
-      const error = new Error('Permission not found');
+      const error = new Error('Invalid role');
+      mockApiClient.POST.mockRejectedValue(error);
+
+      await expect(access.grantByRole({ user: 'user-123' }, 'INVALID_ROLE'))
+        .rejects.toThrow('Invalid role');
+    });
+  });
+
+  describe('revoke', () => {
+    it('should revoke all access with string user ID', async () => {
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessor_id: 'user-123',
+          revoked_count: 3
+        }
+      };
+      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+
+      const result = await access.revoke({ user: 'user-123' });
+
+      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+        '/drive/123/access',
+        { accessor: { user: 'user-123' } }
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should revoke all access with User model object', async () => {
+      const userModel = { id: 'user-456', email: 'test@example.com' };
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessor_id: 'user-456',
+          revoked_count: 2
+        }
+      };
+      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+
+      const result = await access.revoke({ user: userModel as any });
+
+      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+        '/drive/123/access',
+        { accessor: { user: 'user-456' } }
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should revoke all access from org user', async () => {
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessor_id: 'orguser-789',
+          revoked_count: 1
+        }
+      };
+      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+
+      const result = await access.revoke({ org_user: 'orguser-789' });
+
+      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+        '/drive/123/access',
+        { accessor: { org_user: 'orguser-789' } }
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should revoke all access from agent', async () => {
+      const agentModel = { id: 'agent-101', name: 'Test Agent' };
+      const mockResponse = {
+        data: {
+          item_id: 'item-123',
+          accessor_id: 'agent-101',
+          revoked_count: 3
+        }
+      };
+      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+
+      const result = await access.revoke({ agent: agentModel as any });
+
+      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+        '/drive/123/access',
+        { accessor: { agent: 'agent-101' } }
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should revoke all access from client', async () => {
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessor_id: 'client-202',
+          revoked_count: 1
+        }
+      };
+      mockApiClient.DELETE.mockResolvedValue(mockResponse);
+
+      const result = await access.revoke({ client: 'client-202' });
+
+      expect(mockApiClient.DELETE).toHaveBeenCalledWith(
+        '/drive/123/access',
+        { accessor: { client: 'client-202' } }
+      );
+      expect(result).toEqual(mockResponse.data);
+    });
+
+    it('should handle API errors', async () => {
+      const error = new Error('Accessor not found');
       mockApiClient.DELETE.mockRejectedValue(error);
 
-      await expect(access.revoke({ user: 'user-123' }, 'read'))
-        .rejects.toThrow('Permission not found');
+      await expect(access.revoke({ user: 'user-123' }))
+        .rejects.toThrow('Accessor not found');
     });
 
     it('should return response data directly if no data property', async () => {
       const mockResponse = {
         drive_id: 'drive-123',
         accessor_id: 'user-303',
-        action: 'read',
-        deleted_count: 1
+        revoked_count: 1
       };
       mockApiClient.DELETE.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ user: 'user-303' }, 'read');
+      const result = await access.revoke({ user: 'user-303' });
 
       expect(result).toEqual(mockResponse);
     });
 
-    it('should return deleted_count in response', async () => {
+    it('should return revoked_count in response', async () => {
       const mockResponse = {
         data: {
           drive_id: 'drive-123',
           accessor_id: 'user-123',
-          action: '*',
-          deleted_count: 5
+          revoked_count: 5
         }
       };
       mockApiClient.DELETE.mockResolvedValue(mockResponse);
 
-      const result = await access.revoke({ user: 'user-123' }, '*');
+      const result = await access.revoke({ user: 'user-123' });
 
-      expect(result.deleted_count).toBe(5);
+      expect(result.revoked_count).toBe(5);
+    });
+  });
+
+  describe('list', () => {
+    it('should list all accessors', async () => {
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessors: [
+            {
+              accessor_id: 'user-123',
+              accessor_type: 'user',
+              role: 'EDITOR'
+            },
+            {
+              accessor_id: 'orguser-456',
+              accessor_type: 'org_user',
+              role: 'VIEWER'
+            }
+          ]
+        }
+      };
+      mockApiClient.GET.mockResolvedValue(mockResponse);
+
+      const result = await access.list();
+
+      expect(mockApiClient.GET).toHaveBeenCalledWith('/drive/123/access');
+      expect(result).toEqual(mockResponse.data);
+      expect(result.accessors).toHaveLength(2);
+    });
+
+    it('should return empty array when no accessors', async () => {
+      const mockResponse = {
+        data: {
+          drive_id: 'drive-123',
+          accessors: []
+        }
+      };
+      mockApiClient.GET.mockResolvedValue(mockResponse);
+
+      const result = await access.list();
+
+      expect(result.accessors).toEqual([]);
+    });
+
+    it('should handle API errors', async () => {
+      const error = new Error('Drive not found');
+      mockApiClient.GET.mockRejectedValue(error);
+
+      await expect(access.list())
+        .rejects.toThrow('Drive not found');
+    });
+
+    it('should return response data directly if no data property', async () => {
+      const mockResponse = {
+        drive_id: 'drive-123',
+        accessors: []
+      };
+      mockApiClient.GET.mockResolvedValue(mockResponse);
+
+      const result = await access.list();
+
+      expect(result).toEqual(mockResponse);
     });
   });
 
@@ -467,7 +600,7 @@ describe('Access', () => {
     it('should handle unknown errors in revoke', async () => {
       mockApiClient.DELETE.mockRejectedValue('Unknown error');
 
-      await expect(access.revoke({ user: 'user-123' }, 'read'))
+      await expect(access.revoke({ user: 'user-123' }))
         .rejects.toBeDefined();
     });
 

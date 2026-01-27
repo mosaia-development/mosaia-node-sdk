@@ -57,7 +57,7 @@ describe('DriveItem Model', () => {
       id: '456',
       drive: 'drive-123',
       name: 'document.pdf',
-      filename: 'document.pdf',
+      name: 'document.pdf',
       path: '/documents',
       size: 1024,
       mime_type: 'application/pdf',
@@ -94,7 +94,7 @@ describe('DriveItem Model', () => {
 
     it('should set drive item properties from data', () => {
       expect((driveItem as any).name).toBe('document.pdf');
-      expect((driveItem as any).filename).toBe('document.pdf');
+      expect((driveItem as any).name).toBe('document.pdf');
       expect((driveItem as any).path).toBe('/documents');
       expect((driveItem as any).size).toBe(1024);
       expect((driveItem as any).mime_type).toBe('application/pdf');
@@ -126,7 +126,7 @@ describe('DriveItem Model', () => {
   describe('data access', () => {
     it('should access drive item data properties', () => {
       expect((driveItem as any).name).toBe('document.pdf');
-      expect((driveItem as any).filename).toBe('document.pdf');
+      expect((driveItem as any).name).toBe('document.pdf');
       expect((driveItem as any).path).toBe('/documents');
       expect((driveItem as any).size).toBe(1024);
       expect((driveItem as any).mime_type).toBe('application/pdf');
@@ -138,7 +138,7 @@ describe('DriveItem Model', () => {
         id: '456',
         drive: 'drive-123',
         name: 'document.pdf',
-        filename: 'document.pdf',
+        name: 'document.pdf',
         path: '/documents',
         size: 1024,
         mime_type: 'application/pdf',

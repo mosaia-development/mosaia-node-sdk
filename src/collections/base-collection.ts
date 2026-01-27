@@ -215,6 +215,7 @@ export abstract class BaseCollection<
      * instance initialized with the created entity's data.
      * 
      * @param entity - Entity data for the new entity (without ID)
+     * @param params - Optional query parameters to append to the URL
      * @returns Promise resolving to a new model instance
      * 
      * @example
@@ -243,12 +244,21 @@ export abstract class BaseCollection<
      * });
      * ```
      * 
+     * @example
+     * Create with query parameters:
+     * ```typescript
+     * const newItem = await items.create({
+     *   name: 'Document.pdf',
+     *   size: 1024
+     * }, { skipValidation: true, async: false });
+     * ```
+     * 
      * @throws {Error} When API request fails or response is invalid
      * @throws {Error} When required fields are missing
      */
-    async create(entity: Omit<T, 'id'>): Promise<M> {
+    async create(entity: Omit<T, 'id'>, params?: object): Promise<M> {
         try {
-            const response = await this.apiClient.POST<CreatePayload>(this.uri, entity);
+            const response = await this.apiClient.POST<CreatePayload>(this.uri, entity, params);
 
             // Handle the case where response might be undefined or null
             if (!response || !response.data) {
