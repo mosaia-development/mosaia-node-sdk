@@ -215,7 +215,7 @@ describe('BaseCollection', () => {
 
       const result = await testAPI.create(entityData);
 
-      expect(mockAPIClient.POST).toHaveBeenCalledWith('/test', entityData);
+      expect(mockAPIClient.POST).toHaveBeenCalledWith('/test', entityData, undefined);
       expect(result).toBeInstanceOf(MockModel);
       expect((result as MockModel).data.name).toBe('New User');
       expect((result as MockModel).data.email).toBe('newuser@test.com');
