@@ -252,4 +252,33 @@ export default class Tool extends BaseModel<ToolInterface> {
             throw new Error('Unknown error occurred');
         }
     }
+
+    /**
+     * Execute this tool
+     * 
+     * @returns Promise that resolves to the output of the tool call
+     * 
+     * @example
+     * ```typescript
+     * const output = await tool.execute({some: 'args'});
+     * console.log('Tool output:', output);
+     * ```
+     * 
+     * @throws {Error} When API request fails
+     */
+    async execute(args: object): Promise<object> {
+        try {
+            const response = await this.apiClient.POST(`${this.getUri()}/execute`, args);
+            if (!response || !response.data) {
+                throw new Error('Invalid response from API');
+            }
+
+            return response.data;
+        } catch (error) {
+            if ((error as any).message) {
+                throw new Error(String((error as any).message || 'Unknown error'));
+            }
+            throw new Error('Unknown error occurred');
+        }
+    }
 } 

@@ -29,7 +29,6 @@
     "url": "https://github.com/mosaia-development/mosaia-node-sdk/issues"
   },
   "homepage": "https://github.com/mosaia-development/mosaia-node-sdk#readme",
-  "dependencies": {},
   "devDependencies": {
     "@types/jest": "^29.5.12",
     "@types/node": "^22.9.1",
@@ -37,7 +36,7 @@
     "jest": "^29.7.0",
     "ts-jest": "^29.1.2",
     "tsx": "^4.20.3",
-    "typescript": "^5.6.3",
-    "typedoc": "^0.27.1"
+    "typedoc": "^0.27.1",
+    "typescript": "^5.6.3"
   }
 }
