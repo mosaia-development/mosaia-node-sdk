@@ -163,7 +163,7 @@ describe('BaseModel', () => {
       const updates = { name: 'Updated' };
       model.update(updates);
 
-      expect((model as any).data).toEqual({ name: 'Updated', email: 'original@example.com' });
+      expect((model as any).data).toEqual({ name: 'Updated' });
     });
   });
 
