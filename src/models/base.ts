@@ -216,7 +216,7 @@ export abstract class BaseModel<T> {
      * to the API, call {@link save} after updating.
      */
     update(updates: Partial<T>): void {
-        this.data = { ...this.data, ...updates };
+        this.data = { ...updates };
         // Update instance properties
         Object.assign(this, updates);
     }
