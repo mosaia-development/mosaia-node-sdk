@@ -369,7 +369,7 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
             const {
                 data,
                 error
-            } = await this.apiClient.GET<AuthResponse>(`${this.uri}/session`);
+            } = await this.apiClient.GET<AuthResponse>(`${this.uri}/${this.data.id}/session`);
 
             if (error) {
                 throw new Error(error.message);
