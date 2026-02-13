@@ -175,7 +175,7 @@ describe('OrgUser Model', () => {
 
       const result = await orgUser.session();
 
-      expect(mockApiClient.GET).toHaveBeenCalledWith('/org/session');
+      expect(mockApiClient.GET).toHaveBeenCalledWith('/org/123/session');
       expect(result).toEqual({
         apiKey: 'new-access-token',
         apiURL: 'https://api.mosaia.ai',
