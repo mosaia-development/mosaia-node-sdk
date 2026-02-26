@@ -29,6 +29,7 @@ import {
     Search,
     Drives,
     Logs,
+    Plans,
     Scopes,
     SSO,
     Notifications,
@@ -689,6 +690,28 @@ class MosaiaClient {
      */
     get logs() {
         return new Logs();
+    }
+
+    /**
+     * Access to Plans API
+     *
+     * Get available subscription plans and pricing information.
+     *
+     * @returns {Plans} Plans API client
+     *
+     * @example
+     * ```typescript
+     * const mosaia = new SDK.MosaiaClient(config);
+     *
+     * // Get all available plans
+     * const plans = await mosaia.plans.get();
+     *
+     * // Get a specific plan by ID
+     * const plan = await mosaia.plans.get({}, 'plan-id');
+     * ```
+     */
+    get plans() {
+        return new Plans();
     }
 
     /**
