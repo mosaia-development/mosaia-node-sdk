@@ -74,6 +74,7 @@ import VectorIndex from './vector-index';
 import Vector from './vector';
 import Task from './task';
 import Plan from './plan';
+import Trigger from './trigger';
 import AccessPolicy from './access-policy';
 import OrgPermission from './org-permission';
 import UserPermission from './user-permission';
@@ -212,6 +213,12 @@ export { Task };
  * @see {@link Plan}
  */
 export { Plan };
+
+/**
+ * Trigger model for managing scheduled and event-based triggers
+ * @see {@link Trigger}
+ */
+export { Trigger };
 
 /**
  * AccessPolicy model for managing IAM access control policies
