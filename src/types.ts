@@ -1493,37 +1493,134 @@ export interface ScopeInterface {
     description?: string;
 }
 
-// Task interfaces
+// Task interfaces (aligned with macs-node-sdk planning/models/task)
+export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'REVIEW';
+
 export interface TaskInterface extends BaseEntity {
     id?: string;
+    /** Parent plan reference (optional) */
+    plan?: string | { id?: string; [key: string]: any };
+    /** Agent reference (optional) */
+    agent?: string | { id?: string; [key: string]: any };
+    /** Agent log reference for this task (optional) */
+    log?: string | { id?: string; [key: string]: any };
+    /** AgentLog reference when this task was created (optional) */
+    parent_log?: string | { id?: string; [key: string]: any };
+    /** Organization reference (optional) */
+    org?: string | { id?: string; [key: string]: any };
+    /** User reference (optional) */
+    user?: string | { id?: string; [key: string]: any };
+    /** Task IDs that must complete before this task can run */
+    dependencies?: string[];
     name?: string;
-    description?: string;
-    status?: string;
+    /** Markdown content defining the task (required on create) */
+    content?: string;
+    /** Parsed metadata from markdown (type, priority, tags, dependencies) */
     metadata?: {
+        type?: string;
+        priority?: number;
+        tags?: string[];
+        dependencies?: string[];
         [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
     };
-    // Collection getters (available on Task model instances)
-    readonly plans?: any; // Plans collection
+    status?: TaskStatus;
+    active?: boolean;
+    keywords?: string[];
+    tags?: string[];
+    external_id?: string;
+    /** Attempt count (failures); used with max_attempts */
+    attempt_count?: number;
+    /** Max attempts before marking FAILED */
+    max_attempts?: number;
+    /** Reason for last failure */
+    failure_reason?: string;
+    extensors?: Record<string, any>;
 }
+
+// Plan interfaces (aligned with macs-node-sdk planning/models/plan)
+export type PlanStatus = 'DRAFT' | 'APPROVED' | 'EXECUTING' | 'COMPLETED' | 'FAILED' | 'REVIEW' | 'PAUSED';
 
 export interface PlanInterface extends BaseEntity {
     id?: string;
-    task: string;
+    /** Agent reference (optional) */
+    agent?: string | { id?: string; [key: string]: any };
+    /** Agent log reference for execution tracking (optional) */
+    log?: string | { id?: string; [key: string]: any };
+    /** AgentLog reference when this plan was created (optional) */
+    parent_log?: string | { id?: string; [key: string]: any };
+    /** Organization reference (optional) */
+    org?: string | { id?: string; [key: string]: any };
+    /** User reference (optional) */
+    user?: string | { id?: string; [key: string]: any };
+    name?: string;
+    /** Markdown content defining the plan (required on create) */
+    content?: string;
+    status?: PlanStatus;
+    active?: boolean;
+    keywords?: string[];
+    tags?: string[];
+    external_id?: string;
+    extensors?: Record<string, any>;
+    // Collection getters (available on Plan model instances)
+    readonly tasks?: any; // Tasks collection
+}
+
+// Trigger interfaces (aligned with macs-node-sdk event/models/trigger)
+export type TriggerType = 'CRON' | 'WEBHOOK' | 'EVENT' | 'MANUAL';
+export type TriggerStatus = 'ACTIVE' | 'PAUSED';
+
+export interface TriggerConfig {
+    /** CRON: required. e.g. "0 9 * * *" for 9am daily */
+    cron_expression?: string;
+    /** CRON: optional. e.g. "America/New_York" */
+    timezone?: string;
+    /** CRON: if true, run once then remove EventBridge rule */
+    run_once?: boolean;
+    [key: string]: any;
+}
+
+export interface TriggerInterface extends BaseEntity {
+    id?: string;
+    /** Organization reference (optional) */
+    org?: string | { id?: string; [key: string]: any };
+    /** User reference (optional) */
+    user?: string | { id?: string; [key: string]: any };
     name?: string;
     description?: string;
-    plan?: any;
-    metadata?: {
-        [key: string]: any;
-    }
+    type?: TriggerType;
+    /** Agent reference (optional) */
+    agent?: string | { id?: string; [key: string]: any };
+    /** Task reference (optional; exactly one of agent, task, plan required) */
+    task?: string | { id?: string; [key: string]: any };
+    /** Plan reference (optional) */
+    plan?: string | { id?: string; [key: string]: any };
+    /** AgentLog reference (optional) */
+    log?: string | { id?: string; [key: string]: any };
+    user_message?: string;
+    status?: TriggerStatus;
+    /** Auto-remove when task/plan completes */
+    remove_on_completion?: boolean;
+    last_triggered_at?: string | Date;
+    next_trigger_at?: string | Date;
+    trigger_count?: number;
+    active?: boolean;
+    /** Type-specific config (e.g. CRON: cron_expression, timezone, run_once) */
+    config?: TriggerConfig;
+    metadata?: Record<string, any>;
+    keywords?: string[];
+    tags?: string[];
     external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    extensors?: Record<string, any>;
 }
+
+export type GetTriggersPayload = {
+    data: TriggerInterface[];
+    paging?: PagingInterface;
+};
+
+export type GetTriggerPayload = {
+    data: TriggerInterface;
+};
 
 // SSO interfaces
 export interface SSORequestInterface {
