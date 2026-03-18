@@ -1598,8 +1598,8 @@ export interface TriggerInterface extends BaseEntity {
     log?: string | { id?: string; [key: string]: any };
     user_message?: string;
     status?: TriggerStatus;
-    /** Auto-remove when task/plan completes */
-    remove_on_completion?: boolean;
+    /** Auto-pause when task/plan completes (main indicator for whether cron runs again) */
+    pause_on_completion?: boolean;
     last_triggered_at?: string | Date;
     next_trigger_at?: string | Date;
     trigger_count?: number;
