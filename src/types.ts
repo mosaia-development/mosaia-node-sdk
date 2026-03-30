@@ -1512,9 +1512,12 @@ export interface TaskInterface extends BaseEntity {
 
 export interface PlanInterface extends BaseEntity {
     id?: string;
-    task: string;
+    task?: string;
     name?: string;
+    status?: string;
     description?: string;
+    content?: string;
+    idea?: string;
     plan?: any;
     metadata?: {
         [key: string]: any;
