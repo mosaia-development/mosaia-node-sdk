@@ -1587,7 +1587,6 @@ export interface TriggerInterface extends BaseEntity {
     /** User reference (optional) */
     user?: string | { id?: string; [key: string]: any };
     name?: string;
-    status?: string;
     description?: string;
     type?: TriggerType;
     /** Agent reference (optional) */
