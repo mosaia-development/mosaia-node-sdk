@@ -1542,6 +1542,7 @@ export type PlanStatus = 'DRAFT' | 'APPROVED' | 'EXECUTING' | 'COMPLETED' | 'FAI
 
 export interface PlanInterface extends BaseEntity {
     id?: string;
+    task?: string;
     /** Agent reference (optional) */
     agent?: string | { id?: string; [key: string]: any };
     /** Agent log reference for execution tracking (optional) */
@@ -1586,6 +1587,7 @@ export interface TriggerInterface extends BaseEntity {
     /** User reference (optional) */
     user?: string | { id?: string; [key: string]: any };
     name?: string;
+    status?: string;
     description?: string;
     type?: TriggerType;
     /** Agent reference (optional) */

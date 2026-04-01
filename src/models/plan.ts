@@ -25,9 +25,9 @@ export interface PlanExecuteMessage {
 
 /**
  * Plan class for managing task plans
- * 
+ *
  * This class represents a task plan in the Mosaia platform.
- * 
+ *
  * @extends BaseModel<PlanInterface>
  * @category Models
  */
@@ -37,80 +37,96 @@ export default class Plan extends BaseModel<PlanInterface> {
     }
 
     /**
-     * Get the plan's tasks collection
-     * 
-     * @returns Tasks collection for managing plan tasks
-     */
-    get tasks(): Tasks {
-        return new Tasks(this.getUri());
-    }
-
-    /**
-     * Get triggers scoped to this plan (e.g. CRON triggers for this plan).
-     */
-    get triggers(): Triggers {
-        return new Triggers(this.getUri());
-    }
-
-    /**
-     * Trigger plan execution (sends to plan-task-manager queue).
-     * Optional message is passed to the first eligible task when the plan runs.
+     * Approve the plan
      *
-     * @param message - Optional message, e.g. { content: string, role: 'user' }
-     * @returns Promise resolving to the updated plan from the API
+     * This method approves a plan that is in DRAFT status. The approval process
+     * creates tasks from the plan content. The mode parameter determines whether
+     * the plan is auto-executed after approval or requires manual review.
+     *
+     * @param options - Approval options
+     * @param options.mode - Approval mode: 'auto_execute' or 'review' (default: 'review')
+     * @returns Promise resolving to approval response data
+     *
+     * @throws {Error} When plan has no ID
+     * @throws {Error} When plan is not in DRAFT status
+     * @throws {Error} When API request fails
      *
      * @example
      * ```typescript
-     * const plan = await mosaia.plans.get({}, planId);
-     * await plan.execute();
-     * ```
-     *
-     * @example
-     * With a message for the first task:
-     * ```typescript
-     * await plan.execute({ content: 'Use folder X for the destination', role: 'user' });
-     * ```
-     */
-    async execute(message?: PlanExecuteMessage): Promise<PlanInterface> {
-        const body = message
-            ? { content: message.content, role: message.role ?? 'user' }
-            : {};
-        const response = await this.apiClient.POST<PlanInterface>(`${this.getUri()}/execute`, body);
-        if (!response?.data) {
-            throw new Error('Invalid response from execute API');
-        }
-        this.update(response.data as Partial<PlanInterface>);
-        return response.data;
-    }
-
-    /**
-     * Approve a plan (create tasks, optionally auto-execute).
-     * Plan must be in DRAFT status.
-     *
-     * @param options - Optional { mode: 'auto_execute' | 'review' }; defaults to 'review'
-     * @returns Promise resolving to the approve response (message, plan id, mode)
-     *
-     * @example
-     * ```typescript
-     * const plan = await mosaia.plans.get({}, planId);
+     * // Approve for review (default)
      * await plan.approve();
-     * ```
      *
-     * @example
-     * Auto-execute after approval:
-     * ```typescript
+     * // Approve with auto-execution
      * await plan.approve({ mode: 'auto_execute' });
      * ```
      */
-    async approve(options?: PlanApproveOptions): Promise<PlanApproveResponse> {
-        const response = await this.apiClient.POST<PlanApproveResponse>(
-            `${this.getUri()}/approve`,
-            options ?? {}
-        );
-        if (!response?.data) {
-            throw new Error('Invalid response from approve API');
+    async approve(options: { mode?: 'auto_execute' | 'review' } = {}): Promise<{
+        message: string;
+        plan: string;
+        mode: string;
+    }> {
+        try {
+            if (!this.hasId()) {
+                throw new Error('Plan ID is required for approval');
+            }
+
+            const response = await this.apiClient.POST<{
+                message: string;
+                plan: string;
+                mode: string;
+            }>(`${this.uri}/${this.getId()}/approve`, {
+                mode: options.mode || 'review'
+            });
+
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
         }
-        return response.data as PlanApproveResponse;
+    }
+
+    /**
+     * Execute the plan
+     *
+     * This method triggers plan execution for plans that are in APPROVED status.
+     * It sends the plan to the execution queue where tasks will be run.
+     * Optionally accepts a message that will be passed to the first eligible task.
+     *
+     * @param options - Execution options
+     * @param options.message - Optional message to pass to the first task
+     * @returns Promise resolving to the updated plan data
+     *
+     * @throws {Error} When plan has no ID
+     * @throws {Error} When plan is not in APPROVED status
+     * @throws {Error} When API request fails
+     *
+     * @example
+     * ```typescript
+     * // Execute plan
+     * await plan.execute();
+     *
+     * // Execute with message for first task
+     * await plan.execute({
+     *     message: { content: 'Use production settings', role: 'user' }
+     * });
+     * ```
+     */
+    async execute(options: { message?: { content: string; role: string } } = {}): Promise<any> {
+        try {
+            if (!this.hasId()) {
+                throw new Error('Plan ID is required for execution');
+            }
+
+            const response = await this.apiClient.POST<any>(
+                `${this.uri}/${this.getId()}/execute`,
+                options.message || {}
+            );
+
+            // Update local instance with response data
+            this.update(response.data);
+            return response.data;
+        } catch (error) {
+            throw this.handleError(error);
+        }
     }
 }
 
