@@ -1,4 +1,4 @@
-import * as Mosaia from './src';
+import * as Mosaia from '../src';
 import dotenv from 'dotenv';
 
 dotenv.config();

@@ -1,5 +1,27 @@
 import { PlanInterface } from '../types';
 import { BaseModel } from './base';
+import Tasks from '../collections/tasks';
+import Triggers from '../collections/triggers';
+
+/** Options for approving a plan. Plan must be in DRAFT status. */
+export interface PlanApproveOptions {
+    /** 'auto_execute' to create tasks and start execution; 'review' to create tasks only (default). */
+    mode?: 'auto_execute' | 'review';
+}
+
+/** Response from the plan approve API (202). */
+export interface PlanApproveResponse {
+    message: string;
+    plan: string;
+    mode: string;
+}
+
+/** Optional message when executing a plan (e.g. passed to the first eligible task). */
+export interface PlanExecuteMessage {
+    content: string;
+    /** Defaults to 'user' when not provided. */
+    role?: string;
+}
 
 /**
  * Plan class for managing task plans

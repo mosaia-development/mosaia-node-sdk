@@ -30,6 +30,7 @@ import {
     Drives,
     Logs,
     Plans,
+    Triggers,
     Scopes,
     SSO,
     Notifications,
@@ -821,10 +822,31 @@ class MosaiaClient {
      * 
      * // Access task plans
      * const plans = await task.plans.get();
+     * 
+     * // Access task triggers (e.g. CRON)
+     * const triggers = await task.triggers.get();
      * ```
      */
     get tasks() {
         return new Tasks();
+    }
+
+    /**
+     * Manage triggers (CRON, WEBHOOK, EVENT, MANUAL) in the platform.
+     * Use top-level for org/user-scoped lists, or task.triggers / plan.triggers for resource-scoped triggers.
+     *
+     * @returns {Triggers} Triggers API client
+     *
+     * @example
+     * ```typescript
+     * const triggers = await mosaia.triggers.get();
+     * const trigger = await mosaia.triggers.get({}, 'trigger-id');
+     * const taskTriggers = await task.triggers.get();
+     * const planTriggers = await plan.triggers.get();
+     * ```
+     */
+    get triggers() {
+        return new Triggers();
     }
 
     /**
@@ -938,6 +960,7 @@ export { Notifications } from './collections';
 export { VectorIndexes } from './collections';
 export { Tasks } from './collections';
 export { Plans } from './collections';
+export { Triggers } from './collections';
 
 // Model Classes
 export { User } from './models';
@@ -961,6 +984,7 @@ export { Snapshot } from './models';
 export { VectorIndex } from './models';
 export { Task } from './models';
 export { Plan } from './models';
+export { Trigger } from './models';
 
 // Auth Classes
 export { OAuth } from './auth/oauth';
