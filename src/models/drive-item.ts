@@ -123,7 +123,7 @@ export default class DriveItem extends BaseModel<DriveItemInterface> {
         
         // Return the full download URL
         // The API client's base URL will be prepended automatically when this URL is used
-        return `${this.config.apiURL}${baseUrl}${params}`;
+        return `${this.sdkConfig.apiURL}${baseUrl}${params}`;
     }
 
     /**
