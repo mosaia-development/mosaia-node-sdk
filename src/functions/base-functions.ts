@@ -47,15 +47,15 @@ export abstract class BaseFunctions<T extends object = any, GetPayload = any, Cr
      * including API keys, URLs, and other settings.
      * 
      * @returns The current MosaiaConfig object
-     * 
+     *
      * @example
      * ```typescript
-     * const currentConfig = this.config;
+     * const currentConfig = this.sdkConfig;
      * console.log('API URL:', currentConfig.apiURL);
      * console.log('API Key:', currentConfig.apiKey);
      * ```
      */
-    protected get config(): MosaiaConfig {
+    protected get sdkConfig(): MosaiaConfig {
         return this.configManager.getConfig();
     }
 

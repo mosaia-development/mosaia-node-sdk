@@ -100,18 +100,18 @@ export abstract class BaseCollection<
      * including API keys, URLs, and other settings.
      * 
      * @returns The current MosaiaConfig object
-     * 
+     *
      * @example
      * ```typescript
      * protected someMethod() {
-     *   const config = this.config;
-     *   console.log('Using API URL:', config.apiURL);
+     *   const sdkConfig = this.sdkConfig;
+     *   console.log('Using API URL:', sdkConfig.apiURL);
      * }
      * ```
-     * 
+     *
      * @protected
      */
-    protected get config(): MosaiaConfig {
+    protected get sdkConfig(): MosaiaConfig {
         return this.configManager.getConfig();
     }
 

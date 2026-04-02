@@ -33,7 +33,7 @@ class TestFunctions extends BaseFunctions<{ id?: string; name: string; email: st
 
   // Expose protected methods for testing
   public testGetConfig(): MosaiaConfig {
-    return this.config;
+    return this.sdkConfig;
   }
 
   public testHandleError(error: any): Error {
