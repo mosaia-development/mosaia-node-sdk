@@ -257,7 +257,7 @@ describe('DriveItem Model', () => {
 
     it('should return Access function instance', () => {
       const access = driveItem.access;
-      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-456/456');
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-456');
       expect(access).toBeDefined();
       expect(typeof access.grant).toBe('function');
       expect(typeof access.revoke).toBe('function');
@@ -266,7 +266,7 @@ describe('DriveItem Model', () => {
     it('should allow managing access permissions', () => {
       const access = driveItem.access;
       expect(access).toBeDefined();
-      expect(access.uri).toBe('/drive/drive-123/item/item-456/456');
+      expect(access.uri).toBe('/drive/drive-123/item/item-456');
     });
 
     it('should throw error for unsaved drive item', () => {
@@ -288,7 +288,7 @@ describe('DriveItem Model', () => {
       (item as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/item-999');
       
       const access = item.access;
-      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-999/item-999');
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-999');
       expect(access).toBeDefined();
     });
   });
