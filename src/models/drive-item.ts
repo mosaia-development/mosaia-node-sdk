@@ -117,13 +117,40 @@ export default class DriveItem extends BaseModel<DriveItemInterface> {
             throw new Error('Cannot get download URL for unsaved drive item');
         }
 
-        // Construct the download URL with optional expiration parameter
-        const baseUrl = `${this.getUri()}/download`;
+        // Make an authenticated request with redirect: 'manual' to capture
+        // the S3 presigned URL from the 302 Location header
+        const path = `${this.getUri()}/download`;
         const params = expiresIn ? `?expires_in=${expiresIn}` : '';
-        
-        // Return the full download URL
-        // The API client's base URL will be prepended automatically when this URL is used
-        return `${this.config.apiURL}${baseUrl}${params}`;
+        const url = await this.apiClient.getRedirectUrl(`${path}${params}`);
+
+        if (url) return url;
+        throw new Error('Failed to get download URL');
+    }
+
+    /**
+     * Get download info for this item. For files, returns a direct S3 presigned URL.
+     * For folders, returns the authenticated API endpoint URL and auth headers
+     * (since folder downloads stream a ZIP and don't redirect).
+     *
+     * @returns Object with url, headers (if auth required), and isStream flag
+     */
+    async downloadInfo(expiresIn?: number): Promise<{ url: string; headers?: Record<string, string>; isStream: boolean }> {
+        if (!this.data.id) {
+            throw new Error('Cannot get download info for unsaved drive item');
+        }
+
+        const path = `${this.getUri()}/download`;
+        const params = expiresIn ? `?expires_in=${expiresIn}` : '';
+
+        // Try to get redirect URL first (works for files)
+        const redirectUrl = await this.apiClient.getRedirectUrl(`${path}${params}`);
+        if (redirectUrl) {
+            return { url: redirectUrl, isStream: false };
+        }
+
+        // No redirect — likely a folder (ZIP stream). Return authenticated endpoint.
+        const { url, headers } = await this.apiClient.getAuthenticatedUrl(`${path}${params}`);
+        return { url, headers, isStream: true };
     }
 
     /**
@@ -238,7 +265,7 @@ export default class DriveItem extends BaseModel<DriveItemInterface> {
         if (!this.data.id) {
             throw new Error('Cannot access permissions for unsaved drive item');
         }
-        return new Access(`${this.getUri()}/${this.data.id}`);
+        return new Access(this.getUri());
     }
 }
 
