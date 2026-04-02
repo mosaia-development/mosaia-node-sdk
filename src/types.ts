@@ -824,6 +824,12 @@ export interface DriveItemInterface extends BaseEntity {
     mime_type?: string;
     item_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
     url?: string;
+    parent_folder?: string | null;
+    folder_structure?: Array<{
+        folder_id: string;
+        folder_name: string;
+        level: number;
+    }>;
     metadata?: {
         [key: string]: any;
     }
@@ -1542,6 +1548,7 @@ export type PlanStatus = 'DRAFT' | 'APPROVED' | 'EXECUTING' | 'COMPLETED' | 'FAI
 
 export interface PlanInterface extends BaseEntity {
     id?: string;
+    task?: string;
     /** Agent reference (optional) */
     agent?: string | { id?: string; [key: string]: any };
     /** Agent log reference for execution tracking (optional) */
