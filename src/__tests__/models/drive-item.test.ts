@@ -10,7 +10,9 @@ jest.mock('../../models/base', () => ({
       POST: jest.fn(),
       PUT: jest.fn(),
       DELETE: jest.fn(),
-      GET: jest.fn()
+      GET: jest.fn(),
+      getRedirectUrl: jest.fn().mockResolvedValue('https://s3.amazonaws.com/presigned-url'),
+      getAuthenticatedUrl: jest.fn().mockResolvedValue({ url: 'https://api.mosaia.ai/download', headers: {} }),
     };
     this.config = {
       apiKey: 'test-api-key',
@@ -205,14 +207,20 @@ describe('DriveItem Model', () => {
   describe('downloadUrl method', () => {
     it('should return download URL with default expiration', async () => {
       const url = await driveItem.downloadUrl();
-      
-      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/item-456/download');
+
+      expect((driveItem as any).apiClient.getRedirectUrl).toHaveBeenCalledWith(
+        '/drive/drive-123/item/item-456/download'
+      );
+      expect(url).toBe('https://s3.amazonaws.com/presigned-url');
     });
 
     it('should return download URL with custom expiration', async () => {
       const url = await driveItem.downloadUrl(7200);
-      
-      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/item-456/download?expires_in=7200');
+
+      expect((driveItem as any).apiClient.getRedirectUrl).toHaveBeenCalledWith(
+        '/drive/drive-123/item/item-456/download?expires_in=7200'
+      );
+      expect(url).toBe('https://s3.amazonaws.com/presigned-url');
     });
 
     it('should throw error for unsaved drive item', async () => {
@@ -230,15 +238,17 @@ describe('DriveItem Model', () => {
         drive: 'drive-123',
         name: 'file1.pdf'
       });
-      
-      // Mock getUri for this item
+
       (item1 as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/item-111');
-      
+
       const url1 = await item1.downloadUrl();
-      expect(url1).toBe('https://api.mosaia.ai/drive/drive-123/item/item-111/download');
+      expect((item1 as any).apiClient.getRedirectUrl).toHaveBeenCalledWith(
+        '/drive/drive-123/item/item-111/download'
+      );
+      expect(url1).toBe('https://s3.amazonaws.com/presigned-url');
     });
 
-    it('should handle folders (ZIP download)', async () => {
+    it('should throw when getRedirectUrl returns null', async () => {
       const folder = new DriveItem({
         id: 'folder-789',
         drive: 'drive-123',
@@ -246,9 +256,9 @@ describe('DriveItem Model', () => {
       });
 
       (folder as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/folder-789');
-      
-      const url = await folder.downloadUrl(3600);
-      expect(url).toBe('https://api.mosaia.ai/drive/drive-123/item/folder-789/download?expires_in=3600');
+      (folder as any).apiClient.getRedirectUrl = jest.fn().mockResolvedValue(null);
+
+      await expect(folder.downloadUrl(3600)).rejects.toThrow('Failed to get download URL');
     });
   });
 
@@ -257,7 +267,7 @@ describe('DriveItem Model', () => {
 
     it('should return Access function instance', () => {
       const access = driveItem.access;
-      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-456/456');
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-456');
       expect(access).toBeDefined();
       expect(typeof access.grant).toBe('function');
       expect(typeof access.revoke).toBe('function');
@@ -266,7 +276,7 @@ describe('DriveItem Model', () => {
     it('should allow managing access permissions', () => {
       const access = driveItem.access;
       expect(access).toBeDefined();
-      expect(access.uri).toBe('/drive/drive-123/item/item-456/456');
+      expect(access.uri).toBe('/drive/drive-123/item/item-456');
     });
 
     it('should throw error for unsaved drive item', () => {
@@ -288,7 +298,7 @@ describe('DriveItem Model', () => {
       (item as any).getUri = jest.fn().mockReturnValue('/drive/drive-123/item/item-999');
       
       const access = item.access;
-      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-999/item-999');
+      expect(Access).toHaveBeenCalledWith('/drive/drive-123/item/item-999');
       expect(access).toBeDefined();
     });
   });

@@ -438,6 +438,46 @@ export default class APIClient {
     }
 
     /**
+     * Makes an authenticated GET request that captures a redirect URL
+     * instead of following it. Returns the Location header from a 3xx response.
+     *
+     * @param path - API endpoint path
+     * @returns The redirect URL, or null if the response is not a redirect
+     */
+    async getRedirectUrl(path: string): Promise<string | null> {
+        await this.updateClientConfig();
+        const url = new URL(this.baseURL + path);
+
+        const response = await fetch(url.toString(), {
+            method: 'GET',
+            headers: this.headers,
+            redirect: 'manual',
+        });
+
+        if (response.status >= 300 && response.status < 400) {
+            return response.headers.get('location');
+        }
+
+        // Not a redirect — consume the body to prevent connection leaks
+        try { await response.body?.cancel(); } catch {}
+        return null;
+    }
+
+    /**
+     * Returns the full authenticated URL and headers for a given API path.
+     * Useful for endpoints that stream content (e.g. folder ZIP downloads)
+     * where the client needs to fetch directly with auth.
+     *
+     * @param path - API endpoint path
+     * @returns Object with url and headers
+     */
+    async getAuthenticatedUrl(path: string): Promise<{ url: string; headers: Record<string, string> }> {
+        await this.updateClientConfig();
+        const url = new URL(this.baseURL + path);
+        return { url: url.toString(), headers: { ...this.headers } };
+    }
+
+    /**
      * Makes a POST request to the API
      * 
      * Creates new resources or performs actions that require data submission.

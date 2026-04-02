@@ -824,6 +824,12 @@ export interface DriveItemInterface extends BaseEntity {
     mime_type?: string;
     item_type?: 'FILE' | 'FOLDER' | 'SYMLINK';
     url?: string;
+    parent_folder?: string | null;
+    folder_structure?: Array<{
+        folder_id: string;
+        folder_name: string;
+        level: number;
+    }>;
     metadata?: {
         [key: string]: any;
     }
@@ -1513,6 +1519,8 @@ export interface TaskInterface extends BaseEntity {
     /** Task IDs that must complete before this task can run */
     dependencies?: string[];
     name?: string;
+    /** High-level 1–2 sentence summary of what this task will accomplish */
+    description?: string;
     /** Markdown content defining the task (required on create) */
     content?: string;
     /** Parsed metadata from markdown (type, priority, tags, dependencies) */
@@ -1554,6 +1562,8 @@ export interface PlanInterface extends BaseEntity {
     /** User reference (optional) */
     user?: string | { id?: string; [key: string]: any };
     name?: string;
+    /** High-level 1–2 sentence summary of what this plan will accomplish */
+    description?: string;
     /** Markdown content defining the plan (required on create) */
     content?: string;
     status?: PlanStatus;

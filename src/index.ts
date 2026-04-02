@@ -993,16 +993,19 @@ export { OAuth } from './auth/oauth';
 export { ConfigurationManager, DEFAULT_CONFIG } from './config';
 
 // Utility Functions
-export { 
-    isValidObjectId, 
-    parseError, 
-    queryGenerator, 
+export {
+    isValidObjectId,
+    parseError,
+    queryGenerator,
     isTimestampExpired,
     failure,
     success,
     serverErrorToString,
     isSdkError
 } from './utils';
+
+// API Client
+export { default as APIClient } from './utils/api-client';
 
 // Types
 export * from './types';
