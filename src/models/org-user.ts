@@ -376,7 +376,7 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
             }
 
             return Promise.resolve({
-                ...this.config,
+                ...this.sdkConfig,
                 apiKey: data.access_token,
                 session: data
             });
