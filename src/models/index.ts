@@ -75,6 +75,7 @@ import Vector from './vector';
 import Task from './task';
 import Plan from './plan';
 import Trigger from './trigger';
+import Activity from './activity';
 import AccessPolicy from './access-policy';
 import OrgPermission from './org-permission';
 import UserPermission from './user-permission';
@@ -249,3 +250,10 @@ export { Meter };
  * @see {@link Wallet}
  */
 export { Wallet };
+
+/**
+ * Activity model — append-only audit row for a meaningful change to a
+ * user/org-scoped resource. Read-only from the client's perspective.
+ * @see {@link Activity}
+ */
+export { Activity };

@@ -37,6 +37,12 @@ export const DEFAULT_CONFIG = {
         CONTENT_TYPE: 'application/json',
     },
 
+    // SSE Relay Configuration
+    SSE: {
+        /** Default base URL for the SSE relay server */
+        BASE_URL: 'https://sse.mosaia.ai',
+    },
+
     // App Configuration
     APP: {
         /** Default application URL */
@@ -154,11 +160,13 @@ export class ConfigurationManager {
      */
     public initialize(userConfig: Partial<MosaiaConfig>): void {
         const apiURL = userConfig.apiURL || this.defaultConfig.API.BASE_URL;
+        const sseURL = userConfig.sseURL || this.defaultConfig.SSE.BASE_URL;
         const version = userConfig.version || this.defaultConfig.API.VERSION;
 
         this.config = {
             ...userConfig,
             apiURL,
+            sseURL,
             version
         } as MosaiaConfig;
     }
@@ -273,6 +281,19 @@ export class ConfigurationManager {
     public getApiUrl(): string {
         const config = this.getConfig();
         return `${config.apiURL || this.defaultConfig.API.BASE_URL}/v${config.version || this.defaultConfig.API.VERSION}`;
+    }
+
+    /**
+     * Get the SSE relay base URL with version
+     *
+     * Constructs the full SSE relay URL by combining the relay base URL and
+     * API version. Falls back to default values if configuration is not set.
+     *
+     * @returns The full SSE relay URL with version (e.g. 'https://sse.mosaia.ai/v1')
+     */
+    public getSseUrl(): string {
+        const config = this.getConfig();
+        return `${config.sseURL || this.defaultConfig.SSE.BASE_URL}/v${config.version || this.defaultConfig.API.VERSION}`;
     }
 
     /**

@@ -1,6 +1,11 @@
 import { MosaiaConfig } from '../types';
 import APIClient from '../utils/api-client';
 import { ConfigurationManager } from '../config';
+import {
+    subscribeToSSE,
+    SSESubscribeHandlers,
+    SSESubscription,
+} from '../utils/sse-client';
 
 /**
  * Base model class that provides common functionality for all models
@@ -69,7 +74,13 @@ export abstract class BaseModel<T> {
 
         Object.keys(data).forEach(key => {
             // Don't set properties that already have getter methods defined
-            const descriptor = Object.getOwnPropertyDescriptor(Object.getPrototypeOf(this), key);
+            // Walk the full prototype chain to find descriptors (not just one level)
+            let descriptor: PropertyDescriptor | undefined;
+            let proto = Object.getPrototypeOf(this);
+            while (proto && !descriptor) {
+                descriptor = Object.getOwnPropertyDescriptor(proto, key);
+                proto = Object.getPrototypeOf(proto);
+            }
             if (!descriptor || (descriptor.get === undefined && descriptor.set === undefined)) {
                 (this as any)[key] = (data as any)[key];
             }
@@ -488,6 +499,37 @@ export abstract class BaseModel<T> {
      * }
      * ```
      */
+    /**
+     * Subscribe to live updates for this entity via the SSE relay.
+     *
+     * Opens a Server-Sent Events connection to the Mosaia relay server
+     * (`mosaia-sse-relay-server`) scoped to this specific document. The
+     * relay watches the underlying MongoDB change stream and forwards every
+     * update to `handlers.onUpdate`.
+     *
+     * Requires the entity to have an `id` (must be saved first).
+     *
+     * @param handlers - Lifecycle callbacks (`onStart`, `onUpdate`, `onError`, `onClose`).
+     * @returns A subscription handle. Call `close()` to disconnect.
+     *
+     * @example
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const sub = drive.subscribe({
+     *   onUpdate: (doc) => console.log('drive changed', doc),
+     *   onError: (err) => console.error(err),
+     * });
+     *
+     * // later
+     * sub.close();
+     * ```
+     */
+    subscribe<TStart = any>(
+        handlers: SSESubscribeHandlers<Partial<T>, TStart>
+    ): SSESubscription {
+        return subscribeToSSE<Partial<T>, TStart>(this.getUri(), handlers);
+    }
+
     protected handleError(error: any): Error {
         if ((error as any).message) {
             return error;

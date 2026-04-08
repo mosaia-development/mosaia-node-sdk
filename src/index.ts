@@ -31,6 +31,7 @@ import {
     Logs,
     Plans,
     Triggers,
+    Activities,
     Scopes,
     SSO,
     Notifications,
@@ -850,6 +851,32 @@ class MosaiaClient {
     }
 
     /**
+     * Read the append-only activity audit log.
+     *
+     * Activities are produced server-side whenever a meaningful mutation
+     * occurs on a user/org-scoped resource (plans, tasks, triggers, agents,
+     * drives, etc.). The platform does not expose create / update / delete
+     * endpoints — activities are immutable from the client's perspective.
+     *
+     * @returns {Activities} Activities API client (read-only)
+     *
+     * @example
+     * ```typescript
+     * // Most recent activities for the authenticated user/org
+     * const recent = await mosaia.activities.get({ limit: 25 });
+     *
+     * // History for a specific resource
+     * const planHistory = await mosaia.activities.get({
+     *     resource: 'plan',
+     *     resource_id: '69d578be8d8fa7c19c7335e3'
+     * });
+     * ```
+     */
+    get activities() {
+        return new Activities();
+    }
+
+    /**
      * Creates a new OAuth instance for handling OAuth2 Authorization Code flow with PKCE
      * 
      * This method creates an OAuth client that supports the PKCE (Proof Key for Code Exchange)
@@ -1006,6 +1033,23 @@ export {
 
 // API Client
 export { default as APIClient } from './utils/api-client';
+
+// SSE Client (live updates via the mosaia-sse-relay-server)
+export {
+    subscribeToSSE,
+    SSESubscribeHandlers,
+    SSESubscription,
+    SSEEnvelope,
+} from './utils/sse-client';
+
+// Unified activity feed (audit log + live stream)
+export {
+    subscribeToActivity,
+    Activity,
+    ActivityOperation,
+    ActivityStartInfo,
+    SubscribeToActivityOptions,
+} from './utils/activity-feed';
 
 // Types
 export * from './types';

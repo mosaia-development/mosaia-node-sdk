@@ -68,6 +68,8 @@ export interface MosaiaConfig {
     version?: string;
     /** Base URL for API requests (defaults to https://api.mosaia.ai) */
     apiURL?: string;
+    /** Base URL for the SSE relay server (defaults to https://sse.mosaia.ai) */
+    sseURL?: string;
     /** Client ID for client credentials flows (Optional) */
     clientId?: string;
     /** Client secret for client credentials flow (optional) */
@@ -1500,7 +1502,7 @@ export interface ScopeInterface {
 }
 
 // Task interfaces (aligned with macs-node-sdk planning/models/task)
-export type TaskStatus = 'PENDING' | 'IN_PROGRESS' | 'COMPLETED' | 'FAILED' | 'REVIEW';
+export type TaskStatus = 'PENDING' | 'BUILDING' | 'APPROVED' | 'EXECUTING' | 'COMPLETED' | 'FAILED' | 'REVIEW';
 
 export interface TaskInterface extends BaseEntity {
     id?: string;
@@ -1632,6 +1634,99 @@ export type GetTriggersPayload = {
 export type GetTriggerPayload = {
     data: TriggerInterface;
 };
+
+// Activity interfaces (aligned with macs-node-sdk activity/models/activity)
+
+/**
+ * Normalized resource name. The activity producer maps raw Mongo collection
+ * names to a stable singular snake_case form. New resources may be added by
+ * the platform; this is intentionally a string union with a fallback.
+ */
+export type ActivityResource =
+    | 'plan'
+    | 'task'
+    | 'trigger'
+    | 'agent'
+    | 'agent_group'
+    | 'app'
+    | 'tool'
+    | 'drive'
+    | 'drive_item'
+    | 'vector_index'
+    | 'organization'
+    | 'org_user'
+    | 'user'
+    | (string & {}); // allow unknown future values without losing autocompletion
+
+/** CRUD verb matching the IAM action vocabulary. `read` is intentionally absent. */
+export type ActivityOperation = 'create' | 'update' | 'delete';
+
+/**
+ * Activity row — append-only audit entry.
+ *
+ * Each row is a snapshot of a meaningful change to a user/org-scoped resource.
+ * The full pre/post-image of the source document lives on `payload`. Producers
+ * write one row per qualifying mutation; the unique `event_id` ensures
+ * idempotency across multiple relay processes tailing the same change stream.
+ */
+export interface ActivityInterface extends BaseEntity {
+    id?: string;
+    /** Owner user reference (required if `org` is not set) */
+    user?: string | { id?: string; [key: string]: any };
+    /** Owner org reference (required if `user` is not set) */
+    org?: string | { id?: string; [key: string]: any };
+    /** Normalized resource name (e.g. `'plan'`, `'task'`, `'drive_item'`) */
+    resource?: ActivityResource;
+    /** ID of the source document that changed */
+    resource_id?: string;
+    /** CRUD verb */
+    operation?: ActivityOperation;
+    /** Snapshot of the source document at the time of the change */
+    payload?: Record<string, any> | null;
+    /** Stringified change-stream resume token used as a dedupe key */
+    event_id?: string;
+}
+
+export type GetActivitiesPayload = {
+    data: ActivityInterface[];
+    paging?: PagingInterface;
+};
+
+export type GetActivityPayload = {
+    data: ActivityInterface;
+};
+
+/**
+ * Strongly-typed query params for `mosaia.activities.get()`. Mirrors the
+ * filters supported by the api-core `GET /v1/activity` route and the SDK's
+ * `Activity.query()` method.
+ *
+ * Extends `QueryParams` so generic pagination/search params (like `q`,
+ * `tags`, `active`) still pass through transparently.
+ */
+export interface ActivityQueryParams extends QueryParams {
+    /** Restrict to a single resource type (e.g. `'plan'`, `'task'`, `'drive_item'`). */
+    resource?: ActivityResource;
+    /** Restrict to a specific source-document id. Most useful with `resource`. */
+    resource_id?: string;
+    /** Restrict to a single CRUD operation. */
+    operation?: ActivityOperation;
+    /**
+     * Cursor for replay. When set, only rows with `_id > since` are
+     * returned. ObjectIds are time-ordered, so this acts like a "newer
+     * than X" filter.
+     */
+    since?: string;
+    /** Owner user id (admin / super-org use). */
+    user?: string;
+    /** Owner org id (admin / super-org use). */
+    org?: string;
+    /**
+     * When `true`, return every matching row without pagination. Use with
+     * care — there is no upper bound when this is set.
+     */
+    all?: boolean;
+}
 
 // SSO interfaces
 export interface SSORequestInterface {

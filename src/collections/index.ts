@@ -68,6 +68,7 @@ import Vectors from './vectors';
 import Tasks from './tasks';
 import Plans from './plans';
 import Triggers from './triggers';
+import Activities from './activities';
 import AccessPolicies from './access-policies';
 import OrgPermissions from './org-permissions';
 import UserPermissions from './user-permissions';
@@ -324,13 +325,25 @@ export { Plans };
 
 /**
  * Triggers collection client for managing triggers (CRON, WEBHOOK, EVENT, MANUAL)
- * 
+ *
  * Provides CRUD operations for triggers. Use top-level (mosaia.triggers) or
  * scoped to a task (task.triggers) or plan (plan.triggers).
- * 
+ *
  * @see {@link Triggers}
  */
 export { Triggers };
+
+/**
+ * Activities collection client for the read-only activity audit log.
+ *
+ * Activities are produced server-side whenever a meaningful mutation occurs on
+ * a user/org-scoped resource. Use this collection to render activity feeds,
+ * audit history, or to replay events alongside the live `/v1/activity` SSE
+ * stream.
+ *
+ * @see {@link Activities}
+ */
+export { Activities };
 
 /**
  * Access Policies collection client for managing IAM access control policies

@@ -5,6 +5,11 @@ import {
 } from '../types';
 import APIClient from '../utils/api-client';
 import { ConfigurationManager } from '../config';
+import {
+    subscribeToSSE,
+    SSESubscribeHandlers,
+    SSESubscription,
+} from '../utils/sse-client';
 
 /**
  * Base Collection class that provides common functionality for all collection clients
@@ -370,4 +375,46 @@ export abstract class BaseCollection<
             throw new Error('Unknown error occurred');
         }
     }
-} 
+
+    /**
+     * Subscribe to live updates for every entity in this collection that the
+     * authenticated requester owns. Opens an SSE connection to the Mosaia
+     * relay server (`mosaia-sse-relay-server`) at the collection's path.
+     *
+     * The relay scopes results to `requestOrg` if present, otherwise to
+     * `requestUser`. Optional `params` are forwarded as query string values
+     * (used by `/item` which requires `?drive=<id>`).
+     *
+     * @param handlers - Lifecycle callbacks (`onStart`, `onUpdate`, `onError`, `onClose`).
+     * @param params - Optional query parameters to scope the stream.
+     * @returns A subscription handle. Call `close()` to disconnect.
+     *
+     * @example
+     * ```typescript
+     * const sub = client.drives.subscribe({
+     *   onUpdate: (drive) => console.log('drive changed', drive),
+     * });
+     *
+     * // Items in a specific drive
+     * const itemSub = client.drives.get({}, driveId).then(drive =>
+     *   client.driveItems.subscribe(
+     *     { onUpdate: (item) => console.log('item changed', item) },
+     *     { drive: drive.id }
+     *   )
+     * );
+     * ```
+     */
+    subscribe<TStart = any>(
+        handlers: SSESubscribeHandlers<Partial<T>, TStart>,
+        params?: Record<string, string | number | boolean>
+    ): SSESubscription {
+        let path = this.uri;
+        if (params && Object.keys(params).length > 0) {
+            const qs = Object.entries(params)
+                .map(([k, v]) => `${encodeURIComponent(k)}=${encodeURIComponent(String(v))}`)
+                .join('&');
+            path = `${path}?${qs}`;
+        }
+        return subscribeToSSE<Partial<T>, TStart>(path, handlers);
+    }
+}
