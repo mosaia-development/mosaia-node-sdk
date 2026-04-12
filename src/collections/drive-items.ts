@@ -385,6 +385,51 @@ export default class DriveItems extends BaseCollection<
      * 
      * @throws {Error} When path resolution fails or API error occurs
      */
+    /**
+     * Batch delete multiple drive items by ID
+     *
+     * Sends a single request to delete multiple items. Each item is
+     * access-controlled individually on the server — items that fail
+     * validation or permission checks are reported in `failed` without
+     * blocking the rest.
+     *
+     * @param ids - Array of DriveItem IDs to delete
+     * @param options - Optional delete options
+     * @param options.hardDelete - If true, permanently removes items (default: false, soft-delete)
+     * @returns Promise resolving to `{ deleted: string[], failed: { id: string, error: string }[] }`
+     *
+     * @example
+     * ```typescript
+     * const drive = await client.drives.get({}, driveId);
+     * const result = await drive.items.batchDelete(['id1', 'id2', 'id3']);
+     * console.log(`Deleted: ${result.deleted.length}, Failed: ${result.failed.length}`);
+     * ```
+     */
+    async batchDelete(
+        ids: string[],
+        options?: { hardDelete?: boolean }
+    ): Promise<{ deleted: string[]; failed: { id: string; error: string }[] }> {
+        if (!ids || ids.length === 0) {
+            throw new Error('ids must be a non-empty array');
+        }
+
+        const body: Record<string, any> = { ids };
+        if (options?.hardDelete) {
+            body.delete = true;
+        }
+
+        const response = await this.apiClient.POST<{
+            deleted: string[];
+            failed: { id: string; error: string }[];
+        }>(`${this.uri}/batch-delete`, body);
+
+        const data = response.data || response;
+        return {
+            deleted: data.deleted || [],
+            failed: data.failed || [],
+        };
+    }
+
     async findByPath(
         path: string,
         options?: { caseSensitive?: boolean }

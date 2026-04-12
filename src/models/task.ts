@@ -59,5 +59,27 @@ export default class Task extends BaseModel<TaskInterface> {
         this.update(response.data as Partial<TaskInterface>);
         return response.data;
     }
+
+    /**
+     * Interrupt a running task. Sets the AgentLog to STANDBY (stops the
+     * agent loop) and the task status to REVIEW so the user can provide feedback.
+     *
+     * @returns Promise resolving to the updated task from the API
+     *
+     * @example
+     * ```typescript
+     * const task = await mosaia.tasks.get({}, taskId);
+     * await task.interrupt();
+     * // task.status === 'REVIEW'
+     * ```
+     */
+    async interrupt(): Promise<TaskInterface> {
+        const response = await this.apiClient.POST<TaskInterface>(`${this.getUri()}/interrupt`, {});
+        if (!response?.data) {
+            throw new Error('Invalid response from interrupt API');
+        }
+        this.update(response.data as Partial<TaskInterface>);
+        return response.data;
+    }
 }
 
