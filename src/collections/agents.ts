@@ -129,4 +129,29 @@ export default class Agents extends BaseCollection<
     constructor(uri = '') {
         super(`${uri}/agent`, Agent);
     }
+
+    async batchDelete(
+        ids: string[],
+        options?: { hardDelete?: boolean }
+    ): Promise<{ deleted: string[]; failed: { id: string; error: string }[] }> {
+        if (!ids || ids.length === 0) {
+            throw new Error('ids must be a non-empty array');
+        }
+
+        const body: Record<string, any> = { ids };
+        if (options?.hardDelete) {
+            body.delete = true;
+        }
+
+        const response = await this.apiClient.POST<{
+            deleted: string[];
+            failed: { id: string; error: string }[];
+        }>(`${this.uri}/batch-delete`, body);
+
+        const data = response.data || response;
+        return {
+            deleted: data.deleted || [],
+            failed: data.failed || [],
+        };
+    }
 }
