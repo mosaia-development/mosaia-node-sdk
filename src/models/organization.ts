@@ -119,14 +119,15 @@ export default class Organization extends BaseModel<OrganizationInterface> {
      * ```typescript
      * const org = new Organization({
      *   name: 'Enterprise AI',
-     *   short_description: 'Enterprise AI solutions',
-     *   long_description: 'Comprehensive AI solutions for enterprises',
-     *   metadata: {
+     *   description: 'Comprehensive AI solutions for enterprises.',
+     *   type: 'CLIENT',
+     *   url: 'https://enterprise-ai.example.com',
+     *   size: '1001-5000',
+     *   location: 'Global',
+     *   extensors: {
      *     industry: 'technology',
-     *     size: 'enterprise',
-     *     region: 'global',
-     *     compliance: ['gdpr', 'hipaa'],
-     *     features: ['agents', 'models', 'apps']
+     *     compliance: 'gdpr,hipaa',
+     *     features: 'agents,models,apps'
      *   }
      * }, '/enterprise/org');
      * ```
@@ -157,10 +158,11 @@ export default class Organization extends BaseModel<OrganizationInterface> {
      * Create agent:
      * ```typescript
      * const agent = await org.agents.create({
-     *   name: 'Customer Support',
-     *   model: 'gpt-4',
+     *   name: 'customer-support',
+     *   description: 'Customer support triage agent.',
+     *   model: ['65f0c3d2a4b5c6d7e8f90123'],
      *   temperature: 0.7,
-     *   system_prompt: 'You are a helpful support agent.'
+     *   system_message: 'You are a helpful support agent.'
      * });
      * ```
      */
@@ -227,21 +229,20 @@ export default class Organization extends BaseModel<OrganizationInterface> {
      * const clients = await org.clients.get();
      * clients.forEach(client => {
      *   console.log(`Client: ${client.name}`);
-     *   console.log(`ID: ${client.client_id}`);
+     *   console.log(`Name: ${client.name}`);
      * });
      * ```
-     * 
+     *
      * @example
      * Create OAuth client:
      * ```typescript
      * const client = await org.clients.create({
-     *   name: 'Web Dashboard',
-     *   redirect_uris: ['https://app.example.com/oauth/callback'],
-     *   scopes: ['read:agents', 'write:apps'],
-     *   metadata: {
-     *     type: 'web-application',
-     *     environment: 'production'
-     *   }
+     *   name: 'acme-web-dashboard',
+     *   oauth: {
+     *     active: true,
+     *     authorized_redirect_uris: ['https://app.example.com/oauth/callback']
+     *   },
+     *   tags: ['web', 'production']
      * });
      * 
      * console.log('Client credentials:');
@@ -277,24 +278,22 @@ export default class Organization extends BaseModel<OrganizationInterface> {
      * models.forEach(model => {
      *   console.log(`Model: ${model.name}`);
      *   console.log(`Provider: ${model.provider}`);
-     *   console.log(`ID: ${model.model_id}`);
+     *   console.log(`Model: ${model.model}`);
      * });
      * ```
-     * 
+     *
      * @example
      * Create custom model:
      * ```typescript
      * const model = await org.models.create({
-     *   name: 'Enhanced GPT-4',
-     *   provider: 'openai',
-     *   model_id: 'gpt-4',
-     *   temperature: 0.7,
-     *   max_tokens: 2000,
-     *   metadata: {
-     *     purpose: 'customer-support',
-     *     training: 'fine-tuned',
-     *     version: '1.0'
-     *   }
+     *   name: 'enhanced-gpt-4o',
+     *   model: 'gpt-4o',
+     *   description: 'Support-tuned GPT-4o deployment.',
+     *   api_type: 'openai',
+     *   base_url: 'https://api.openai.com/v1',
+     *   api_key: process.env.OPENAI_API_KEY!,
+     *   prices: { input_per_1k: 0.005, output_per_1k: 0.015 },
+     *   max_output_tokens: 2000
      * });
      * ```
      */

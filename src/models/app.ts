@@ -36,7 +36,8 @@ import { Image } from '../functions/image';
  * 
  * // Create a new application
  * const supportPortal = new App({
- *   name: 'AI Support Portal',
+ *   name: 'ai-support-portal',
+ *   type: 'INTEGRATION',
  *   short_description: 'Intelligent customer support',
  *   long_description: 'AI-powered support system with multiple specialized agents',
  *   external_app_url: 'https://support.example.com'
@@ -51,7 +52,8 @@ import { Image } from '../functions/image';
  * ```typescript
  * // Configure external system integration
  * const app = new App({
- *   name: 'Integration App',
+ *   name: 'external-integration',
+ *   type: 'INTEGRATION',
  *   external_app_url: 'https://api.external-system.com',
  *   external_api_key: process.env.EXTERNAL_API_KEY,
  *   external_headers: {
@@ -78,32 +80,39 @@ export default class App extends BaseModel<AppInterface> {
      * AI-powered solutions.
      * 
      * @param data - Application configuration data including:
-     *               - name: Application name
+     *               - name: Application name (required, unique)
+     *               - type: App type (required: INTEGRATION | DEPLOYER | CLIENT | NOTIFIER)
      *               - short_description: Brief description
      *               - long_description: Detailed description
      *               - external_app_url: External system URL
+     *               - external_api_urls: Named external URLs used by the integration
      *               - external_api_key: API key for external system
      *               - external_headers: Custom headers for external requests
      * @param uri - Optional URI path for the application endpoint
-     * 
+     *
      * @example
      * Basic configuration:
      * ```typescript
      * const app = new App({
-     *   name: 'Customer Portal',
+     *   name: 'customer-portal',
+     *   type: 'INTEGRATION',
      *   short_description: 'AI customer service portal',
      *   external_app_url: 'https://portal.example.com'
      * });
      * ```
-     * 
+     *
      * @example
      * Full configuration:
      * ```typescript
      * const app = new App({
-     *   name: 'Enterprise Solution',
+     *   name: 'enterprise-solution',
+     *   type: 'INTEGRATION',
      *   short_description: 'AI-powered enterprise tools',
      *   long_description: 'Comprehensive suite of AI tools for enterprise use',
      *   external_app_url: 'https://enterprise.example.com',
+     *   external_api_urls: {
+     *     webhook: 'https://enterprise.example.com/hooks'
+     *   },
      *   external_api_key: process.env.API_KEY,
      *   external_headers: {
      *     'X-Enterprise-ID': 'ent-123',
@@ -169,8 +178,8 @@ export default class App extends BaseModel<AppInterface> {
      * ```typescript
      * const webhook = await app.webhooks.create({
      *   url: 'https://myapp.com/webhook',
-     *   events: ['REQUEST'],
-     *   secret: 'webhook-secret-key'
+     *   event: 'REQUEST',
+     *   headers: 'X-Signing-Secret: webhook-secret-key'
      * });
      * ```
      */

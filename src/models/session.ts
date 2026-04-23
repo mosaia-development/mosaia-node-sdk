@@ -267,7 +267,7 @@ export default class Session extends BaseModel<SessionInterface> {
      * const org = session.org;
      * if (org) {
      *   console.log(`Organization: ${org.name}`);
-     *   console.log(`Description: ${org.short_description}`);
+     *   console.log(`Description: ${org.description}`);
      *   console.log(`Status: ${org.isActive() ? 'Active' : 'Inactive'}`);
      * } else {
      *   console.log('No organization context');
@@ -323,24 +323,21 @@ export default class Session extends BaseModel<SessionInterface> {
      * session.org = {
      *   id: 'org-123',
      *   name: 'New Organization',
-     *   short_description: 'Updated context'
+     *   description: 'Updated context'
      * };
      * ```
-     * 
+     *
      * @example
      * Detailed organization context:
      * ```typescript
      * session.org = {
      *   id: 'org-456',
      *   name: 'Enterprise Corp',
-     *   short_description: 'Global enterprise solutions',
-     *   long_description: 'Leading provider of enterprise AI solutions',
-     *   metadata: {
-     *     industry: 'technology',
-     *     size: 'enterprise',
-     *     region: 'global',
-     *     features: ['agents', 'apps', 'models']
-     *   }
+     *   description: 'Leading provider of enterprise AI solutions.',
+     *   type: 'CLIENT',
+     *   size: '1001-5000',
+     *   location: 'New York, NY',
+     *   url: 'https://enterprise.example.com'
      * };
      * 
      * // Update related context
@@ -522,40 +519,32 @@ export default class Session extends BaseModel<SessionInterface> {
      * 
      * @param client - Complete client data including:
      *                 - id: Client's unique identifier
-     *                 - name: Client application name
-     *                 - client_id: OAuth client ID
-     *                 - client_secret: OAuth client secret
-     *                 - redirect_uris: Authorized redirect URIs
-     *                 - scopes: Authorized scopes
-     *                 - metadata: Additional client data
-     * 
+     *                 - name: Client identifier (used as the OAuth `client_id`)
+     *                 - oauth.active: Whether OAuth authorization is enabled
+     *                 - oauth.authorized_redirect_uris: Accepted redirect URIs
+     *                 - tags: Free-form tags for grouping
+     *
      * @example
      * Basic client update:
      * ```typescript
      * session.client = {
      *   id: 'client-123',
-     *   name: 'Web Dashboard',
-     *   client_id: 'client-id',
-     *   redirect_uris: ['https://app.example.com/callback']
+     *   name: 'acme-web-dashboard',
+     *   oauth: {
+     *     active: true,
+     *     authorized_redirect_uris: ['https://app.example.com/callback']
+     *   }
      * };
      * ```
-     * 
+     *
      * @example
-     * Service account setup:
+     * Service account client:
      * ```typescript
      * session.client = {
      *   id: 'client-456',
-     *   name: 'Background Service',
-     *   client_id: process.env.SERVICE_CLIENT_ID,
-     *   client_secret: process.env.SERVICE_CLIENT_SECRET,
-     *   grant_types: ['client_credentials'],
-     *   scopes: ['service:full'],
-     *   metadata: {
-     *     type: 'service-account',
-     *     service: 'data-processor',
-     *     environment: 'production',
-     *     rate_limit: 1000
-     *   }
+     *   name: 'acme-data-processor',
+     *   oauth: { active: false },
+     *   tags: ['service-account', 'background']
      * };
      * 
      * // Verify client

@@ -84,10 +84,11 @@ import { Image } from '../functions/image';
  * 
  * // Create new agent
  * const agent = await user.agents.create({
- *   name: 'Personal Assistant',
- *   model: 'gpt-4',
+ *   name: 'personal-assistant',
+ *   description: 'Personal productivity assistant.',
+ *   model: ['65f0c3d2a4b5c6d7e8f90123'],
  *   temperature: 0.7,
- *   system_prompt: 'You are a helpful assistant.'
+ *   system_message: 'You are a helpful assistant.'
  * });
  * 
  * // Create application
@@ -183,14 +184,12 @@ export default class User extends BaseModel<UserInterface> {
      * Create agent:
      * ```typescript
      * const agent = await user.agents.create({
-     *   name: 'Code Assistant',
-     *   model: 'gpt-4',
+     *   name: 'code-assistant',
+     *   description: 'Expert programmer pair, tuned for code review.',
+     *   model: ['65f0c3d2a4b5c6d7e8f90123'],
      *   temperature: 0.7,
-     *   system_prompt: 'You are an expert programmer.',
-     *   metadata: {
-     *     purpose: 'code-review',
-     *     languages: ['typescript', 'python', 'go']
-     *   }
+     *   system_message: 'You are an expert programmer.',
+     *   tags: ['code-review', 'typescript', 'python', 'go']
      * });
      * ```
      */
@@ -258,27 +257,24 @@ export default class User extends BaseModel<UserInterface> {
      * const clients = await user.clients.get();
      * clients.forEach(client => {
      *   console.log(`Client: ${client.name}`);
-     *   console.log(`ID: ${client.client_id}`);
      * });
      * ```
-     * 
+     *
      * @example
      * Create OAuth client:
      * ```typescript
      * const client = await user.clients.create({
-     *   name: 'Mobile App',
-     *   redirect_uris: ['com.example.app://oauth/callback'],
-     *   scopes: ['read:agents', 'write:apps'],
-     *   metadata: {
-     *     platform: 'ios',
-     *     version: '2.0',
-     *     environment: 'production'
-     *   }
+     *   name: 'alice-mobile-app',
+     *   oauth: {
+     *     active: true,
+     *     authorized_redirect_uris: ['com.example.app://oauth/callback']
+     *   },
+     *   tags: ['mobile', 'ios', 'production']
      * });
-     * 
-     * console.log('Client credentials:');
-     * console.log(`ID: ${client.client_id}`);
-     * console.log(`Secret: ${client.client_secret}`);
+     *
+     * // The server-generated secret is returned only on create — store it.
+     * console.log(`Name: ${client.name}`);
+     * console.log(`Secret: ${client.secret}`);
      * ```
      */
     get clients(): Clients {
@@ -301,25 +297,25 @@ export default class User extends BaseModel<UserInterface> {
      * const models = await user.models.get();
      * models.forEach(model => {
      *   console.log(`Model: ${model.name}`);
-     *   console.log(`Provider: ${model.provider}`);
-     *   console.log(`ID: ${model.model_id}`);
+     *   console.log(`Provider: ${model.api_type}`);
+     *   console.log(`Upstream: ${model.model}`);
      * });
      * ```
-     * 
+     *
      * @example
      * Create custom model:
      * ```typescript
      * const model = await user.models.create({
-     *   name: 'Enhanced GPT-4',
-     *   provider: 'openai',
-     *   model_id: 'gpt-4',
-     *   temperature: 0.7,
-     *   max_tokens: 2000,
-     *   metadata: {
-     *     purpose: 'code-generation',
-     *     training: 'fine-tuned',
-     *     version: '1.0',
-     *     specialties: ['typescript', 'python'],
+     *   name: 'alice-code-model',
+     *   model: 'gpt-4o',
+     *   description: 'Code-generation tuned GPT-4o.',
+     *   api_type: 'openai',
+     *   base_url: 'https://api.openai.com/v1',
+     *   api_key: process.env.OPENAI_API_KEY!,
+     *   prices: { input_per_1k: 0.005, output_per_1k: 0.015 },
+     *   max_output_tokens: 2000,
+     *   tags: ['code-generation', 'typescript', 'python'],
+     *   extensors: {
      *     performance: {
      *       avg_latency: 500,
      *       max_concurrent: 10

@@ -34,11 +34,11 @@ import AgentTools from '../collections/agent-tools';
  * 
  * // Create an agent instance
  * const agent = new Agent({
- *   name: 'Customer Support Agent',
- *   short_description: 'AI agent for customer inquiries',
- *   model: 'gpt-4',
+ *   name: 'customer-support',
+ *   description: 'AI agent for customer inquiries.',
+ *   model: ['65f0c3d2a4b5c6d7e8f90123'],
  *   temperature: 0.7,
- *   system_prompt: 'You are a helpful customer support agent.'
+ *   system_message: 'You are a helpful customer support agent.'
  * });
  * 
  * // Upload an agent avatar
@@ -77,9 +77,9 @@ export default class Agent extends BaseModel<AgentInterface> {
      * @example
      * ```typescript
      * const agent = new Agent({
-     *   name: 'Support Agent',
-     *   short_description: 'Customer support AI',
-     *   model: 'gpt-4',
+     *   name: 'support-agent',
+     *   description: 'Customer support AI.',
+     *   model: ['65f0c3d2a4b5c6d7e8f90123'],
      *   temperature: 0.7
      * });
      * ```
@@ -252,13 +252,13 @@ export default class Agent extends BaseModel<AgentInterface> {
      * 
      * @throws {Error} When API request fails
      */
-    async fork(options?: { generate_system_message?: boolean }): Promise<Agent> {
+    async fork(
+        data?: Partial<AgentInterface>,
+        params?: { generate_system_message?: boolean } & Record<string, any>
+    ): Promise<Agent> {
         try {
-            let uri = `${this.getUri()}/fork`;
-            if (options?.generate_system_message) {
-                uri += '?generate_system_message=true';
-            }
-            const response = await this.apiClient.POST<GetAgentPayload>(uri);
+            const uri = `${this.getUri()}/fork`;
+            const response = await this.apiClient.POST<GetAgentPayload>(uri, data, params);
             if (!response || !response.data) {
                 throw new Error('Invalid response from API');
             }

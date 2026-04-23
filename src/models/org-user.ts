@@ -284,14 +284,11 @@ export default class OrgUser extends BaseModel<OrgUserInterface> {
      * orgUser.org = {
      *   id: 'org-456',
      *   name: 'Tech Innovators',
-     *   short_description: 'AI and ML solutions',
-     *   long_description: 'Cutting-edge AI/ML solutions for enterprises',
-     *   metadata: {
-     *     industry: 'technology',
-     *     size: 'enterprise',
-     *     founded: '2020',
-     *     locations: ['San Francisco', 'London']
-     *   }
+     *   description: 'Cutting-edge AI/ML solutions for enterprises.',
+     *   type: 'CLIENT',
+     *   size: '201-500',
+     *   location: 'San Francisco, CA',
+     *   url: 'https://tech-innovators.example.com'
      * };
      * 
      * // Save changes

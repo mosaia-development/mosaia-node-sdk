@@ -503,10 +503,11 @@ export default class APIClient {
      * Create an AI agent:
      * ```typescript
      * const agent = await client.POST<AgentInterface>('/agent', {
-     *   name: 'Support Assistant',
-     *   model: 'gpt-4',
+     *   name: 'support-assistant',
+     *   description: 'Customer support triage assistant.',
+     *   model: ['65f0c3d2a4b5c6d7e8f90123'],
      *   temperature: 0.7,
-     *   system_prompt: 'You are a helpful support agent.'
+     *   system_message: 'You are a helpful support agent.'
      * });
      * ```
      * 
@@ -551,7 +552,7 @@ export default class APIClient {
      * ```typescript
      * const updatedAgent = await client.PUT<AgentInterface>('/agent/789', {
      *   temperature: 0.5,
-     *   system_prompt: 'You are a technical support specialist.',
+     *   system_message: 'You are a technical support specialist.',
      *   tags: ['support', 'technical']
      * });
      * ```
@@ -561,7 +562,7 @@ export default class APIClient {
      * ```typescript
      * const updatedOrg = await client.PUT<OrganizationInterface>('/org/456', {
      *   name: 'Updated Corp Name',
-     *   short_description: 'Updated description',
+     *   description: 'Updated description',
      *   active: true
      * });
      * ```

@@ -44,19 +44,23 @@ import { BaseModel } from './base';
  * ```typescript
  * import { Model } from 'mosaia-node-sdk';
  * 
- * // Create a GPT-4 model configuration
+ * // Create a GPT-4o model configuration
  * const gpt4Model = new Model({
- *   name: 'Enhanced GPT-4',
- *   provider: 'openai',
- *   model_id: 'gpt-4',
- *   temperature: 0.7,
- *   max_tokens: 2000,
- *   metadata: {
- *     purpose: 'general-purpose',
- *     version: '1.0'
- *   }
+ *   name: 'gpt-4o',
+ *   model: 'gpt-4o',
+ *   description: 'Flagship multimodal model from OpenAI.',
+ *   type: 'chat',
+ *   api_type: 'openai',
+ *   base_url: 'https://api.openai.com/v1',
+ *   api_key: process.env.OPENAI_API_KEY!,
+ *   prices: {
+ *     input_per_1k: 0.005,
+ *     output_per_1k: 0.015
+ *   },
+ *   max_context_tokens: 128000,
+ *   max_output_tokens: 16384
  * });
- * 
+ *
  * await gpt4Model.save();
  * ```
  * 
@@ -94,39 +98,46 @@ export default class Model extends BaseModel<ModelInterface> {
      * with the platform.
      * 
      * @param data - Configuration data including:
-     *               - name: Model configuration name
-     *               - provider: AI provider (e.g., 'openai', 'anthropic')
-     *               - model_id: Provider's model identifier
-     *               - temperature: Response randomness (0-1)
-     *               - max_tokens: Maximum response length
-     *               - metadata: Custom metadata object
+     *               - name: Display name (required, unique among public models)
+     *               - model: Upstream model identifier (e.g. 'gpt-4o', 'claude-3-5-sonnet-20241022')
+     *               - description: One-line description (required)
+     *               - api_type: Provider protocol (e.g. 'openai', 'anthropic')
+     *               - base_url: Provider API base URL (required, encrypted)
+     *               - api_key: Provider API key (required, encrypted)
+     *               - prices: Pricing map (values must be numbers)
+     *               - type: Model category (chat | image | rerank | moderation | language | embedding | contextualized_embedding)
+     *               - max_context_tokens / max_output_tokens: Token limits
      * @param uri - Optional custom URI path for the model endpoint
-     * 
+     *
      * @example
      * Basic configuration:
      * ```typescript
      * const model = new Model({
-     *   name: 'Support GPT',
-     *   provider: 'openai',
-     *   model_id: 'gpt-4',
-     *   temperature: 0.7
+     *   name: 'support-gpt',
+     *   model: 'gpt-4o',
+     *   description: 'Support model fine-tuned on Zendesk tickets.',
+     *   api_type: 'openai',
+     *   base_url: 'https://api.openai.com/v1',
+     *   api_key: process.env.OPENAI_API_KEY!,
+     *   prices: { input_per_1k: 0.005, output_per_1k: 0.015 }
      * });
      * ```
-     * 
+     *
      * @example
      * Advanced configuration:
      * ```typescript
      * const model = new Model({
-     *   name: 'Enterprise Claude',
-     *   provider: 'anthropic',
-     *   model_id: 'claude-2',
-     *   temperature: 0.5,
-     *   max_tokens: 4000,
-     *   metadata: {
-     *     team: 'enterprise',
-     *     use_case: 'documentation',
-     *     version: '2.0'
-     *   }
+     *   name: 'enterprise-claude',
+     *   model: 'claude-3-5-sonnet-20241022',
+     *   description: 'Enterprise documentation assistant.',
+     *   api_type: 'anthropic',
+     *   base_url: 'https://api.anthropic.com/v1',
+     *   api_key: process.env.ANTHROPIC_API_KEY!,
+     *   prices: { input_per_1k: 0.003, output_per_1k: 0.015 },
+     *   type: 'chat',
+     *   max_context_tokens: 200000,
+     *   max_output_tokens: 8192,
+     *   encoding: 'cl100k_base'
      * }, '/enterprise/model');
      * ```
      */

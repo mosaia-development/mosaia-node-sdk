@@ -32,90 +32,79 @@ import { BaseModel } from './base';
  * Basic client setup:
  * ```typescript
  * import { Client } from 'mosaia-node-sdk';
- * 
- * // Create an OAuth client for web application
+ *
+ * // Create an OAuth client for a web application.
+ * // The client `name` is the public identifier (analogous to client_id); the secret
+ * // is generated server-side on create and returned once.
  * const webClient = new Client({
- *   name: 'Web Dashboard',
- *   client_id: process.env.CLIENT_ID,
- *   client_secret: process.env.CLIENT_SECRET,
- *   redirect_uris: ['https://app.example.com/oauth/callback'],
- *   scopes: ['read:users', 'write:data']
- * });
- * 
- * await webClient.save();
- * ```
- * 
- * @example
- * Service account setup:
- * ```typescript
- * // Create a service account client
- * const serviceClient = new Client({
- *   name: 'Background Service',
- *   client_id: process.env.SERVICE_CLIENT_ID,
- *   client_secret: process.env.SERVICE_CLIENT_SECRET,
- *   grant_types: ['client_credentials'],
- *   scopes: ['service:full'],
- *   metadata: {
- *     service: 'data-processor',
- *     environment: 'production'
+ *   name: 'acme-web-dashboard',
+ *   oauth: {
+ *     active: true,
+ *     authorized_redirect_uris: ['https://app.example.com/oauth/callback']
  *   }
  * });
- * 
+ *
+ * const saved = await webClient.save();
+ * console.log('Save and store client secret:', saved.secret);
+ * ```
+ *
+ * @example
+ * Service account client:
+ * ```typescript
+ * // Machine-to-machine client. OAuth can be disabled when the client is used
+ * // only with client-credentials / API-key flows.
+ * const serviceClient = new Client({
+ *   name: 'acme-data-processor',
+ *   oauth: { active: false },
+ *   tags: ['service', 'background']
+ * });
+ *
  * if (serviceClient.isActive()) {
- *   console.log('Service client ready');
- *   console.log('Available scopes:', serviceClient.scopes);
+ *   console.log('Service client ready:', serviceClient.name);
  * }
  * ```
- * 
+ *
  * @extends BaseModel<ClientInterface>
  * @category Models
  */
 export default class Client extends BaseModel<ClientInterface> {
     /**
      * Creates a new OAuth client instance
-     * 
+     *
      * Initializes an OAuth client application with the provided configuration.
      * The client manages authentication and authorization for accessing the
      * Mosaia API securely.
-     * 
+     *
      * @param data - Configuration data including:
-     *               - name: Client application name
-     *               - client_id: OAuth client ID
-     *               - client_secret: OAuth client secret
-     *               - redirect_uris: Authorized redirect URIs
-     *               - scopes: Authorized scope list
-     *               - grant_types: Supported OAuth grant types
-     *               - metadata: Custom metadata object
+     *               - name: Client identifier (required, regex `[a-zA-Z0-9_:-]+`). Used as the OAuth `client_id`.
+     *               - oauth.active: Whether to enable the OAuth authorize flow
+     *               - oauth.authorized_redirect_uris: Accepted redirect URIs
+     *               - tags: Free-form tags for grouping
+     *               Note: `secret` and `refresh_key` are generated server-side and never supplied by clients.
      * @param uri - Optional custom URI path for the client endpoint
-     * 
+     *
      * @example
-     * Web application client:
+     * Web application client (OAuth enabled):
      * ```typescript
      * const webClient = new Client({
-     *   name: 'Web App',
-     *   client_id: process.env.CLIENT_ID,
-     *   client_secret: process.env.CLIENT_SECRET,
-     *   redirect_uris: [
-     *     'https://app.example.com/oauth/callback',
-     *     'http://localhost:3000/callback'  // Development
-     *   ],
-     *   scopes: ['read:users', 'write:data']
+     *   name: 'acme-web-app',
+     *   oauth: {
+     *     active: true,
+     *     authorized_redirect_uris: [
+     *       'https://app.example.com/oauth/callback',
+     *       'http://localhost:3000/callback'
+     *     ]
+     *   }
      * });
      * ```
-     * 
+     *
      * @example
-     * Machine-to-machine client:
+     * Service account client (OAuth disabled):
      * ```typescript
      * const serviceClient = new Client({
-     *   name: 'API Service',
-     *   client_id: process.env.SERVICE_CLIENT_ID,
-     *   client_secret: process.env.SERVICE_CLIENT_SECRET,
-     *   grant_types: ['client_credentials'],
-     *   scopes: ['service:full'],
-     *   metadata: {
-     *     type: 'service-account',
-     *     owner: 'system'
-     *   }
+     *   name: 'acme-api-service',
+     *   oauth: { active: false },
+     *   tags: ['service-account']
      * }, '/service/client');
      * ```
      */

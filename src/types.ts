@@ -451,25 +451,28 @@ export interface UserInterface extends BaseEntity {
 }
 
 /**
+ * Organization type. Mosaia has exactly one SUPERORG (the control-plane tenant);
+ * every other tenant is CLIENT.
+ */
+export type OrganizationType = 'SUPERORG' | 'CLIENT';
+
+/**
  * Organization entity interface
- * 
- * Represents an organization in the Mosaia platform. Organizations can contain
- * multiple users, applications, and other resources. They provide a way to
- * group and manage related resources and users.
- * 
+ *
+ * Mirrors `macs-node-sdk/lib/orgs/models/organization.js`. Organizations are
+ * tenants that own users, agents, apps, tools, and other resources.
+ *
  * @example
  * ```typescript
  * const org: OrganizationInterface = {
  *   id: 'org-123',
  *   name: 'Acme Corp',
- *   short_description: 'Leading technology company',
- *   long_description: 'Acme Corp is a leading technology company specializing in AI solutions...',
- *   image: 'https://example.com/logo.png',
- *   external_id: 'acme-corp-123',
- *   extensors: {
- *     industry: 'technology',
- *     founded_year: '2020'
- *   },
+ *   description: 'Leading technology company specializing in AI solutions.',
+ *   image: 'https://cdn.acme.example.com/logo.png',
+ *   type: 'CLIENT',
+ *   url: 'https://acme.example.com',
+ *   size: '201-500',
+ *   location: 'San Francisco, CA',
  *   active: true
  * };
  * ```
@@ -477,20 +480,22 @@ export interface UserInterface extends BaseEntity {
 export interface OrganizationInterface extends BaseEntity {
     /** Unique identifier for the organization */
     id?: string;
-    /** Organization name (required) */
+    /** Organization name (required, unique) */
     name: string;
-    /** Brief description of the organization */
-    short_description?: string;
-    /** Detailed description of the organization */
-    long_description?: string;
     /** URL to organization's logo/image */
     image?: string;
-    /** External system identifier */
-    external_id?: string;
-    /** Extended properties for custom integrations */
-    extensors?: {
-        [key: string]: string;
-    };
+    /** Organization description */
+    description?: string;
+    /** Tenant type. `SUPERORG` is the control plane; `CLIENT` is every other tenant. */
+    type?: OrganizationType;
+    /** Website URL */
+    url?: string;
+    /** Company size bucket (e.g. `'51-200'`). Free-form string on the server. */
+    size?: string;
+    /** Headquarters / location string */
+    location?: string;
+    /** Human-readable recommendation shown on the org profile */
+    mosaia_recommendation?: string;
     // Collection getters (available on Organization model instances)
     readonly agents?: any; // Agents collection
     readonly apps?: any; // Apps collection
@@ -533,20 +538,29 @@ export interface PermissionParamsInterface {
 }
 
 /**
+ * App type. Mirrors `APP_TYPE` in `macs-node-sdk/lib/app/models/app.js`.
+ * - `INTEGRATION`: outbound integration (e.g. Slack, GitHub)
+ * - `DEPLOYER`: packaged deployer that installs other resources
+ * - `CLIENT`: app-as-OAuth-client (installable Mosaia client)
+ * - `NOTIFIER`: publishes events to an external destination
+ */
+export type AppType = 'INTEGRATION' | 'DEPLOYER' | 'CLIENT' | 'NOTIFIER';
+
+/**
  * Application entity interface
- * 
- * Represents an application in the Mosaia platform. Applications can have
- * bots, tools, and other integrations associated with them.
- * 
+ *
+ * Mirrors `macs-node-sdk/lib/app/models/app.js`.
+ *
  * @example
  * ```typescript
  * const app: AppInterface = {
  *   id: 'app-123',
- *   name: 'My AI Assistant',
+ *   name: 'slack-integration',
+ *   type: 'INTEGRATION',
  *   org: 'org-456',
- *   short_description: 'AI-powered customer support assistant',
- *   external_app_url: 'https://myapp.com',
- *   tags: ['ai', 'support', 'automation'],
+ *   short_description: 'Send messages and read channels via a Slack bot user.',
+ *   external_app_url: 'https://slack.com',
+ *   tags: ['chat', 'messaging'],
  *   active: true
  * };
  * ```
@@ -554,131 +568,228 @@ export interface PermissionParamsInterface {
 export interface AppInterface extends BaseEntity {
     /** Unique identifier for the application */
     id?: string;
-    /** Application name (required) */
+    /** Application name (required, unique) */
     name: string;
+    /** App type (required) */
+    type: AppType;
     /** Organization ID the app belongs to */
     org?: string;
     /** User ID the app belongs to (if not org-scoped) */
     user?: string;
-    /** Brief description of the application (required) */
-    short_description: string;
+    /** Client ID (for CLIENT-type apps). Set server-side after `createClient()`. */
+    client?: string;
+    /** Brief description of the application */
+    short_description?: string;
     /** Detailed description of the application */
     long_description?: string;
+    /** Markdown README rendered on the app profile */
+    readme?: string;
     /** URL to application's icon/image */
     image?: string;
     /** External application URL for integrations */
     external_app_url?: string;
-    /** API key for external integrations */
+    /** Named external URLs used by the integration (validated as URLs server-side) */
+    external_api_urls?: {
+        [key: string]: string;
+    };
+    /** API key used when calling the external app (encrypted at rest) */
     external_api_key?: string;
-    /** Custom headers for external API calls */
+    /** Custom headers forwarded on external API calls */
     external_headers?: {
         [key: string]: string;
-    }
+    };
+    /** Public listing flag */
+    public?: boolean;
+    /** Featured listing flag */
+    featured?: boolean;
     /** Whether the application is currently active */
     active?: boolean;
     /** Tags for categorizing the application */
     tags?: string[];
     /** Keywords for search functionality */
     keywords?: string[];
-    /** Extended properties for custom integrations */
-    extensors?: {
-        [key: string]: string;
-    }
-    /** External system identifier */
-    external_id?: string;
     // Collection getters (available on App model instances)
     readonly connectors?: any; // AppConnectors collection
     readonly webhooks?: any; // AppWebhooks collection
-    // Note: image property conflicts with image URL string, so not typed here
 }
 
-// Tool interfaces
+/**
+ * Tool entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/tools/models/tool.js`. Tools are callable units
+ * (HTTP endpoints) that agents invoke during chat. Required fields on create:
+ * `name`, `friendly_name`, `short_description`, `tool_schema`, `url`.
+ */
 export interface ToolInterface extends BaseEntity {
     id?: string;
     org?: string;
     user?: string;
-    name?: string;
-    friendly_name?: string;
+    image?: string;
+    /** Machine name (required, unique) */
+    name: string;
+    /** Human-readable name (required) */
+    friendly_name: string;
+    /** URL-safe slug derived from `friendly_name` — auto-generated server-side */
+    readonly friendly_name_slug?: string;
+    /** One-line description (required) */
     short_description: string;
-    tool_schema: string;
-    required_environment_variables?: string[];
+    /** Link to the tool's source repo (optional) */
     source_url?: string;
-    url?: string;
+    /** JSON-Schema object describing the tool's arguments (required) */
+    tool_schema: object;
+    /** Default per-tool secrets (encrypted server-side) */
+    default_environment_secrets?: string;
+    /** Environment variable names the tool requires at execution time */
+    required_environment_variables?: string[];
+    /** Tool execution endpoint (required) */
+    url: string;
+    /** Public listing flag */
     public?: boolean;
+    /** Featured listing flag */
+    featured?: boolean;
     active?: boolean;
     keywords?: string[];
     tags?: string[];
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
 }
 
-// Agent interfaces
+/**
+ * Fork reference — points back at the original agent when an agent was forked.
+ * Mirrors the `forked` subdocument in the agent schema.
+ */
+export interface AgentForkedRef {
+    from?: string;
+    created_at?: string | Date;
+}
+
+/**
+ * Agent entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/ai/models/agent.js`. Required on create: `name`,
+ * `description`. `model` is an array of Model ObjectIds in priority order.
+ */
 export interface AgentInterface extends BaseEntity {
     id?: string;
-    name: string;
     org?: string;
     user?: string;
-    short_description: string;
-    long_description?: string;
+    /** Agent name (required, regex `[a-zA-Z0-9_-]+`) */
+    name: string;
+    /** One-line description (required) */
+    description: string;
+    /** Markdown README shown on the agent profile */
+    readme?: string;
     image?: string;
-    model?: string;
-    temperature?: number;
+    /** Models in priority order. Defaults to `[DEFAULT_LLM_MODEL]` when omitted. */
+    model?: string[];
+    /** System message injected at the top of every completion */
+    system_message?: string;
+    /** Max output tokens */
     max_tokens?: number;
-    system_prompt?: string;
+    /** Sampling temperature (0–2, default 0) */
+    temperature?: number;
+    /** Public listing flag */
     public?: boolean;
+    /** Built-in "Mia" assistant flag — set server-side, never by clients */
+    mia?: boolean;
+    /** Origin agent if this one was forked */
+    forked?: AgentForkedRef;
+    /** Featured listing flag */
+    featured?: boolean;
     active?: boolean;
     tags?: string[];
     keywords?: string[];
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    };
     // Collection getters (available on Agent model instances)
     readonly chat?: any; // Chat functionality
-    // Note: image property conflicts with image URL string, so not typed here
     readonly tasks?: any; // Tasks collection
     readonly logs?: any; // Logs collection
 }
 
-// Model interfaces
+/**
+ * Model type. Matches the enum in `macs-node-sdk/lib/ai/models/model.js`.
+ */
+export type ModelType =
+    | 'chat'
+    | 'image'
+    | 'rerank'
+    | 'moderation'
+    | 'language'
+    | 'embedding'
+    | 'contextualized_embedding';
+
+/**
+ * Model entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/ai/models/model.js`. Required on create: `name`,
+ * `model`, `description`, `base_url`, `api_type`, `api_key`, `prices`.
+ */
 export interface ModelInterface extends BaseEntity {
     id?: string;
-    name: string;
     org?: string;
     user?: string;
-    short_description: string;
-    long_description?: string;
-    provider: string;
-    model_id: string;
-    max_tokens?: number;
-    temperature?: number;
+    /** Display name (required, unique among public models) */
+    name: string;
+    /** Upstream model identifier (e.g. `'gpt-4o'`, `'claude-3-5-sonnet-20241022'`). Required. */
+    model: string;
+    image?: string;
+    /** One-line description (required) */
+    description: string;
+    /** Markdown README */
+    readme?: string;
+    /** Max context tokens the model accepts */
+    max_context_tokens?: number;
+    /** Max output tokens the model will produce */
+    max_output_tokens?: number;
+    /** Tokenizer encoding (default `'cl100k_base'`) */
+    encoding?: string;
+    /** Fraction of max context to reserve (0–1, default 0.85) */
+    safety_margin?: number;
+    /** Heuristic multiplier for estimating tokens per character (default 1.0) */
+    tokens_per_char_multiplier?: number;
+    /** Model category (default `'chat'`) */
+    type?: ModelType;
+    /** Provider API base URL — required, encrypted at rest */
+    base_url: string;
+    /** Provider protocol (e.g. `'openai'`, `'anthropic'`). Required. */
+    api_type: string;
+    /** Provider API key — required, encrypted at rest */
+    api_key: string;
+    /** Pricing map (values must be numbers). Required. */
+    prices: {
+        [key: string]: number;
+    };
     public?: boolean;
     active?: boolean;
     tags?: string[];
     keywords?: string[];
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
 }
 
-// Client interfaces
+/**
+ * Client OAuth configuration (nested subdocument on `ClientInterface`).
+ * Mirrors `client.oauth` in `macs-node-sdk/lib/clients/models/client.js`.
+ */
+export interface ClientOAuthConfig {
+    /** Whether OAuth authorization is enabled for this client */
+    active?: boolean;
+    /** Redirect URIs accepted during the authorize step */
+    authorized_redirect_uris?: string[];
+}
+
+/**
+ * Client entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/clients/models/client.js`. A Client is an OAuth /
+ * API-key credential owned by an org or user. `secret` and `refresh_key` are
+ * server-managed and never returned on reads.
+ */
 export interface ClientInterface extends BaseEntity {
     id?: string;
-    name: string;
     org?: string;
     user?: string;
-    client_id: string;
-    client_secret?: string;
-    redirect_uris?: string[];
-    scopes?: string[];
+    /** Client name (required, regex `[a-zA-Z0-9_:-]+`). Used as the OAuth `client_id`. */
+    name: string;
+    /** OAuth configuration (nested) */
+    oauth?: ClientOAuthConfig;
     active?: boolean;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    tags?: string[];
 }
 
 // App Connector interfaces
@@ -702,17 +813,48 @@ export interface AppConnectorInterface extends BaseEntity {
 export type DehydratedAppConnectorInterface = Omit<AppConnectorInterface, 'id' | 'app'> & { id: string, app: string }
 
 
-// Billing interfaces
+/**
+ * Subscription subdocument on `WalletInterface`. Most fields are populated by
+ * Stripe webhook handlers, not by client code.
+ */
+export interface WalletSubscription {
+    stripe_subscription_id?: string | null;
+    customer_portal?: string;
+    name?: string;
+    period?: 'monthly' | 'annual';
+    entitlements?: Array<{
+        id: string;
+        object?: string;
+        active: boolean;
+        livemode: boolean;
+        lookup_key: string;
+        metadata?: { [key: string]: any };
+        name?: string;
+    }>;
+}
+
+/**
+ * Wallet entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/payments/models/wallet.js`. Balances are tracked
+ * in USD. `stripe_customer_id` and the subscription fields are server-managed.
+ */
 export interface WalletInterface extends BaseEntity {
     id?: string;
     org?: string;
     user?: string;
-    balance: number;
-    currency: string;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    /** Current balance in USD */
+    usd_balance?: number;
+    /** Auto-reload threshold in USD (balance triggers reload below this) */
+    renewal_threshold_usd?: number;
+    /** Auto-reload amount in USD */
+    renewal_amount_usd?: number;
+    /** Whether auto-reload is enabled */
+    auto_reload_on?: boolean;
+    /** Linked Stripe customer — server-managed */
+    stripe_customer_id?: string;
+    /** Active Stripe subscription (if any) */
+    subscription?: WalletSubscription;
 }
 
 export interface MeterInterface extends BaseEntity {
@@ -746,70 +888,134 @@ export interface AccessPolicyInterface extends BaseEntity {
     }
 }
 
+/**
+ * OrgPermission binds an AccessPolicy to an org user / agent / client.
+ *
+ * Mirrors `macs-node-sdk/lib/iam/models/org-permission.js`.
+ */
 export interface OrgPermissionInterface extends BaseEntity {
     id?: string;
     org: string;
+    /** OrgUser target (not a raw User id) */
     user?: string;
+    agent?: string;
     client?: string;
     policy: string | AccessPolicyInterface;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    tags?: string[];
+    active?: boolean;
 }
 
+/**
+ * UserPermission binds an AccessPolicy to a user, optionally delegating access
+ * to another `allowed_user`.
+ *
+ * Mirrors `macs-node-sdk/lib/iam/models/user-permission.js`.
+ */
 export interface UserPermissionInterface extends BaseEntity {
     id?: string;
     user: string;
-    client: string;
+    agent?: string;
+    client?: string;
+    /** User being granted delegated access */
+    allowed_user?: string;
     policy: string | AccessPolicyInterface;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    tags?: string[];
+    active?: boolean;
 }
 
-// Org User interfaces
+/**
+ * Org-user permission role. Matches the Mongoose enum in
+ * `macs-node-sdk/lib/orgs/models/org-user.js`.
+ */
+export type OrgUserPermission = 'SUPERUSER' | 'USER';
+
+/**
+ * OrgUser (membership) entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/orgs/models/org-user.js`.
+ */
 export interface OrgUserInterface extends BaseEntity {
     id?: string;
     org: string;
     user: string;
-    permission: string;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    /** Role in the org. Default `'USER'`. */
+    permission?: OrgUserPermission;
+    keywords?: string[];
+    tags?: string[];
+    active?: boolean;
 }
 
 
-// Snapshot interfaces
+/**
+ * Snapshot type. Only `AGENT_LOG` is supported today.
+ */
+export type SnapshotType = 'AGENT_LOG';
+
+/**
+ * Snapshot entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/logs/models/snapshot.js`. A point-in-time capture
+ * of a source document (currently only AgentLog). Required on create:
+ * `source` + `data`.
+ */
 export interface SnapshotInterface extends BaseEntity {
     id?: string;
     org?: string;
     user?: string;
-    type: string;
+    /** ObjectId of the source document being snapshotted (required) */
+    source: string;
+    /** Snapshot kind (currently always `'AGENT_LOG'`) */
+    type?: SnapshotType;
+    /** Snapshot payload — shape depends on `type` */
     data: any;
-    metadata?: {
-        [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    keywords?: string[];
+    tags?: string[];
+    active?: boolean;
 }
 
-// Drive interfaces
+/**
+ * Retention policy subdocument on `DriveInterface`.
+ */
+export interface DriveRetentionPolicy {
+    enabled?: boolean;
+    /** Retention period in days */
+    retention_period?: number;
+    retention_type?: 'LEGAL_HOLD' | 'COMPLIANCE' | 'BUSINESS';
+}
+
+/**
+ * Drive entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/drive/models/drive.js`. `current_size` is server-
+ * tracked.
+ */
 export interface DriveInterface extends BaseEntity {
     id?: string;
     org?: string;
     user?: string;
+    /** Drive name (required, maxlength 255) */
     name: string;
+    /** Description (maxlength 1000) */
     description?: string;
+    /** Bytes currently stored — server-managed */
+    readonly current_size?: number;
+    /** Quota in bytes. Default 1 GiB. */
+    max_size?: number;
+    /** Storage status (see `STORAGE_STATUS` constant). Default `'ACTIVE'`. */
+    status?: string;
+    /** Whether the drive allows public read without auth */
+    public?: boolean;
+    /** Retention policy config */
+    retention_policy?: DriveRetentionPolicy;
+    /** Whether storage monitoring is enabled */
+    monitoring_enabled?: boolean;
+    /** Quota usage % that triggers a warning alert (1–100, default 80) */
+    quota_alert_threshold?: number;
+    /** Quota usage % that triggers a critical alert (1–100, default 95) */
+    critical_quota_threshold?: number;
+    /** Whether audit logging is enabled for drive operations */
+    audit_logging_enabled?: boolean;
     active?: boolean;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    };
     // Collection getters (available on Drive model instances)
     readonly items?: any; // DriveItems collection
     readonly uploads?: any; // UploadJobs collection
@@ -925,35 +1131,74 @@ export interface LikeInterface extends BaseEntity {
     }
 }
 
-// Agent Log interfaces
+/**
+ * AgentLog processing status. Mirrors the enum in
+ * `macs-node-sdk/lib/logs/models/agent-log.js`.
+ */
+export type AgentLogStatus = 'STANDBY' | 'PROCESSING' | 'ERROR';
+
+/**
+ * AgentLog entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/logs/models/agent-log.js`. An AgentLog is the
+ * conversation/run log binding together one or more agents, clients, and users
+ * with an append-only Message stream.
+ */
 export interface AgentLogInterface extends BaseEntity {
     id?: string;
-    agent: string;
-    response?: any;
-    metadata?: {
-        [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    };
+    /** Display name for the log (free-form) */
+    name?: string;
+    org?: string;
+    user?: string;
+    /** Model used for this log's completions */
+    model?: string;
+    /**
+     * Primary agent on the log.
+     * @deprecated Use `agents[]`. Retained for backward compatibility.
+     */
+    agent?: string;
+    /** Agents participating in the log */
+    agents?: string[];
+    /** Clients that authored messages on this log */
+    clients?: string[];
+    /** OrgUsers that participated */
+    org_users?: string[];
+    /** Guest (non-member) users who joined the log */
+    guest_users?: string[];
+    /** Human-readable summary of the log */
+    summary?: string;
+    /**
+     * Inline messages.
+     * @deprecated Use the nested messages collection instead of this flat array.
+     */
+    messages?: any[];
+    /** Processing status */
+    status?: AgentLogStatus;
+    keywords?: string[];
+    tags?: string[];
+    active?: boolean;
     // Collection getters (available on Log model instances)
-    readonly messages?: any; // Messages collection (replaces messages: any[] data property)
     readonly snapshots?: any; // Snapshots collection
+    // Note: `messages` collection getter on model instances supersedes the flat `messages?[]` above.
 }
 
-// Agent Tool interfaces
+/**
+ * AgentTool entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/tools/models/agent-tool.js`. Attaches a tool to
+ * an agent with optional per-attachment secrets that override the tool's
+ * `default_environment_secrets`.
+ */
 export interface AgentToolInterface extends BaseEntity {
     id?: string;
-    agent: AgentInterface;
-    tool: ToolInterface;
-    config?: {
-        [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    /** Agent the tool is attached to (may be populated on read) */
+    agent?: string | AgentInterface;
+    /** Tool being attached (may be populated on read) */
+    tool?: string | ToolInterface;
+    /** Per-attachment secrets (encrypted server-side) */
+    environment_secrets?: string;
+    tags?: string[];
+    active?: boolean;
 }
 
 // Group Agent interfaces
@@ -985,33 +1230,58 @@ export interface AppUserInterface extends BaseEntity {
     }
 }
 
-// App Webhook interfaces
+/**
+ * App webhook event name. Currently only `REQUEST` is supported.
+ */
+export type AppWebhookEvent = 'REQUEST';
+
+/**
+ * AppWebhook entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/app/models/app-webhook.js`. Note the field is
+ * singular `event`, not `events[]` — the schema only supports a single event
+ * per webhook today.
+ */
 export interface AppWebhookInterface extends BaseEntity {
     id?: string;
+    /** App this webhook belongs to (required) */
     app: string;
+    org?: string;
+    user?: string;
+    agent?: string;
+    /** Callback URL the app invokes (required) */
     url: string;
-    events: string[];
-    secret?: string;
+    /** Event name that triggers the webhook (singular) */
+    event?: AppWebhookEvent;
+    /** Raw HTTP headers to forward (string form) */
+    headers?: string;
+    tags?: string[];
     active?: boolean;
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
 }
 
-// Client Session interfaces
+/**
+ * ClientSession entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/clients/models/client-session.js`. Represents a
+ * pending / active OAuth authorization session. `code`, `refresh_key`, and
+ * `active_id` are server-managed.
+ */
 export interface ClientSessionInterface extends BaseEntity {
     id?: string;
+    /** Owning Client (required) */
     client: string;
-    token: string;
-    expires_at: string;
-    metadata?: {
-        [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    /** OAuth request metadata (scopes, state, etc.) — required */
+    metadata: { [key: string]: any };
+    /** Authorization code issued to the client (read-only after issue) */
+    readonly code?: string;
+    /** PKCE code challenge */
+    code_challenge?: string;
+    /** PKCE code challenge method */
+    code_challenge_method?: 'S256' | 'plain';
+    /** Redirect URI agreed at authorization (required) */
+    redirect_uri: string;
+    /** Session expiry */
+    expires_at?: string | Date;
 }
 
 // API Request Log interfaces
@@ -1479,19 +1749,64 @@ export type GetApiRequestLogPayload = {
     data: ApiRequestLogInterface;
 }
 
-// Message interfaces
+/**
+ * Message role. Matches the Mongoose enum on
+ * `macs-node-sdk/lib/logs/models/message.js`.
+ */
+export type MessageRole = 'user' | 'assistant' | 'tool';
+
+/**
+ * Message type. Indicates severity/classification for downstream handlers.
+ */
+export type MessageType = 'INFO' | 'WARNING' | 'ERROR';
+
+/**
+ * Principal type for `creator` / `recipient` on a message.
+ */
+export type MessageActorType = 'user' | 'org_user' | 'agent' | 'client' | 'model' | 'system';
+
+/**
+ * Creator/recipient descriptor. The `type` constrains which Mongoose collection
+ * the `id` resolves to.
+ */
+export interface MessageActor {
+    id?: string;
+    type?: MessageActorType;
+    metadata?: { [key: string]: any };
+}
+
+/**
+ * Message entity interface
+ *
+ * Mirrors `macs-node-sdk/lib/logs/models/message.js`.
+ */
 export interface MessageInterface extends BaseEntity {
     id?: string;
+    org?: string;
+    user?: string;
+    /** Parent AgentLog (required) */
     log: string;
-    role?: string;
+    /** Role of the message author (required server-side; default `'user'`) */
+    role?: MessageRole;
+    /** Message body (may be empty for tool-call messages) */
     content?: string;
-    metadata?: {
-        [key: string]: any;
-    }
-    external_id?: string;
-    extensors?: {
-        [key: string]: string;
-    }
+    /** Outbound tool calls attached to this message */
+    tool_calls?: Array<{ [key: string]: any }>;
+    /** Inbound tool-call id this message is replying to (for role=`'tool'`) */
+    tool_call_id?: string;
+    /** Classification (INFO/WARNING/ERROR) */
+    type?: MessageType;
+    /** Structured creator descriptor (supersedes role for non-human creators) */
+    creator?: MessageActor;
+    /** Structured recipient descriptor (for direct addressing) */
+    recipient?: MessageActor;
+    /** Linked conversation ids for cross-conversation recall */
+    associated_conversation_ids?: string[];
+    /** Arbitrary metadata */
+    metadata?: { [key: string]: any };
+    keywords?: string[];
+    tags?: string[];
+    active?: boolean;
 }
 
 // Scope interfaces

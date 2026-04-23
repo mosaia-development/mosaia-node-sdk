@@ -536,9 +536,13 @@ class MosaiaClient {
      * 
      * // Create new model
      * const newModel = await mosaia.models.create({
-     *   name: 'My Model',
-     *   provider: 'openai',
-     *   model_id: 'gpt-4'
+     *   name: 'my-model',
+     *   model: 'gpt-4o',
+     *   description: 'Custom GPT-4o deployment.',
+     *   api_type: 'openai',
+     *   base_url: 'https://api.openai.com/v1',
+     *   api_key: process.env.OPENAI_API_KEY!,
+     *   prices: { input_per_1k: 0.005, output_per_1k: 0.015 }
      * });
      * ```
      */
@@ -594,8 +598,8 @@ class MosaiaClient {
      * const newWebhook = await mosaia.appWebhooks.create({
      *   app: 'app-id',
      *   url: 'https://myapp.com/webhook',
-     *   events: ['REQUEST'],
-     *   secret: 'webhook-secret-key'
+     *   event: 'REQUEST',
+     *   headers: 'X-Signing-Secret: webhook-secret-key'
      * });
      * ```
      */

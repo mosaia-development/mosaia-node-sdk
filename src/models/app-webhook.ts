@@ -33,8 +33,8 @@ import { BaseModel } from './base';
  * const webhook = new AppWebhook({
  *   app: 'app-id',
  *   url: 'https://myapp.com/webhook',
- *   events: ['REQUEST'],
- *   secret: 'webhook-secret-key'
+ *   event: 'REQUEST',
+ *   headers: 'X-Signing-Secret: webhook-secret-key'
  * });
  * 
  * await webhook.save();
@@ -44,12 +44,14 @@ import { BaseModel } from './base';
  * @example
  * Advanced webhook configuration:
  * ```typescript
- * // Create a webhook with multiple event types
+ * // Create a webhook for the REQUEST event
+ * // Note: the schema only supports a single event per webhook today.
+ * // Register multiple webhooks if you need to fan out to different targets.
  * const webhook = new AppWebhook({
  *   app: 'app-id',
  *   url: 'https://api.example.com/webhooks',
- *   events: ['REQUEST', 'RESPONSE'],
- *   secret: 'secure-secret-key',
+ *   event: 'REQUEST',
+ *   headers: 'X-Signing-Secret: secure-secret-key',
  *   active: true,
  *   external_id: 'external-webhook-id',
  *   extensors: {
@@ -79,31 +81,31 @@ export default class AppWebhook extends BaseModel<AppWebhookInterface> {
      * @param data - Configuration data including:
      *               - app: Parent application ID
      *               - url: Webhook endpoint URL where notifications will be sent
-     *               - events: Array of event types to subscribe to
-     *               - secret: Optional secret key for webhook authentication
+     *               - event: Event type to subscribe to (singular; currently only `'REQUEST'`)
+     *               - headers: Optional raw HTTP headers to forward (string form; include your signing secret here)
      *               - active: Whether the webhook is currently active
      *               - external_id: Optional external system identifier
      *               - extensors: Optional custom metadata object
      * @param uri - Optional custom URI path for the webhook endpoint
-     * 
+     *
      * @example
      * Basic webhook:
      * ```typescript
      * const webhook = new AppWebhook({
      *   app: 'app-123',
      *   url: 'https://api.example.com/webhook',
-     *   events: ['REQUEST']
+     *   event: 'REQUEST'
      * });
      * ```
-     * 
+     *
      * @example
      * Advanced configuration:
      * ```typescript
      * const webhook = new AppWebhook({
      *   app: 'app-123',
      *   url: 'https://api.example.com/webhooks',
-     *   events: ['REQUEST', 'RESPONSE'],
-     *   secret: 'webhook-secret',
+     *   event: 'REQUEST',
+     *   headers: 'X-Signing-Secret: webhook-secret',
      *   active: true,
      *   external_id: 'ext-123',
      *   extensors: {
