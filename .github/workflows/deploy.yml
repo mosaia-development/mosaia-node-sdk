@@ -154,18 +154,22 @@ jobs:
           cd main-branch
 
           # Replace the prior semver in each of the two version references.
-          # Using anchored patterns so unrelated version-looking strings (e.g. in
-          # code samples, API versions, or third-party URLs) are never touched.
+          # Uses anchored patterns so unrelated version-looking strings
+          # (code samples, API versions, third-party URLs) are never touched.
           #
-          # Handles both the initial template form (`vLATEST_VERSION`) and any
-          # previously-released semver like `v0.0.52`.
+          # Handles both the initial template form (`vLATEST_VERSION`) and
+          # any previously-released semver like `v0.0.48`.
+          #
+          # Note: the sed delimiter is `#`, not `|`, because the alternation
+          # inside the semver pattern contains `|` and would otherwise be
+          # parsed as the delimiter and error with "unknown option to `s'".
           SEMVER='v(LATEST_VERSION|[0-9]+\.[0-9]+\.[0-9]+)'
 
           # 1. Docs-site URL: https://mosaia-development.github.io/mosaia-node-sdk/vX.Y.Z/
-          sed -i -E "s|(mosaia-node-sdk/)${SEMVER}/|\1v${VERSION}/|g" README.md
+          sed -i -E "s#(mosaia-node-sdk/)${SEMVER}/#\1v${VERSION}/#g" README.md
 
           # 2. Text callout: "Latest version: **vX.Y.Z**"
-          sed -i -E "s|(Latest version: \*\*)${SEMVER}(\*\*)|\1v${VERSION}\3|g" README.md
+          sed -i -E "s#(Latest version: \*\*)${SEMVER}(\*\*)#\1v${VERSION}\3#g" README.md
 
           # Check if README was modified
           if git diff --quiet README.md; then
