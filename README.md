@@ -31,19 +31,27 @@ and CI.
 ```typescript
 import * as Mosaia from '@mosaia/mosaia-node-sdk';
 
-// 1. Exchange your client credentials for a session
-const auth = new Mosaia.MosaiaAuth();
-const config = await auth.signInWithClient(
+// 1. Initialize an unauthenticated client. `mosaia.auth` is a getter that
+//    hands back a MosaiaAuth bound to this config.
+const mosaia = new Mosaia.MosaiaClient({
+  apiURL: 'https://api.mosaia.ai'
+});
+
+// 2. Exchange the credentials for a session — pass them directly, no need
+//    to stash them in the config. Returns a MosaiaConfig with
+//    { session: { accessToken, refreshToken, ... } }.
+const authenticatedConfig = await mosaia.auth.signInWithClient(
   process.env.MOSAIA_CLIENT_ID!,
   process.env.MOSAIA_CLIENT_SECRET!
 );
 
-// 2. Initialize the SDK with the returned config (includes access + refresh tokens)
-const mosaia = new Mosaia.MosaiaClient(config);
+// 3. Create a new authenticated MosaiaClient from the returned config. Use
+//    this one for all subsequent calls — it carries the bearer token.
+const authedMosaia = new Mosaia.MosaiaClient(authenticatedConfig);
 
-// 3. Call the API
-const users = await mosaia.users.get();
-const agents = await mosaia.agents.get();
+// 4. Call the API
+const users = await authedMosaia.users.get();
+const agents = await authedMosaia.agents.get();
 ```
 
 Create a client via the dashboard or with the SDK:
@@ -51,7 +59,7 @@ Create a client via the dashboard or with the SDK:
 ```typescript
 // In a super-org context, create an OAuth client to get a clientId/clientSecret.
 // The secret is returned only once on create — persist it immediately.
-const client = await mosaia.clients.create({
+const client = await authedMosaia.clients.create({
   name: 'acme-backend-service',
   oauth: { active: false }, // false if you only need client-credentials; true enables the authorize flow too
   tags: ['service-account']
@@ -76,9 +84,9 @@ const mosaia = new Mosaia.MosaiaClient({
 
 ### Online Documentation
 
-📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/v0.0.25/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
+📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/v0.0.52/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
 
-> **Note**: Latest version: **v0.0.25**. The link is automatically updated on each release.
+> **Note**: Latest version: **v0.0.52**. The link is automatically updated on each release.
 
 The documentation is automatically generated and deployed on every version release, providing:
 - **Complete API Reference**: All classes, methods, and types with detailed descriptions
@@ -185,27 +193,40 @@ loop:
 
 #### Client Credentials (recommended for backends)
 
+`mosaia.auth` is a getter on every `MosaiaClient`. Initialize an
+unauthenticated client, call `mosaia.auth.signInWithClient(clientId, clientSecret)`
+with the credentials as arguments, then construct a new `MosaiaClient` from the
+returned authenticated config.
+
 ```typescript
 import * as Mosaia from '@mosaia/mosaia-node-sdk';
 
-const auth = new Mosaia.MosaiaAuth();
+// 1. Initialize an unauthenticated client — no need to put secrets in config
+const mosaia = new Mosaia.MosaiaClient({
+  apiURL: 'https://api.mosaia.ai'
+});
 
-// Exchange the client credentials for a session
-const config = await auth.signInWithClient(
+// 2. Exchange the credentials for a session
+const authenticatedConfig = await mosaia.auth.signInWithClient(
   process.env.MOSAIA_CLIENT_ID!,
   process.env.MOSAIA_CLIENT_SECRET!
 );
 
-// config is a MosaiaConfig with { session: { accessToken, refreshToken, ... } }
-const mosaia = new Mosaia.MosaiaClient(config);
+// 3. Build the authenticated client — use this one for all subsequent calls
+const authedMosaia = new Mosaia.MosaiaClient(authenticatedConfig);
 
-// Later, refresh the token before it expires
-const refreshed = await auth.refreshToken();
-mosaia.config = refreshed;
+// Refresh the token before it expires
+authedMosaia.config = await authedMosaia.auth.refreshToken();
 
-// And sign out when the worker shuts down
-await auth.signOut();
+// Sign out when the worker shuts down
+await authedMosaia.auth.signOut();
 ```
+
+> **When do you need `clientId` on the config?** Only for flows that read it
+> from there rather than taking it as an argument: the OAuth 2.0 + PKCE
+> authorize flow (`mosaia.oauth(...)`) and the password grant
+> (`mosaia.auth.signInWithPassword(email, password)`). Client credentials don't
+> need it — pass them directly to `signInWithClient`.
 
 Provision credentials via the dashboard or programmatically:
 
@@ -245,16 +266,22 @@ const authenticatedMosaia = new Mosaia.MosaiaClient(newConfig);
 #### Password Authentication
 
 Requires a `clientId` on the SDK config — the password grant is always scoped to
-a specific client.
+a specific client. Same three-step pattern as client credentials.
 
 ```typescript
+// 1. Unauthenticated client with clientId in config
 const mosaia = new Mosaia.MosaiaClient({
   clientId: process.env.MOSAIA_CLIENT_ID!
 });
 
-const auth = new Mosaia.MosaiaAuth();
-const config = await auth.signInWithPassword('user@example.com', 'password');
-mosaia.config = config;
+// 2. Sign in via the getter
+const authenticatedConfig = await mosaia.auth.signInWithPassword(
+  'user@example.com',
+  'password'
+);
+
+// 3. Build the authenticated client
+const authedMosaia = new Mosaia.MosaiaClient(authenticatedConfig);
 ```
 
 #### API Key Authentication

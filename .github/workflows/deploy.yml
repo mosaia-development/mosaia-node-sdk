@@ -150,16 +150,26 @@ jobs:
         run: |
           VERSION=${{ env.version }}
           echo "Updating README.md with version $VERSION"
-          
+
           cd main-branch
-          
-          # Update the README.md to replace LATEST_VERSION placeholder with actual version
-          sed -i "s|vLATEST_VERSION|v$VERSION|g" README.md
-          sed -i "s|Latest version: \*\*vLATEST_VERSION\*\*|Latest version: **v$VERSION**|g" README.md
-          
+
+          # Replace the prior semver in each of the two version references.
+          # Using anchored patterns so unrelated version-looking strings (e.g. in
+          # code samples, API versions, or third-party URLs) are never touched.
+          #
+          # Handles both the initial template form (`vLATEST_VERSION`) and any
+          # previously-released semver like `v0.0.52`.
+          SEMVER='v(LATEST_VERSION|[0-9]+\.[0-9]+\.[0-9]+)'
+
+          # 1. Docs-site URL: https://mosaia-development.github.io/mosaia-node-sdk/vX.Y.Z/
+          sed -i -E "s|(mosaia-node-sdk/)${SEMVER}/|\1v${VERSION}/|g" README.md
+
+          # 2. Text callout: "Latest version: **vX.Y.Z**"
+          sed -i -E "s|(Latest version: \*\*)${SEMVER}(\*\*)|\1v${VERSION}\3|g" README.md
+
           # Check if README was modified
           if git diff --quiet README.md; then
-            echo "No changes to README.md"
+            echo "No changes to README.md — version references already up-to-date"
           else
             echo "README.md updated with version $VERSION"
             git config user.name "github-actions[bot]"
