@@ -84,9 +84,9 @@ const mosaia = new Mosaia.MosaiaClient({
 
 ### Online Documentation
 
-📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/v0.0.48/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
+📚 **Latest Release**: [View the latest release documentation](https://mosaia-development.github.io/mosaia-node-sdk/v0.0.53/) | [Browse all versions](https://mosaia-development.github.io/mosaia-node-sdk/) | [Development (Latest)](https://mosaia-development.github.io/mosaia-node-sdk/development/)
 
-> **Note**: Latest version: **v0.0.48**. The link is automatically updated on each release.
+> **Note**: Latest version: **v0.0.53**. The link is automatically updated on each release.
 
 The documentation is automatically generated and deployed on every version release, providing:
 - **Complete API Reference**: All classes, methods, and types with detailed descriptions
