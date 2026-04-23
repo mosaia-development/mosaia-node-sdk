@@ -23,23 +23,52 @@ npm install @mosaia/mosaia-node-sdk
 
 ## Quick Start
 
+The most common server-side flow is **client credentials** — exchange a
+`clientId` + `clientSecret` for an access token, then use that token for every
+subsequent call. No user interaction, works for cron jobs, background workers,
+and CI.
+
 ```typescript
 import * as Mosaia from '@mosaia/mosaia-node-sdk';
 
-// Initialize the SDK
-const mosaia = new Mosaia.MosaiaClient({
-  apiKey: 'your-api-key',
-  apiURL: 'https://api.mosaia.ai',
-  clientId: 'your-client-id'
+// 1. Exchange your client credentials for a session
+const auth = new Mosaia.MosaiaAuth();
+const config = await auth.signInWithClient(
+  process.env.MOSAIA_CLIENT_ID!,
+  process.env.MOSAIA_CLIENT_SECRET!
+);
+
+// 2. Initialize the SDK with the returned config (includes access + refresh tokens)
+const mosaia = new Mosaia.MosaiaClient(config);
+
+// 3. Call the API
+const users = await mosaia.users.get();
+const agents = await mosaia.agents.get();
+```
+
+Create a client via the dashboard or with the SDK:
+
+```typescript
+// In a super-org context, create an OAuth client to get a clientId/clientSecret.
+// The secret is returned only once on create — persist it immediately.
+const client = await mosaia.clients.create({
+  name: 'acme-backend-service',
+  oauth: { active: false }, // false if you only need client-credentials; true enables the authorize flow too
+  tags: ['service-account']
 });
 
-// Get all users
-const users = await mosaia.users.get();
+console.log('MOSAIA_CLIENT_ID=', client.name);
+console.log('MOSAIA_CLIENT_SECRET=', client.secret); // store immediately — cannot be retrieved later
+```
 
-// Create an OAuth instance
-const oauth = mosaia.oauth({
-  redirectUri: 'https://your-app.com/callback',
-  scopes: ['read', 'write']
+For browser / end-user authentication use the OAuth 2.0 PKCE flow (see
+[Authentication](#authentication)). For a one-off API key (no refresh, no
+session), pass `apiKey` directly:
+
+```typescript
+const mosaia = new Mosaia.MosaiaClient({
+  apiKey: 'your-api-key',
+  apiURL: 'https://api.mosaia.ai'
 });
 ```
 
@@ -144,35 +173,99 @@ const readOnlyConfig = configManager.getReadOnlyConfig();
 
 ### Authentication
 
+The SDK supports three auth flows. Pick based on whether a human user is in the
+loop:
+
+| Flow | When to use | How to auth |
+|---|---|---|
+| **Client credentials** | Server-to-server, CI, cron jobs | `signInWithClient(clientId, clientSecret)` |
+| **OAuth 2.0 + PKCE** | Browser or mobile apps acting on behalf of a user | `mosaia.oauth(...).authenticateWithCodeAndVerifier(...)` |
+| **Password** | User-facing CLIs / dashboards where you collect credentials directly | `signInWithPassword(email, password)` |
+| **API key** | Quick one-off scripts (no refresh, no session) | Pass `apiKey` to the `MosaiaClient` constructor |
+
+#### Client Credentials (recommended for backends)
+
+```typescript
+import * as Mosaia from '@mosaia/mosaia-node-sdk';
+
+const auth = new Mosaia.MosaiaAuth();
+
+// Exchange the client credentials for a session
+const config = await auth.signInWithClient(
+  process.env.MOSAIA_CLIENT_ID!,
+  process.env.MOSAIA_CLIENT_SECRET!
+);
+
+// config is a MosaiaConfig with { session: { accessToken, refreshToken, ... } }
+const mosaia = new Mosaia.MosaiaClient(config);
+
+// Later, refresh the token before it expires
+const refreshed = await auth.refreshToken();
+mosaia.config = refreshed;
+
+// And sign out when the worker shuts down
+await auth.signOut();
+```
+
+Provision credentials via the dashboard or programmatically:
+
+```typescript
+// From a super-org admin session:
+const client = await mosaia.clients.create({
+  name: 'acme-backend-service',       // becomes the client_id; regex [a-zA-Z0-9_:-]+
+  oauth: { active: false },           // false: client-credentials only
+  tags: ['service-account']
+});
+
+// The server-generated secret is returned ONLY on create — store it now.
+process.env.MOSAIA_CLIENT_ID = client.name;
+process.env.MOSAIA_CLIENT_SECRET = client.secret;
+```
+
 #### OAuth 2.0 with PKCE Support
 
 ```typescript
-// Create OAuth instance with PKCE
+// Create an OAuth instance with PKCE
 const oauth = mosaia.oauth({
   redirectUri: 'https://your-app.com/callback',
   scopes: ['read', 'write']
 });
 
-// Get authorization URL and code verifier
+// Get authorization URL and code verifier (persist the verifier alongside the user's session)
 const { url, codeVerifier } = oauth.getAuthorizationUrlAndCodeVerifier();
 
-// Redirect user to authorization URL
-// After user authorizes, exchange code for tokens
+// Redirect the user to the authorization URL.
+// Once the user consents, your callback receives `?code=...`. Exchange it:
 const newConfig = await oauth.authenticateWithCodeAndVerifier(code, codeVerifier);
 
-// Create new authenticated instance
+// Create a new authenticated SDK instance scoped to the user
 const authenticatedMosaia = new Mosaia.MosaiaClient(newConfig);
+```
+
+#### Password Authentication
+
+Requires a `clientId` on the SDK config — the password grant is always scoped to
+a specific client.
+
+```typescript
+const mosaia = new Mosaia.MosaiaClient({
+  clientId: process.env.MOSAIA_CLIENT_ID!
+});
+
+const auth = new Mosaia.MosaiaAuth();
+const config = await auth.signInWithPassword('user@example.com', 'password');
+mosaia.config = config;
 ```
 
 #### API Key Authentication
 
 ```typescript
-// Initialize with API key
+// One-off scripts that don't need refresh/session semantics
 const mosaia = new Mosaia.MosaiaClient({
   apiKey: 'your-api-key'
 });
 
-// Update API key at runtime
+// Update the API key at runtime
 mosaia.apiKey = 'new-api-key';
 ```
 
