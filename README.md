@@ -153,32 +153,6 @@ async function createUser(userData: UserData): Promise<User> {
 
 ## API Reference
 
-### Configuration Management
-
-The SDK provides a robust configuration management system with singleton pattern:
-
-```typescript
-import { ConfigurationManager } from '@mosaia/mosaia-node-sdk';
-
-// Get the singleton configuration manager
-const configManager = ConfigurationManager.getInstance();
-
-// Initialize with user configuration
-configManager.initialize({
-  apiKey: 'your-api-key',
-  apiURL: 'https://api.mosaia.ai',
-  version: '1',
-  clientId: 'your-client-id'
-});
-
-// Update configuration at runtime
-configManager.updateConfig('apiKey', 'new-api-key');
-configManager.updateConfig('version', '2');
-
-// Get read-only configuration
-const readOnlyConfig = configManager.getReadOnlyConfig();
-```
-
 ### Authentication
 
 The SDK supports three auth flows. Pick based on whether a human user is in the
